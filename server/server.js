@@ -4,10 +4,9 @@ const cors = require('cors');
 const fetch = require('node-fetch');
 const path = require('path');
 const { router: authRouter, requireAuth } = require('./auth');
-<<<<<<< HEAD
-=======
+
 const onboardingRouter = require('./onboarding');
->>>>>>> keshvi-module
+
 const alertsRouter = require('./alerts');
 const narrativeRouter = require('./narrative');
 const quizRouter = require('./quiz');
@@ -25,10 +24,9 @@ app.use(express.json());
 
 // Auth routes: /api/auth/signup, /api/auth/signin, /api/auth/me, /api/auth/profile, /api/auth/change-password
 app.use('/api/auth', authRouter);
-<<<<<<< HEAD
-=======
+
 app.use('/api/onboarding', onboardingRouter);
->>>>>>> keshvi-module
+
 app.use('/api/alerts', alertsRouter);
 app.use('/api/narrative', narrativeRouter);
 app.use('/api/quiz', quizRouter);
@@ -36,11 +34,41 @@ app.use('/api/portfolio', portfolioRouter);
 app.use('/api/watchlist', watchlistRouter);
 app.use('/api/market', marketRouter);
 
-// Serve the static frontend files (home.html, explore.html, etc.)
+// Middleware to redirect direct .html requests to clean paths
+app.use((req, res, next) => {
+  if (req.path.endsWith('.html') && req.method === 'GET') {
+    const query = req.url.slice(req.path.length);
+    const cleanPath = req.path.slice(0, -5);
+    return res.redirect(301, cleanPath + query);
+  }
+  next();
+});
+
+// Serve the static frontend files
 app.use(express.static(path.join(__dirname, '..')));
 
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '../home.html'));
+});
+
+// Route handlers for clean paths
+const cleanPages = [
+  'home',
+  'dashboard',
+  'explore',
+  'alerts',
+  'learn',
+  'today',
+  'settings',
+  'signin',
+  'signup',
+  'onboarding'
+];
+
+cleanPages.forEach(page => {
+  app.get(`/${page}`, (req, res) => {
+    res.sendFile(path.join(__dirname, `../${page}.html`));
+  });
 });
 
 // GET /api/chat/history — load this user's past AI Mentor conversation

@@ -5,15 +5,14 @@
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>Sign Up | TradePilot</title>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<<<<<<< HEAD
-=======
+
 <script>
   window.onGoogleLibraryLoad = function() {
     if (window.initGoogleAuth) window.initGoogleAuth();
   };
 </script>
 <script src="https://accounts.google.com/gsi/client?onload=onGoogleLibraryLoad" async defer></script>
->>>>>>> keshvi-module
+
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
 <script id="tailwind-config">
@@ -153,8 +152,8 @@
 <body class="bg-background text-on-surface font-body-md min-h-screen">
 <nav class="fixed top-0 w-full z-50 bg-white/70 backdrop-blur-md border-b border-outline-variant/30 shadow-sm">
 <div class="flex justify-between items-center h-16 px-gutter max-w-container-max mx-auto">
-<a href="home.html" class="text-title-md font-title-md font-bold text-primary tracking-tight">TradePilot</a>
-<a href="signin.html" class="text-label-md font-label-md text-on-surface-variant hover:text-primary transition-colors">Already have an account? <span class="text-primary font-bold">Sign In</span></a>
+<a href="/home"" class="text-title-md font-title-md font-bold text-primary tracking-tight">TradePilot</a>
+<a href="/signin"" class="text-label-md font-label-md text-on-surface-variant hover:text-primary transition-colors">Already have an account? <span class="text-primary font-bold">Sign In</span></a>
 </div>
 </nav>
 
@@ -192,8 +191,7 @@ Create Account
 </button>
 </form>
 
-<<<<<<< HEAD
-=======
+
 <div class="flex items-center my-md">
   <div class="flex-grow h-px bg-outline-variant/30"></div>
   <span class="px-3 text-label-sm text-on-surface-variant font-medium">or</span>
@@ -212,7 +210,7 @@ Create Account
   <span>Continue with Google</span>
 </button>
 </div>
->>>>>>> keshvi-module
+
 <p class="text-label-sm text-on-surface-variant text-center mt-lg">
 By signing up, you agree this is a local demo app — no real trading occurs.
 </p>
@@ -315,7 +313,7 @@ By signing up, you agree this is a local demo app — no real trading occurs.
 
       localStorage.setItem('tradepilot_token', data.token);
       localStorage.setItem('tradepilot_user', JSON.stringify(data.user));
-      window.location.href = 'dashboard.html';
+      window.location.href = '/dashboard';
     } catch (err) {
       errorBox.textContent = 'Could not reach the server. Make sure it is running (npm start).';
       errorBox.classList.remove('hidden');
@@ -323,8 +321,7 @@ By signing up, you agree this is a local demo app — no real trading occurs.
       submitBtn.textContent = 'Create Account';
     }
   });
-<<<<<<< HEAD
-=======
+
 
   // Handle Google Credential Response
   window.handleCredentialResponse = async function(response) {
@@ -346,7 +343,7 @@ By signing up, you agree this is a local demo app — no real trading occurs.
       
       localStorage.setItem('tradepilot_token', data.token);
       localStorage.setItem('tradepilot_user', JSON.stringify(data.user));
-      window.location.href = 'dashboard.html';
+      window.location.href = '/dashboard';
     } catch (err) {
       errorBox.textContent = err.message || 'Could not sign up with Google.';
       errorBox.classList.remove('hidden');
@@ -404,7 +401,7 @@ By signing up, you agree this is a local demo app — no real trading occurs.
           }
           localStorage.setItem('tradepilot_token', data.token);
           localStorage.setItem('tradepilot_user', JSON.stringify(data.user));
-          window.location.href = 'dashboard.html';
+          window.location.href = '/dashboard';
         } catch (err) {
           errorBox.textContent = err.message || 'Could not complete simulated Google signin.';
           errorBox.classList.remove('hidden');
@@ -420,7 +417,7 @@ By signing up, you agree this is a local demo app — no real trading occurs.
   if (window.google && window.google.accounts) {
     initGoogleAuth();
   }
->>>>>>> keshvi-module
+
 })();
 </script>
 </body>

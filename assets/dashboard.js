@@ -78,9 +78,7 @@
       try {
         const res = await fetch(PORTFOLIO_URL, { headers: authHeaders() });
         const data = await res.json();
-<<<<<<< HEAD
-        if (res.ok) renderHoldings(data.holdings, data.summary);
-=======
+
         if (res.ok) {
           renderHoldings(data.holdings, data.summary);
           renderSectorExposure(data.sectorExposure);
@@ -97,7 +95,7 @@
           // Trigger news reload for portfolio
           loadPortfolioNews();
         }
->>>>>>> keshvi-module
+
       } catch (err) {
         console.error('Could not load holdings', err);
       }
@@ -114,8 +112,14 @@
 
     async function saveHolding() {
       formError.classList.add('hidden');
+      const symbol = symbolInput.value.trim().toUpperCase();
+      if (!symbol || !legitSymbols.some(s => s.symbol === symbol)) {
+        formError.textContent = 'Please select a supported stock symbol (e.g. AAPL, TSLA, NVDA).';
+        formError.classList.remove('hidden');
+        return;
+      }
       const payload = {
-        symbol: symbolInput.value.trim(),
+        symbol: symbol,
         quantity: quantityInput.value,
         avgCost: avgCostInput.value
       };
@@ -172,7 +176,7 @@
         data.watchlist.forEach((item) => {
           const changePositive = item.quote.changePercent >= 0;
           const row = document.createElement('div');
-          row.className = 'watchlist-row flex justify-between items-center p-xs hover:bg-surface-container rounded-xl transition-colors group';
+          row.className = 'watchlist-row flex justify-between items-center p-sm border border-outline-variant/20 rounded-xl hover:bg-surface-container transition-colors group';
           row.innerHTML = `
             <div class="flex items-center gap-sm">
               <div class="w-10 h-10 bg-primary-container/20 rounded-lg flex items-center justify-center font-bold text-primary">${item.symbol.slice(0, 2)}</div>
@@ -195,18 +199,16 @@
             loadWatchlist();
           });
         });
-<<<<<<< HEAD
-=======
+
 
         loadWatchlistNews();
->>>>>>> keshvi-module
+
       } catch (err) {
         console.error('Could not load watchlist', err);
       }
     }
 
-<<<<<<< HEAD
-=======
+
     // Set dynamic username
     const user = window.TradePilotAuth.getUser();
     if (user) {
@@ -230,8 +232,8 @@
       saveWatchlistBtn.addEventListener('click', async () => {
         watchlistError.classList.add('hidden');
         const symbol = watchlistSymbolInput.value.trim().toUpperCase();
-        if (!symbol || !/^[A-Z]{1,6}$/.test(symbol)) {
-          watchlistError.textContent = 'Please enter a valid stock symbol (1-6 letters).';
+        if (!symbol || !legitSymbols.some(s => s.symbol === symbol)) {
+          watchlistError.textContent = 'Please select a supported stock symbol (e.g. AAPL, TSLA, NVDA).';
           watchlistError.classList.remove('hidden');
           return;
         }
@@ -492,8 +494,131 @@
       });
     }
 
->>>>>>> keshvi-module
+
+    // --- Autocomplete logic ---
+    let legitSymbols = [];
+    async function fetchLegitSymbols() {
+      try {
+        const res = await fetch('/api/market/symbols', { headers: authHeaders() });
+        const data = await res.json();
+        if (res.ok && data.symbols) {
+          legitSymbols = data.symbols;
+          setupAutocomplete(watchlistSymbolInput, document.getElementById('watchlist-suggestions'), legitSymbols);
+          setupAutocomplete(symbolInput, document.getElementById('holding-suggestions'), legitSymbols);
+        }
+      } catch (err) {
+        console.error('Failed to load legit symbols', err);
+      }
+    }
+
+    function setupAutocomplete(input, suggestionsContainer, symbols) {
+      if (!input || !suggestionsContainer) return;
+      
+      let activeIndex = -1;
+      let filtered = [];
+
+      function showSuggestions() {
+        const query = input.value.trim().toUpperCase();
+        suggestionsContainer.innerHTML = '';
+        activeIndex = -1;
+        
+        if (!query) {
+          suggestionsContainer.classList.add('hidden');
+          return;
+        }
+
+        filtered = symbols.filter(s => 
+          s.symbol.startsWith(query) || 
+          s.name.toUpperCase().includes(query)
+        );
+
+        if (filtered.length === 0) {
+          suggestionsContainer.classList.add('hidden');
+          return;
+        }
+
+        suggestionsContainer.classList.remove('hidden');
+        filtered.forEach((item, idx) => {
+          const itemEl = document.createElement('div');
+          itemEl.className = 'w-full px-3 py-2.5 cursor-pointer text-label-sm border-b border-outline-variant/10 last:border-b-0 flex justify-between items-center transition-colors dark:text-inverse-on-surface hover:bg-primary/10 dark:hover:bg-primary-container/45';
+          itemEl.innerHTML = `
+            <span class="font-bold shrink-0">${item.symbol}</span>
+            <span class="text-[11px] text-on-surface-variant dark:text-outline-variant truncate ml-4 text-right">${item.name}</span>
+          `;
+          
+          itemEl.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            selectItem(item.symbol);
+          });
+          
+          suggestionsContainer.appendChild(itemEl);
+        });
+      }
+
+      function selectItem(symbol) {
+        input.value = symbol;
+        suggestionsContainer.classList.add('hidden');
+        input.focus();
+      }
+
+      function highlightItem() {
+        Array.from(suggestionsContainer.children).forEach((child, idx) => {
+          if (idx === activeIndex) {
+            child.classList.add('bg-primary/20', 'dark:bg-primary-container/60');
+            child.scrollIntoView({ block: 'nearest' });
+          } else {
+            child.classList.remove('bg-primary/20', 'dark:bg-primary-container/60');
+          }
+        });
+      }
+
+      function clearError() {
+        if (input === watchlistSymbolInput) {
+          watchlistError.classList.add('hidden');
+        } else if (input === symbolInput) {
+          formError.classList.add('hidden');
+        }
+      }
+
+      input.addEventListener('input', () => {
+        clearError();
+        showSuggestions();
+      });
+      input.addEventListener('focus', () => {
+        clearError();
+        showSuggestions();
+      });
+      input.addEventListener('blur', () => {
+        setTimeout(() => {
+          suggestionsContainer.classList.add('hidden');
+        }, 150);
+      });
+
+      input.addEventListener('keydown', (e) => {
+        const items = suggestionsContainer.children;
+        if (suggestionsContainer.classList.contains('hidden')) return;
+
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          activeIndex = (activeIndex + 1) % items.length;
+          highlightItem();
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          activeIndex = (activeIndex - 1 + items.length) % items.length;
+          highlightItem();
+        } else if (e.key === 'Enter') {
+          if (activeIndex >= 0 && activeIndex < filtered.length) {
+            e.preventDefault();
+            selectItem(filtered[activeIndex].symbol);
+          }
+        } else if (e.key === 'Escape') {
+          suggestionsContainer.classList.add('hidden');
+        }
+      });
+    }
+
     loadHoldings();
     loadWatchlist();
+    fetchLegitSymbols();
   });
 })();

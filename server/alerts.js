@@ -18,10 +18,10 @@ router.get('/', requireAuth, async (req, res) => {
 
     const updated = await Promise.all(alerts.map(async (alert) => {
       if (alert.status !== 'active') {
-        return { ...alert, currentPrice: getMockPrice(alert.symbol) };
+        return { ...alert, currentPrice: await getMockPrice(alert.symbol) };
       }
 
-      const currentPrice = getMockPrice(alert.symbol);
+      const currentPrice = await getMockPrice(alert.symbol);
       const target = Number(alert.targetPrice);
       const shouldTrigger =
         (alert.condition === 'above' && currentPrice >= target) ||
@@ -76,7 +76,7 @@ router.post('/', requireAuth, async (req, res) => {
       targetPrice: price
     });
 
-    res.json({ alert: { ...alert, currentPrice: getMockPrice(alert.symbol) } });
+    res.json({ alert: { ...alert, currentPrice: await getMockPrice(alert.symbol) } });
   } catch (err) {
     console.error('Create alert error:', err);
     res.status(500).json({ error: 'Could not create alert.' });

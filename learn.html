@@ -138,11 +138,11 @@
 <div class="flex justify-between items-center h-16 px-gutter max-w-container-max mx-auto">
 <div class="text-title-md font-title-md font-bold text-primary tracking-tight">TradePilot</div>
 <div class="hidden md:flex gap-md items-center">
-<a class="text-on-surface-variant hover:text-primary transition-colors text-label-md font-label-md" href="today.html">Today's Narrative</a>
-<a class="text-on-surface-variant hover:text-primary transition-colors text-label-md font-label-md" href="explore.html">Explore</a>
-<a class="text-on-surface-variant hover:text-primary transition-colors text-label-md font-label-md" href="alerts.html">Smart Alerts</a>
-<a class="text-primary border-b-2 border-primary pb-1 text-label-md font-label-md" href="learn.html">Learn</a>
-<a class="text-on-surface-variant hover:text-primary transition-colors text-label-md font-label-md" href="dashboard.html">Dashboard</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors text-label-md font-label-md" href="/today">Today's Narrative</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors text-label-md font-label-md" href="/explore">Explore</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors text-label-md font-label-md" href="/alerts">Smart Alerts</a>
+<a class="text-primary border-b-2 border-primary pb-1 text-label-md font-label-md" href="/learn">Learn</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors text-label-md font-label-md" href="/dashboard">Dashboard</a>
 </div>
 <div class="flex items-center gap-sm">
 <div class="relative hidden sm:block">
@@ -150,12 +150,13 @@
 <input class="pl-10 pr-4 py-1.5 bg-surface-container-low border border-outline-variant rounded-full text-label-md focus:ring-2 focus:ring-primary/20 outline-none w-64" placeholder="Search lessons..." type="text"/>
 </div>
 <button class="material-symbols-outlined text-on-surface p-2 hover:bg-surface-container-low rounded-full transition-all" id="darkModeToggle">dark_mode</button>
-<a id="nav-account-btn" href="signin.html" class="material-symbols-outlined material-symbols-outlined text-on-surface p-2 hover:bg-surface-container-low rounded-full transition-all cursor-pointer">account_circle</a>
+<button class="material-symbols-outlined text-on-surface hover:bg-surface-container-low rounded-full p-2 transition-all" id="ai-toggle" title="Toggle AI Mentor">psychology</button>
+<a id="nav-account-btn" href="/signin" class="material-symbols-outlined material-symbols-outlined text-on-surface p-2 hover:bg-surface-container-low rounded-full transition-all cursor-pointer">account_circle</a>
 </div>
 </div>
 </nav>
 <!-- SideNavBar (AI Mentor) -->
-<aside class="fixed right-0 top-16 h-[calc(100vh-64px)] w-80 bg-surface border-l border-outline-variant/30 shadow-xl z-40 hidden xl:flex flex-col p-sm">
+<aside id="ai-sidebar" class="fixed right-0 top-16 h-[calc(100vh-64px)] w-80 bg-surface dark:bg-inverse-surface border-l border-outline-variant/30 shadow-2xl z-50 flex flex-col p-sm transition-transform duration-300 ease-in-out translate-x-full">
 <div class="p-md bg-primary-container rounded-20px text-white mb-md">
 <div class="flex items-center gap-3 mb-xs">
 <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
@@ -209,7 +210,7 @@
 </div>
 </div>
 <div class="border-t border-outline-variant/20 pt-sm mt-auto">
-<a class="text-on-surface-variant hover:bg-surface-variant/50 rounded-20px mx-2 my-1 px-4 py-3 flex items-center gap-3 transition-colors" href="settings.html">
+<a class="text-on-surface-variant hover:bg-surface-variant/50 rounded-20px mx-2 my-1 px-4 py-3 flex items-center gap-3 transition-colors" href="/settings">
 <span class="material-symbols-outlined">settings</span>
 <span class="text-label-md font-label-md">Settings</span>
 </a>
@@ -220,7 +221,7 @@
 </div>
 </aside>
 <!-- Main Content -->
-<main class="pt-24 pb-xl px-4 md:px-gutter max-w-container-max mx-auto xl:mr-80">
+<main class="pt-24 pb-xl px-4 md:px-gutter max-w-container-max mx-auto">
 <!-- Welcome & Streak Tracker -->
 <section class="mb-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-md">
 <div>

@@ -653,7 +653,7 @@
                     localStorage.setItem('tradepilot_user', JSON.stringify(localUser));
                 }
 
-                window.location.href = 'dashboard.html';
+                window.location.href = '/dashboard';
             } catch (err) {
                 console.error(err);
                 showError(err.message || 'Could not connect to the server. Please try again.');

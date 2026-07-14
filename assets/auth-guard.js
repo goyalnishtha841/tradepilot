@@ -17,7 +17,7 @@ window.TradePilotAuth = {
   logout: function () {
     localStorage.removeItem('tradepilot_token');
     localStorage.removeItem('tradepilot_user');
-    window.location.href = 'signin.html';
+    window.location.href = '/signin';
   }
 };
 
@@ -28,22 +28,21 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // Protect app pages: bounce to sign-in if not logged in
   if (requiresAuth && !token) {
-    window.location.href = 'signin.html';
+    window.location.href = '/signin';
     return;
   }
 
-<<<<<<< HEAD
-=======
+
   // Handle onboarding redirects & session sync
-  const isOnboardingPage = window.location.pathname.endsWith('onboarding.html');
+  const isOnboardingPage = window.location.pathname.includes('onboarding');
   if (token && user) {
     // Fast path local storage check
     if (user.onboardingCompleted === false && !isOnboardingPage && requiresAuth) {
-      window.location.href = 'onboarding.html';
+      window.location.href = '/onboarding';
       return;
     }
     if (user.onboardingCompleted === true && isOnboardingPage) {
-      window.location.href = 'dashboard.html';
+      window.location.href = '/dashboard';
       return;
     }
 
@@ -63,16 +62,16 @@ document.addEventListener('DOMContentLoaded', function () {
         localStorage.setItem('tradepilot_user', JSON.stringify(updatedUser));
         
         if (!data.user.onboardingCompleted && !isOnboardingPage && requiresAuth) {
-          window.location.href = 'onboarding.html';
+          window.location.href = '/onboarding';
         } else if (data.user.onboardingCompleted && isOnboardingPage) {
-          window.location.href = 'dashboard.html';
+          window.location.href = '/dashboard';
         }
       }
     })
     .catch(err => console.error('Failed to sync auth session:', err));
   }
 
->>>>>>> keshvi-module
+
   // Wire up the account icon in the top nav
   const accountBtn = document.getElementById('nav-account-btn');
   if (accountBtn) {
@@ -87,7 +86,27 @@ document.addEventListener('DOMContentLoaded', function () {
       });
     } else {
       accountBtn.title = 'Sign in';
-      accountBtn.setAttribute('href', 'signin.html');
+      accountBtn.setAttribute('href', '/signin');
     }
+  }
+
+  // Wire up the AI sidebar toggle
+  const aiToggle = document.getElementById('ai-toggle');
+  const aiSidebar = document.getElementById('ai-sidebar');
+  if (aiToggle && aiSidebar) {
+    aiToggle.addEventListener('click', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      aiSidebar.classList.toggle('translate-x-full');
+      aiSidebar.classList.toggle('translate-x-0');
+    });
+
+    // Close when clicking outside of the sidebar
+    document.addEventListener('click', function (e) {
+      if (!aiSidebar.contains(e.target) && !aiToggle.contains(e.target) && !aiSidebar.classList.contains('translate-x-full')) {
+        aiSidebar.classList.add('translate-x-full');
+        aiSidebar.classList.remove('translate-x-0');
+      }
+    });
   }
 });

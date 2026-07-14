@@ -120,11 +120,11 @@
 <span class="text-title-md font-title-md font-bold text-primary tracking-tight">TradePilot</span>
 </div>
 <div class="hidden md:flex items-center gap-lg">
-<a class="text-label-md font-label-md text-primary border-b-2 border-primary pb-1" href="today.html">Today's Narrative</a>
-<a class="text-label-md font-label-md text-on-surface-variant hover:text-primary transition-colors" href="explore.html">Explore</a>
-<a class="text-label-md font-label-md text-on-surface-variant hover:text-primary transition-colors" href="alerts.html">Smart Alerts</a>
-<a class="text-label-md font-label-md text-on-surface-variant hover:text-primary transition-colors" href="learn.html">Learn</a>
-<a class="text-label-md font-label-md text-on-surface-variant hover:text-primary transition-colors" href="dashboard.html">Dashboard</a>
+<a class="text-label-md font-label-md text-primary border-b-2 border-primary pb-1" href="/today">Today's Narrative</a>
+<a class="text-label-md font-label-md text-on-surface-variant hover:text-primary transition-colors" href="/explore">Explore</a>
+<a class="text-label-md font-label-md text-on-surface-variant hover:text-primary transition-colors" href="/alerts">Smart Alerts</a>
+<a class="text-label-md font-label-md text-on-surface-variant hover:text-primary transition-colors" href="/learn">Learn</a>
+<a class="text-label-md font-label-md text-on-surface-variant hover:text-primary transition-colors" href="/dashboard">Dashboard</a>
 </div>
 <div class="flex items-center gap-md">
 <button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors p-2 rounded-full hover:bg-surface-container" title="Toggle Dark Mode">dark_mode</button>
@@ -132,12 +132,13 @@
 <span class="material-symbols-outlined text-on-surface-variant">search</span>
 <input class="bg-transparent border-none focus:ring-0 text-label-md w-48" placeholder="Search narrative..." type="text"/>
 </div>
-<a id="nav-account-btn" href="signin.html" class="material-symbols-outlined material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors cursor-pointer">account_circle</a>
+<button class="material-symbols-outlined text-on-surface-variant hover:bg-surface-container-low rounded-full p-2 transition-all" id="ai-toggle" title="Toggle AI Mentor">psychology</button>
+<a id="nav-account-btn" href="/signin" class="material-symbols-outlined material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors p-2 hover:bg-surface-container rounded-full transition-all cursor-pointer">account_circle</a>
 </div>
 </div>
 </nav>
 <!-- SideNavBar (AI Mentor) -->
-<aside class="fixed right-0 top-16 h-[calc(100vh-64px)] w-80 bg-surface border-l border-outline-variant/30 shadow-xl z-40 hidden xl:flex flex-col p-sm">
+<aside id="ai-sidebar" class="fixed right-0 top-16 h-[calc(100vh-64px)] w-80 bg-surface dark:bg-inverse-surface border-l border-outline-variant/30 shadow-2xl z-50 flex flex-col p-sm transition-transform duration-300 ease-in-out translate-x-full">
 <div class="p-md flex flex-col items-center text-center">
 <div class="w-20 h-20 rounded-full primary-gradient flex items-center justify-center mb-sm shadow-lg overflow-hidden relative">
 <span class="material-symbols-outlined text-white text-display-lg relative z-10" style="font-variation-settings: 'FILL' 1;">psychology</span>
@@ -175,7 +176,7 @@
 </div>
 </div>
 <div class="mt-auto border-t border-outline-variant/20 pt-sm">
-<a class="text-on-surface-variant hover:bg-surface-variant/50 rounded-xl mx-2 my-1 px-4 py-3 flex items-center gap-3 transition-colors" href="settings.html">
+<a class="text-on-surface-variant hover:bg-surface-variant/50 rounded-xl mx-2 my-1 px-4 py-3 flex items-center gap-3 transition-colors" href="/settings">
 <span class="material-symbols-outlined">settings</span>
 <span class="font-label-md">Settings</span>
 </a>
@@ -186,7 +187,7 @@
 </div>
 </aside>
 <!-- Main Content -->
-<main class="pt-24 pb-xl px-gutter max-w-container-max mx-auto xl:mr-80 transition-all duration-300">
+<main class="pt-24 pb-xl px-gutter max-w-container-max mx-auto transition-all duration-300">
 <!-- Header & Top Action -->
 <div class="flex flex-col md:flex-row md:items-end justify-between gap-md mb-xl">
 <div class="space-y-base">
