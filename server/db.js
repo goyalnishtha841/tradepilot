@@ -86,9 +86,6 @@ async function init() {
       UNIQUE(user_id, symbol)
     );
   `);
-<<<<<<< HEAD
-
-=======
     await pool.query(`
     CREATE TABLE IF NOT EXISTS user_preferences (
       id SERIAL PRIMARY KEY,
@@ -127,7 +124,6 @@ async function init() {
       created_at TIMESTAMPTZ DEFAULT NOW()
     );
   `);
->>>>>>> keshvi-module
   console.log('✅ Connected to database, all tables ready.');
 }
 
@@ -312,8 +308,6 @@ module.exports = {
 
   async updatePasswordHash(userId, passwordHash) {
     await pool.query(`UPDATE users SET password_hash = $1 WHERE id = $2`, [passwordHash, userId]);
-<<<<<<< HEAD
-=======
   }, 
 
   async saveUserPreferences(userId, data) {
@@ -456,6 +450,5 @@ module.exports = {
       [symbol, title, description, url]
     );
     return rows[0];
->>>>>>> keshvi-module
   }
 };

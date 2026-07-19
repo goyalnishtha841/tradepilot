@@ -2,10 +2,7 @@ const express = require('express');
 const db = require('./db');
 const { requireAuth } = require('./auth');
 const { getMockQuote } = require('./mock-market');
-<<<<<<< HEAD
-=======
 const { getOrGenerateNews } = require('./news-service');
->>>>>>> keshvi-module
 
 const router = express.Router();
 
@@ -54,8 +51,6 @@ router.delete('/:id', requireAuth, async (req, res) => {
   }
 });
 
-<<<<<<< HEAD
-=======
 // GET /api/watchlist/news — list news linked to watchlist
 router.get('/news', requireAuth, async (req, res) => {
   try {
@@ -76,5 +71,4 @@ router.get('/news', requireAuth, async (req, res) => {
   }
 });
 
->>>>>>> keshvi-module
 module.exports = router;

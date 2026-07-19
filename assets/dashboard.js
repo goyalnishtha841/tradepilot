@@ -78,9 +78,6 @@
       try {
         const res = await fetch(PORTFOLIO_URL, { headers: authHeaders() });
         const data = await res.json();
-<<<<<<< HEAD
-        if (res.ok) renderHoldings(data.holdings, data.summary);
-=======
         if (res.ok) {
           renderHoldings(data.holdings, data.summary);
           renderSectorExposure(data.sectorExposure);
@@ -97,7 +94,6 @@
           // Trigger news reload for portfolio
           loadPortfolioNews();
         }
->>>>>>> keshvi-module
       } catch (err) {
         console.error('Could not load holdings', err);
       }
@@ -195,18 +191,13 @@
             loadWatchlist();
           });
         });
-<<<<<<< HEAD
-=======
 
         loadWatchlistNews();
->>>>>>> keshvi-module
       } catch (err) {
         console.error('Could not load watchlist', err);
       }
     }
 
-<<<<<<< HEAD
-=======
     // Set dynamic username
     const user = window.TradePilotAuth.getUser();
     if (user) {
@@ -492,7 +483,6 @@
       });
     }
 
->>>>>>> keshvi-module
     loadHoldings();
     loadWatchlist();
   });

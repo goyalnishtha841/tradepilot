@@ -1,10 +1,7 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-<<<<<<< HEAD
-=======
 const fetch = require('node-fetch');
->>>>>>> keshvi-module
 const db = require('./db');
 
 const router = express.Router();
@@ -56,11 +53,15 @@ router.post('/signup', async (req, res) => {
     const user = await db.createUser({ name: name.trim(), email: email.trim(), passwordHash });
     const token = signToken(user);
 
-<<<<<<< HEAD
-    res.json({ token, user: { id: user.id, name: user.name, email: user.email } });
-=======
-    res.json({ token, user: { id: user.id, name: user.name, email: user.email, onboardingCompleted: false } });
->>>>>>> keshvi-module
+    res.json({
+      token,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        onboardingCompleted: false
+      }
+    });
   } catch (err) {
     console.error('Signup error:', err);
     res.status(500).json({ error: 'Something went wrong creating your account.' });
@@ -87,13 +88,18 @@ router.post('/signin', async (req, res) => {
     }
 
     const token = signToken(user);
-<<<<<<< HEAD
-    res.json({ token, user: { id: user.id, name: user.name, email: user.email } });
-=======
     const prefs = await db.getUserPreferences(user.id);
     const onboardingCompleted = prefs ? prefs.onboarding_completed : false;
-    res.json({ token, user: { id: user.id, name: user.name, email: user.email, onboardingCompleted } });
->>>>>>> keshvi-module
+
+    res.json({
+      token,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        onboardingCompleted
+      }
+    });
   } catch (err) {
     console.error('Signin error:', err);
     res.status(500).json({ error: 'Something went wrong signing you in.' });
@@ -119,13 +125,10 @@ function requireAuth(req, res, next) {
 }
 
 // GET /api/auth/me — used by pages to check "am I logged in?"
-<<<<<<< HEAD
-router.get('/me', requireAuth, (req, res) => {
-  res.json({ user: req.user });
-=======
 router.get('/me', requireAuth, async (req, res) => {
   try {
     const prefs = await db.getUserPreferences(req.user.id);
+
     res.json({
       user: {
         id: req.user.id,
@@ -138,7 +141,6 @@ router.get('/me', requireAuth, async (req, res) => {
     console.error('Error in /me preference check:', err);
     res.json({ user: req.user });
   }
->>>>>>> keshvi-module
 });
 
 // PATCH /api/auth/profile — update display name
@@ -191,8 +193,6 @@ router.post('/change-password', requireAuth, async (req, res) => {
   }
 });
 
-<<<<<<< HEAD
-=======
 // GET /api/auth/google/client-id
 router.get('/google/client-id', (req, res) => {
   res.json({ clientId: process.env.GOOGLE_CLIENT_ID || null });
@@ -260,5 +260,4 @@ router.post('/google', async (req, res) => {
   }
 });
 
->>>>>>> keshvi-module
 module.exports = { router, requireAuth };
