@@ -46,6 +46,9 @@ app.use((req, res, next) => {
 
 // Serve the static frontend files
 app.use(express.static(path.join(__dirname, '..')));
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, '../home.html'));
+});
 
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '../home.html'));

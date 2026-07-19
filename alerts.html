@@ -315,13 +315,12 @@ You don't have any alerts yet — click "Create New Alert" above to set one up.
 <p class="text-label-md text-on-surface-variant">Potential volatility expansion of 15%. Direct impact on tech sector indices expected within the hour.</p>
 </div>
 <div class="bg-primary-container p-sm rounded-xl border border-primary/20">
-<p class="text-label-sm font-bold text-on-primary-container mb-xs">Suggested Action:</p>
-<p class="text-label-md text-on-primary-container">Review stop-loss orders for semiconductor exposure. Neutralize delta if long-term position is held.</p>
+<p class="text-label-sm font-bold text-on-primary-container mb-xs">What to know:</p>
+<p class="text-label-md text-on-primary-container">Semiconductor exposure across the sector may see wider price swings following this move.</p>
 </div>
 </div>
 </div>
 <div class="lg:w-64 flex flex-col gap-sm">
-<button class="w-full py-3 bg-primary text-white rounded-xl text-label-md font-bold hover:opacity-90 transition-opacity">Execute Hedge</button>
 <button class="w-full py-3 bg-surface-container-high text-on-surface rounded-xl text-label-md font-bold flex items-center justify-center gap-2">
 <span class="material-symbols-outlined text-[20px]">visibility</span> Analyze Chart
                                 </button>
@@ -351,13 +350,12 @@ You don't have any alerts yet — click "Create New Alert" above to set one up.
 <p class="text-label-md text-on-surface-variant">Medium-term bullish structure confirmation. Liquidity depth improved by 12% in the last 4 hours.</p>
 </div>
 <div class="bg-primary-container p-sm rounded-xl border border-primary/20">
-<p class="text-label-sm font-bold text-on-primary-container mb-xs">Suggested Action:</p>
-<p class="text-label-md text-on-primary-container">Gradual scaling into BTC/USD or crypto-proxies like COIN or MSTR on the next minor pullback.</p>
+<p class="text-label-sm font-bold text-on-primary-container mb-xs">What to know:</p>
+<p class="text-label-md text-on-primary-container">Crypto-linked equities like COIN and MSTR often move in the same direction as this kind of sentiment shift.</p>
 </div>
 </div>
 </div>
 <div class="lg:w-64 flex flex-col gap-sm">
-<button class="w-full py-3 bg-primary text-white rounded-xl text-label-md font-bold hover:opacity-90">Set Buy Limit</button>
 <button class="w-full py-3 bg-surface-container-high text-on-surface rounded-xl text-label-md font-bold">Deep Research</button>
 <div class="p-sm bg-surface-container rounded-xl">
 <p class="text-[10px] uppercase font-bold text-on-surface-variant mb-xs">Learning Lab</p>
@@ -421,10 +419,13 @@ You don't have any alerts yet — click "Create New Alert" above to set one up.
 <div>
 <label class="text-label-sm font-bold text-on-surface-variant block mb-1">Alert Type</label>
 <select id="alert-type" class="w-full bg-surface-container border border-outline-variant/50 rounded-xl px-4 py-3 text-body-md focus:ring-2 focus:ring-primary/20 outline-none appearance-none">
-<option>Price Target</option>
-<option>Volume Spike</option>
-<option>News Keyword</option>
+<option>Price Threshold</option>
+<option>Volume Movement</option>
+<option>News</option>
+<option>Filing</option>
 <option>Sentiment Shift</option>
+<option>Sector Impact</option>
+<option>Portfolio Relevance</option>
 </select>
 </div>
 <div>
@@ -436,7 +437,7 @@ You don't have any alerts yet — click "Create New Alert" above to set one up.
 </select>
 </div>
 </div>
-<div>
+<div id="alert-price-condition-wrap">
 <label class="text-label-sm font-bold text-on-surface-variant block mb-1">Trigger Condition</label>
 <div class="flex gap-xs items-center bg-surface-container p-4 rounded-xl border border-outline-variant/50">
 <span class="text-on-surface-variant">Price goes</span>
@@ -452,7 +453,7 @@ You don't have any alerts yet — click "Create New Alert" above to set one up.
 <span class="material-symbols-outlined text-[16px] text-primary">auto_awesome</span>
 <span class="text-label-sm font-bold">AI Context</span>
 </div>
-<p class="text-[12px] text-on-surface-variant">Enable AI to automatically assess 'Financial Impact' and 'Suggested Actions' when this alert triggers.</p>
+<p class="text-[12px] text-on-surface-variant">When this alert triggers, TradePilot will describe what happened in plain language. It won't tell you to buy, sell, or hold anything — that requires a compliance review we haven't done yet.</p>
 </div>
 </div>
 <div class="flex gap-md pt-md">

@@ -4,11 +4,21 @@
   document.addEventListener('DOMContentLoaded', function () {
     const btn = document.getElementById('regenerate-narrative-btn');
     const errorBox = document.getElementById('narrative-error');
-    const whatEl = document.getElementById('narrative-what');
-    const whyEl = document.getElementById('narrative-why');
-    const explainerEl = document.getElementById('narrative-explainer');
+    const fields = {
+      marketOverview: document.getElementById('narrative-market-overview'),
+      sectorMovement: document.getElementById('narrative-sector-movement'),
+      companyNews: document.getElementById('narrative-company-news'),
+      watchlistEvents: document.getElementById('narrative-watchlist-events'),
+      portfolioRelevance: document.getElementById('narrative-portfolio-relevance'),
+      plainLanguageExplanation: document.getElementById('narrative-explainer')
+    };
 
     if (!btn) return;
+
+    function authHeaders(extra) {
+      const h = window.TradePilotAuth ? window.TradePilotAuth.authHeader() : {};
+      return { ...h, ...(extra || {}) };
+    }
 
     async function generateNarrative() {
       errorBox.classList.add('hidden');
@@ -17,10 +27,9 @@
       btn.disabled = true;
 
       try {
-        const authHeader = window.TradePilotAuth ? window.TradePilotAuth.authHeader() : {};
         const res = await fetch(NARRATIVE_URL, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', ...authHeader }
+          headers: authHeaders({ 'Content-Type': 'application/json' })
         });
         const data = await res.json();
 
@@ -30,9 +39,9 @@
           return;
         }
 
-        whatEl.textContent = data.whatHappened;
-        whyEl.textContent = data.whyItHappened;
-        if (data.beginnerExplainer) explainerEl.textContent = data.beginnerExplainer;
+        Object.keys(fields).forEach((key) => {
+          if (fields[key] && data[key]) fields[key].textContent = data[key];
+        });
       } catch (err) {
         errorBox.textContent = 'Could not reach the AI server. Make sure it is running (npm start).';
         errorBox.classList.remove('hidden');
@@ -44,7 +53,7 @@
 
     btn.addEventListener('click', generateNarrative);
 
-    // Auto-generate a fresh narrative once when the page first loads
+    // Auto-generate a fresh, personalized narrative once when the page first loads
     generateNarrative();
   });
 })();
