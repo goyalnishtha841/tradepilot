@@ -1,32 +1,42 @@
 const express = require('express');
 const db = require('./db');
 const { requireAuth } = require('./auth');
+const { getRealQuote } = require('./yahoo-finance');
 const { getMockQuote, LEGIT_SYMBOLS } = require('./mock-market');
-
 const { getOrGenerateNews } = require('./news-service');
-
 
 const router = express.Router();
 
 function isValidSymbol(symbol) {
-  return typeof symbol === 'string' && LEGIT_SYMBOLS.some(s => s.symbol === symbol.trim().toUpperCase());
+  return typeof symbol === 'string' && /^[A-Za-z.\-]{1,15}$/.test(symbol.trim());
 }
 
-// GET /api/portfolio — list holdings with live (mock) valuation
+// Real-time quote with graceful fallback to a simulated one if the live feed fails.
+async function getQuoteWithFallback(symbol) {
+  try {
+    const quote = await getRealQuote(symbol);
+    quote.sector = quote.sector || getMockQuote(symbol).sector;
+    return quote;
+  } catch (err) {
+    console.warn(`Live quote failed for ${symbol} (${err.message}), using simulated quote.`);
+    return getMockQuote(symbol);
+  }
+}
+
+// GET /api/portfolio — list holdings with live valuation
 router.get('/', requireAuth, async (req, res) => {
   try {
     const holdings = await db.listHoldings(req.user.id);
 
     let totalValue = 0;
     let totalCost = 0;
-
     const sectorMap = {};
 
-
     const enriched = await Promise.all(holdings.map(async (h) => {
-      const quote = await getMockQuote(h.symbol);
+      const quote = await getQuoteWithFallback(h.symbol);
       const quantity = Number(h.quantity);
       const avgCost = Number(h.avgCost);
+
       const marketValue = quote.price * quantity;
       const costBasis = avgCost * quantity;
       const gain = marketValue - costBasis;
@@ -35,7 +45,6 @@ router.get('/', requireAuth, async (req, res) => {
       totalValue += marketValue;
       totalCost += costBasis;
 
-
       const sector = quote.sector || 'Other';
       sectorMap[sector] = (sectorMap[sector] || 0) + marketValue;
 
@@ -43,7 +52,6 @@ router.get('/', requireAuth, async (req, res) => {
         ...h,
         currentPrice: quote.price,
         sector,
-
         marketValue: Math.round(marketValue * 100) / 100,
         gain: Math.round(gain * 100) / 100,
         gainPercent: Math.round(gainPercent * 100) / 100
@@ -51,20 +59,20 @@ router.get('/', requireAuth, async (req, res) => {
     }));
 
     const totalGain = totalValue - totalCost;
-    const totalGainPercent = totalCost > 0 ? (totalGain / totalCost) * 100 : 0;
-
+    const totalGainPercent =
+      totalCost > 0 ? (totalGain / totalCost) * 100 : 0;
 
     const sectorExposure = [];
+
     if (totalValue > 0) {
-      for (const [sec, val] of Object.entries(sectorMap)) {
+      for (const [sector, value] of Object.entries(sectorMap)) {
         sectorExposure.push({
-          sector: sec,
-          value: Math.round(val * 100) / 100,
-          percentage: Math.round((val / totalValue) * 100 * 100) / 100
+          sector,
+          value: Math.round(value * 100) / 100,
+          percentage: Math.round((value / totalValue) * 10000) / 100
         });
       }
     }
-
 
     res.json({
       holdings: enriched,
@@ -73,10 +81,8 @@ router.get('/', requireAuth, async (req, res) => {
         totalCost: Math.round(totalCost * 100) / 100,
         totalGain: Math.round(totalGain * 100) / 100,
         totalGainPercent: Math.round(totalGainPercent * 100) / 100
-
       },
       sectorExposure
-
     });
   } catch (err) {
     console.error('List holdings error:', err);
@@ -90,15 +96,23 @@ router.post('/', requireAuth, async (req, res) => {
     const { symbol, quantity, avgCost } = req.body;
 
     if (!isValidSymbol(symbol)) {
-      return res.status(400).json({ error: 'Please enter a supported stock symbol (e.g. AAPL, TSLA, NVDA).' });
+      return res.status(400).json({ error: 'Please enter a valid stock symbol (e.g. AAPL, TSLA, NVDA).' });
     }
+
     const qty = Number(quantity);
+
     if (!quantity || isNaN(qty) || qty <= 0) {
-      return res.status(400).json({ error: 'Please enter a valid quantity greater than 0.' });
+      return res.status(400).json({
+        error: 'Please enter a valid quantity greater than 0.'
+      });
     }
+
     const cost = Number(avgCost);
+
     if (!avgCost || isNaN(cost) || cost <= 0) {
-      return res.status(400).json({ error: 'Please enter a valid average cost per share.' });
+      return res.status(400).json({
+        error: 'Please enter a valid average cost per share.'
+      });
     }
 
     const holding = await db.createHolding(req.user.id, {
@@ -118,36 +132,53 @@ router.post('/', requireAuth, async (req, res) => {
 router.delete('/:id', requireAuth, async (req, res) => {
   try {
     const deleted = await db.deleteHolding(req.user.id, req.params.id);
+
     if (!deleted) {
-      return res.status(404).json({ error: 'Holding not found.' });
+      return res.status(404).json({
+        error: 'Holding not found.'
+      });
     }
+
     res.json({ success: true });
   } catch (err) {
     console.error('Delete holding error:', err);
-    res.status(500).json({ error: 'Could not delete holding.' });
+    res.status(500).json({
+      error: 'Could not delete holding.'
+    });
   }
 });
-
 
 // GET /api/portfolio/news — list news linked to holdings
 router.get('/news', requireAuth, async (req, res) => {
   try {
     const holdings = await db.listHoldings(req.user.id);
-    const symbols = [...new Set(holdings.map(h => h.symbol.trim().toUpperCase()))];
+
+    const symbols = [
+      ...new Set(
+        holdings.map((h) => h.symbol.trim().toUpperCase())
+      )
+    ];
+
     if (symbols.length === 0) {
       return res.json({ news: [] });
     }
+
     const news = await getOrGenerateNews('portfolio', symbols);
-    const sanitized = news.map(item => ({
+
+    const sanitized = news.map((item) => ({
       ...item,
-      url: `https://finance.yahoo.com/quote/${item.symbol.trim().toUpperCase()}/news`
+      url: `https://finance.yahoo.com/quote/${item.symbol
+        .trim()
+        .toUpperCase()}/news`
     }));
+
     res.json({ news: sanitized });
   } catch (err) {
     console.error('Portfolio news error:', err);
-    res.status(500).json({ error: 'Could not load portfolio news.' });
+    res.status(500).json({
+      error: 'Could not load portfolio news.'
+    });
   }
 });
-
 
 module.exports = router;

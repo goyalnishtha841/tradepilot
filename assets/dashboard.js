@@ -203,6 +203,8 @@
 
         loadWatchlistNews();
 
+
+        loadWatchlistNews();
       } catch (err) {
         console.error('Could not load watchlist', err);
       }

@@ -4,9 +4,7 @@ const cors = require('cors');
 const fetch = require('node-fetch');
 const path = require('path');
 const { router: authRouter, requireAuth } = require('./auth');
-
 const onboardingRouter = require('./onboarding');
-
 const alertsRouter = require('./alerts');
 const narrativeRouter = require('./narrative');
 const quizRouter = require('./quiz');
@@ -22,17 +20,15 @@ const GROQ_API_KEY = process.env.GROQ_API_KEY;
 app.use(cors());
 app.use(express.json());
 
-// Auth routes: /api/auth/signup, /api/auth/signin, /api/auth/me, /api/auth/profile, /api/auth/change-password
 app.use('/api/auth', authRouter);
-
 app.use('/api/onboarding', onboardingRouter);
-
 app.use('/api/alerts', alertsRouter);
 app.use('/api/narrative', narrativeRouter);
 app.use('/api/quiz', quizRouter);
 app.use('/api/portfolio', portfolioRouter);
 app.use('/api/watchlist', watchlistRouter);
 app.use('/api/market', marketRouter);
+//app.use('/api/explore', require('./explore'));
 
 // Middleware to redirect direct .html requests to clean paths
 app.use((req, res, next) => {
@@ -46,12 +42,9 @@ app.use((req, res, next) => {
 
 // Serve the static frontend files
 app.use(express.static(path.join(__dirname, '..')));
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, '../home.html'));
-});
 
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, '../home.html'));
+  res.sendFile(path.join(__dirname, '../home.html'));
 });
 
 // Route handlers for clean paths
@@ -85,7 +78,7 @@ app.get('/api/chat/history', requireAuth, async (req, res) => {
   }
 });
 
-// Chat endpoint - the frontend calls this instead of Groq directly
+// POST /api/chat
 app.post('/api/chat', requireAuth, async (req, res) => {
   try {
     const { message, context } = req.body;
@@ -130,9 +123,8 @@ ${context ? `\n\nContext about what the user is currently looking at: ${context}
     const data = await groqResponse.json();
     const reply = data.choices?.[0]?.message?.content || 'Sorry, I could not generate a response.';
 
-    // Save both sides of the conversation for this user (best-effort; don't fail the request if this fails)
-    db.saveChatMessage(req.user.id, 'user', message).catch((e) => console.error('Save chat (user) failed:', e));
-    db.saveChatMessage(req.user.id, 'assistant', reply).catch((e) => console.error('Save chat (assistant) failed:', e));
+    db.saveChatMessage(req.user.id, 'user', message).catch(e => console.error('Save chat (user) failed:', e));
+    db.saveChatMessage(req.user.id, 'assistant', reply).catch(e => console.error('Save chat (assistant) failed:', e));
 
     res.json({ reply });
   } catch (err) {

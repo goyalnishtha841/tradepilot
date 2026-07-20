@@ -1,22 +1,32 @@
 const express = require('express');
 const db = require('./db');
 const { requireAuth } = require('./auth');
-const { getMockQuote, LEGIT_SYMBOLS } = require('./mock-market');
-
+const { getRealQuote } = require('./yahoo-finance');
+const { getMockQuote } = require('./mock-market');
 const { getOrGenerateNews } = require('./news-service');
-
 
 const router = express.Router();
 
 function isValidSymbol(symbol) {
-  return typeof symbol === 'string' && LEGIT_SYMBOLS.some(s => s.symbol === symbol.trim().toUpperCase());
+  return typeof symbol === 'string' && /^[A-Za-z.\-]{1,15}$/.test(symbol.trim());
 }
 
-// GET /api/watchlist — list saved symbols with live (mock) quotes
+async function getQuoteWithFallback(symbol) {
+  try {
+    const quote = await getRealQuote(symbol);
+    quote.sector = quote.sector || getMockQuote(symbol).sector;
+    return quote;
+  } catch (err) {
+    console.warn(`Live quote failed for ${symbol} (${err.message}), using simulated quote.`);
+    return getMockQuote(symbol);
+  }
+}
+
+// GET /api/watchlist — list saved symbols with live quotes
 router.get('/', requireAuth, async (req, res) => {
   try {
     const items = await db.listWatchlist(req.user.id);
-    const enriched = await Promise.all(items.map(async (item) => ({ ...item, quote: await getMockQuote(item.symbol) })));
+    const enriched = await Promise.all(items.map(async (item) => ({ ...item, quote: await getQuoteWithFallback(item.symbol) })));
     res.json({ watchlist: enriched });
   } catch (err) {
     console.error('List watchlist error:', err);
@@ -29,10 +39,10 @@ router.post('/', requireAuth, async (req, res) => {
   try {
     const { symbol } = req.body;
     if (!isValidSymbol(symbol)) {
-      return res.status(400).json({ error: 'Please enter a supported stock symbol (e.g. AAPL, TSLA, NVDA).' });
+      return res.status(400).json({ error: 'Please enter a valid stock symbol (e.g. AAPL, TSLA, NVDA).' });
     }
     const item = await db.addToWatchlist(req.user.id, symbol.trim().toUpperCase());
-    res.json({ item: { ...item, quote: await getMockQuote(item.symbol) } });
+    res.json({ item: { ...item, quote: await getQuoteWithFallback(item.symbol) } });
   } catch (err) {
     console.error('Add watchlist error:', err);
     res.status(500).json({ error: 'Could not add to watchlist.' });
@@ -53,7 +63,6 @@ router.delete('/:id', requireAuth, async (req, res) => {
   }
 });
 
-
 // GET /api/watchlist/news — list news linked to watchlist
 router.get('/news', requireAuth, async (req, res) => {
   try {
@@ -73,6 +82,5 @@ router.get('/news', requireAuth, async (req, res) => {
     res.status(500).json({ error: 'Could not load watchlist news.' });
   }
 });
-
 
 module.exports = router;

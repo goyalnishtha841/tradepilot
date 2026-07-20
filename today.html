@@ -191,12 +191,12 @@
 <!-- Header & Top Action -->
 <div class="flex flex-col md:flex-row md:items-end justify-between gap-md mb-xl">
 <div class="space-y-base">
-<span class="text-label-sm font-label-sm text-on-tertiary-container uppercase tracking-widest bg-tertiary-fixed px-xs py-[2px] rounded">April 12, 2024</span>
+<span id="narrative-date-badge" class="text-label-sm font-label-sm text-on-tertiary-container uppercase tracking-widest bg-tertiary-fixed px-xs py-[2px] rounded">Loading…</span>
 <h1 class="font-headline-lg text-headline-lg md:text-display-lg md:font-display-lg text-primary">Today's Narrative</h1>
 <p class="text-body-lg font-body-lg text-on-surface-variant max-w-2xl">The market is currently digesting mixed inflation data while tech giants prepare for a significant pivot.</p>
 </div>
 <div class="flex gap-sm shrink-0">
-<button class="flex items-center gap-xs border border-outline-variant/50 text-on-surface-variant px-md py-sm rounded-xl hover:bg-surface-container transition-all group h-fit">
+<button id="export-narrative-btn" class="flex items-center gap-xs border border-outline-variant/50 text-on-surface-variant px-md py-sm rounded-xl hover:bg-surface-container transition-all group h-fit">
 <span class="material-symbols-outlined text-[20px]">picture_as_pdf</span>
 <span class="text-label-md font-label-md">Export</span>
 </button>
@@ -218,6 +218,7 @@
 <span class="material-symbols-outlined text-white" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
 </div>
 <h2 class="text-title-md font-title-md">AI Narrative Summary</h2>
+<span id="narrative-source-badge" class="hidden text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full"></span>
 </div>
 <button id="regenerate-narrative-btn" class="flex items-center gap-1 text-label-sm font-label-sm text-primary border border-primary/30 rounded-lg px-3 py-1.5 hover:bg-primary hover:text-white transition-all">
 <span class="material-symbols-outlined text-[16px]">refresh</span>
@@ -546,6 +547,7 @@ Regenerate
             });
         });
     </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="assets/auth-guard.js"></script>
 <script src="assets/narrative.js"></script>
 <script src="assets/mentor-chat.js"></script>

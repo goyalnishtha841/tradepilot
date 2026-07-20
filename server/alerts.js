@@ -1,6 +1,7 @@
 const express = require('express');
 const db = require('./db');
 const { requireAuth } = require('./auth');
+const { getRealQuote } = require('./yahoo-finance');
 const { getMockPrice } = require('./mock-market');
 
 const router = express.Router();
@@ -15,31 +16,38 @@ const VALID_ALERT_TYPES = [
   'Sector Impact',
   'Portfolio Relevance'
 ];
-// Only these types have a live (simulated) data feed to check against right now.
-// The rest are saved and displayed but not yet auto-evaluated — see mock-market.js
-// for where a real data feed would plug in for each type in the future.
+// Only these types have a live data feed to check against right now.
+// The rest are saved and displayed but not yet auto-evaluated — each would need
+// its own real data pipeline (volume feed, filings feed, sentiment model, etc.)
+// beyond real-time price, which is out of scope for this pass.
 const MONITORED_TYPES = ['Price Threshold'];
 
 function isValidSymbol(symbol) {
-  return typeof symbol === 'string' && /^[A-Za-z]{1,6}$/.test(symbol.trim());
+  return typeof symbol === 'string' && /^[A-Za-z.\-]{1,15}$/.test(symbol.trim());
 }
 
-// GET /api/alerts — list this user's alerts, auto-checking monitored types against the mock price
+// Real-time price with graceful fallback to a simulated one if the live feed fails.
+async function getPriceWithFallback(symbol) {
+  try {
+    const quote = await getRealQuote(symbol);
+    return { price: quote.price, simulated: false };
+  } catch (err) {
+    console.warn(`Live price failed for ${symbol} (${err.message}), using simulated price.`);
+    return { price: getMockPrice(symbol), simulated: true };
+  }
+}
+
+// GET /api/alerts — list this user's alerts, auto-checking monitored types against real-time price
 router.get('/', requireAuth, async (req, res) => {
   try {
     const alerts = await db.listAlerts(req.user.id);
 
     const updated = await Promise.all(alerts.map(async (alert) => {
+      const { price: currentPrice, simulated } = await getPriceWithFallback(alert.symbol);
+      const monitored = MONITORED_TYPES.includes(alert.alertType);
 
-      router.get('/', requireAuth, async (req, res) => {
-  try {
-    const alerts = await db.listAlerts(req.user.id);
-
-    const updated = await Promise.all(alerts.map(async (alert) => {
-      const currentPrice = await getMockPrice(alert.symbol);
-
-      if (!MONITORED_TYPES.includes(alert.alertType) || alert.status !== 'active') {
-        return { ...alert, currentPrice, monitored: MONITORED_TYPES.includes(alert.alertType) };
+      if (!monitored || alert.status !== 'active') {
+        return { ...alert, currentPrice, simulated, monitored };
       }
 
       const target = Number(alert.targetPrice);
@@ -54,7 +62,7 @@ router.get('/', requireAuth, async (req, res) => {
           lastCheckedPrice: currentPrice,
           triggeredAt
         });
-        return { ...alert, status: 'triggered', currentPrice, triggeredAt, monitored: true };
+        return { ...alert, status: 'triggered', currentPrice, simulated, triggeredAt, monitored: true };
       }
 
       await db.updateAlertStatus(alert.id, {
@@ -62,37 +70,7 @@ router.get('/', requireAuth, async (req, res) => {
         lastCheckedPrice: currentPrice,
         triggeredAt: alert.triggeredAt || null
       });
-      return { ...alert, currentPrice, monitored: true };
-    }));
-
-    res.json({ alerts: updated });
-  } catch (err) {
-    console.error('List alerts error:', err);
-    res.status(500).json({ error: 'Could not load alerts.' });
-  }
-});
-
-      const target = Number(alert.targetPrice);
-      const shouldTrigger =
-        (alert.condition === 'above' && currentPrice >= target) ||
-        (alert.condition === 'below' && currentPrice <= target);
-
-      if (shouldTrigger) {
-        const triggeredAt = new Date().toISOString();
-        await db.updateAlertStatus(alert.id, {
-          status: 'triggered',
-          lastCheckedPrice: currentPrice,
-          triggeredAt
-        });
-        return { ...alert, status: 'triggered', currentPrice, triggeredAt, monitored: true };
-      }
-
-      await db.updateAlertStatus(alert.id, {
-        status: 'active',
-        lastCheckedPrice: currentPrice,
-        triggeredAt: alert.triggeredAt || null
-      });
-      return { ...alert, currentPrice, monitored: true };
+      return { ...alert, currentPrice, simulated, monitored: true };
     }));
 
     res.json({ alerts: updated });
@@ -108,7 +86,7 @@ router.post('/', requireAuth, async (req, res) => {
     const { symbol, alertType, priority, condition, targetPrice } = req.body;
 
     if (!isValidSymbol(symbol)) {
-      return res.status(400).json({ error: 'Please enter a valid stock symbol (letters only, e.g. AAPL).' });
+      return res.status(400).json({ error: 'Please enter a valid stock symbol (e.g. AAPL, TSLA, NVDA).' });
     }
     if (alertType && !VALID_ALERT_TYPES.includes(alertType)) {
       return res.status(400).json({ error: 'Invalid alert type.' });
@@ -138,7 +116,8 @@ router.post('/', requireAuth, async (req, res) => {
       targetPrice: priceToSave
     });
 
-res.json({ alert: { ...alert, currentPrice: await getMockPrice(alert.symbol), monitored: isMonitoredType } });
+    const { price: currentPrice, simulated } = await getPriceWithFallback(alert.symbol);
+    res.json({ alert: { ...alert, currentPrice, simulated, monitored: isMonitoredType } });
   } catch (err) {
     console.error('Create alert error:', err);
     res.status(500).json({ error: 'Could not create alert.' });

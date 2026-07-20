@@ -200,7 +200,7 @@
 <p class="text-body-md font-body-md text-on-surface-variant max-w-xl">Intelligent market signals powered by real-time data and AI-driven sentiment analysis.</p>
 </div>
 <div class="flex items-center gap-sm">
-<button class="p-3 bg-white border border-outline-variant/30 rounded-xl text-on-surface-variant hover:text-primary transition-all shadow-sm" title="Export as PDF">
+<button id="export-alerts-btn" class="p-3 bg-white border border-outline-variant/30 rounded-xl text-on-surface-variant hover:text-primary transition-all shadow-sm" title="Export as PDF">
 <span class="material-symbols-outlined text-[24px]">picture_as_pdf</span>
 </button>
 <button class="bg-primary text-white px-6 py-3 rounded-xl text-label-md font-label-md shadow-lg hover:shadow-xl active:scale-95 transition-all flex items-center gap-2" onclick="document.getElementById('new-alert-modal').classList.remove('hidden')">
@@ -501,6 +501,7 @@ You don't have any alerts yet — click "Create New Alert" above to set one up.
             });
         });
     </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="assets/auth-guard.js"></script>
 <script src="assets/alerts.js"></script>
 <script src="assets/mentor-chat.js"></script>

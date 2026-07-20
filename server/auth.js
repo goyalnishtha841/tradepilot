@@ -58,6 +58,15 @@ router.post('/signup', async (req, res) => {
 
     res.json({ token, user: { id: user.id, name: user.name, email: user.email, onboardingCompleted: false } });
 
+    res.json({
+      token,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        onboardingCompleted: false
+      }
+    });
   } catch (err) {
     console.error('Signup error:', err);
     res.status(500).json({ error: 'Something went wrong creating your account.' });
@@ -87,8 +96,16 @@ router.post('/signin', async (req, res) => {
 
     const prefs = await db.getUserPreferences(user.id);
     const onboardingCompleted = prefs ? prefs.onboarding_completed : false;
-    res.json({ token, user: { id: user.id, name: user.name, email: user.email, onboardingCompleted } });
 
+    res.json({
+      token,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        onboardingCompleted
+      }
+    });
   } catch (err) {
     console.error('Signin error:', err);
     res.status(500).json({ error: 'Something went wrong signing you in.' });
@@ -118,6 +135,7 @@ function requireAuth(req, res, next) {
 router.get('/me', requireAuth, async (req, res) => {
   try {
     const prefs = await db.getUserPreferences(req.user.id);
+
     res.json({
       user: {
         id: req.user.id,
@@ -252,4 +270,5 @@ router.post('/google', async (req, res) => {
 });
 
 
+module.exports = { router, requireAuth };
 module.exports = { router, requireAuth };

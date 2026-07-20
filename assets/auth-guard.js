@@ -3,6 +3,7 @@ window.TradePilotAuth = {
   getToken: function () {
     return localStorage.getItem('tradepilot_token');
   },
+
   getUser: function () {
     try {
       return JSON.parse(localStorage.getItem('tradepilot_user'));
@@ -10,10 +11,12 @@ window.TradePilotAuth = {
       return null;
     }
   },
+
   authHeader: function () {
     const token = localStorage.getItem('tradepilot_token');
     return token ? { Authorization: 'Bearer ' + token } : {};
   },
+
   logout: function () {
     localStorage.removeItem('tradepilot_token');
     localStorage.removeItem('tradepilot_user');
@@ -32,54 +35,58 @@ document.addEventListener('DOMContentLoaded', function () {
     return;
   }
 
-
   // Handle onboarding redirects & session sync
   const isOnboardingPage = window.location.pathname.includes('onboarding');
+
   if (token && user) {
-    // Fast path local storage check
+    // Fast path using local storage
     if (user.onboardingCompleted === false && !isOnboardingPage && requiresAuth) {
       window.location.href = '/onboarding';
       return;
     }
+
     if (user.onboardingCompleted === true && isOnboardingPage) {
       window.location.href = '/dashboard';
       return;
     }
 
-    // Dynamic verification path
+    // Verify with server and refresh stored user info
     fetch('/api/auth/me', {
-      headers: { 'Authorization': 'Bearer ' + token }
+      headers: { Authorization: 'Bearer ' + token }
     })
-    .then(res => res.json())
-    .then(data => {
-      if (data.user) {
-        const updatedUser = { 
-          id: data.user.id, 
-          name: data.user.name, 
-          email: data.user.email, 
-          onboardingCompleted: data.user.onboardingCompleted 
-        };
-        localStorage.setItem('tradepilot_user', JSON.stringify(updatedUser));
-        
-        if (!data.user.onboardingCompleted && !isOnboardingPage && requiresAuth) {
-          window.location.href = '/onboarding';
-        } else if (data.user.onboardingCompleted && isOnboardingPage) {
-          window.location.href = '/dashboard';
-        }
-      }
-    })
-    .catch(err => console.error('Failed to sync auth session:', err));
-  }
+      .then(res => res.json())
+      .then(data => {
+        if (data.user) {
+          const updatedUser = {
+            id: data.user.id,
+            name: data.user.name,
+            email: data.user.email,
+            onboardingCompleted: data.user.onboardingCompleted
+          };
 
+          localStorage.setItem('tradepilot_user', JSON.stringify(updatedUser));
+
+          if (!data.user.onboardingCompleted && !isOnboardingPage && requiresAuth) {
+            window.location.href = '/onboarding';
+          } else if (data.user.onboardingCompleted && isOnboardingPage) {
+            window.location.href = '/dashboard';
+          }
+        }
+      })
+      .catch(err => console.error('Failed to sync auth session:', err));
+  }
 
   // Wire up the account icon in the top nav
   const accountBtn = document.getElementById('nav-account-btn');
+
   if (accountBtn) {
     if (token && user) {
       accountBtn.title = 'Signed in as ' + user.name + ' — click to log out';
       accountBtn.setAttribute('href', '#');
+
       accountBtn.addEventListener('click', function (e) {
         e.preventDefault();
+
         if (confirm('Log out of TradePilot?')) {
           window.TradePilotAuth.logout();
         }
