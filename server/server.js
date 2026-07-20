@@ -11,6 +11,7 @@ const quizRouter = require('./quiz');
 const portfolioRouter = require('./portfolio');
 const watchlistRouter = require('./watchlist');
 const marketRouter = require('./market');
+const papertradingRouter = require('./papertrading');
 const db = require('./db');
 
 const app = express();
@@ -28,7 +29,6 @@ app.use('/api/quiz', quizRouter);
 app.use('/api/portfolio', portfolioRouter);
 app.use('/api/watchlist', watchlistRouter);
 app.use('/api/market', marketRouter);
-//app.use('/api/explore', require('./explore'));
 
 // Middleware to redirect direct .html requests to clean paths
 app.use((req, res, next) => {

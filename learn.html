@@ -6,6 +6,7 @@
 <title>Learn | TradePilot</title>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
 <script id="tailwind-config">
       tailwind.config = {
@@ -107,6 +108,7 @@
         background-color: #f8fafc;
         font-family: 'Inter', sans-serif;
         color: #1b1b1d;
+        scroll-behavior: smooth;
       }
       .material-symbols-outlined {
         font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
@@ -130,6 +132,13 @@
         background: #e2e8f0;
         border-radius: 10px;
       }
+      /* Paper Trading styles */
+      .tp-mono {
+        font-family: 'JetBrains Mono', ui-monospace, monospace;
+      }
+      .pt-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
+      .pt-scrollbar::-webkit-scrollbar-track { background: transparent; }
+      .pt-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
     </style>
 </head>
 <body data-auth="required" class="bg-background overflow-x-hidden">
@@ -141,7 +150,12 @@
 <a class="text-on-surface-variant hover:text-primary transition-colors text-label-md font-label-md" href="/today">Today's Narrative</a>
 <a class="text-on-surface-variant hover:text-primary transition-colors text-label-md font-label-md" href="/explore">Explore</a>
 <a class="text-on-surface-variant hover:text-primary transition-colors text-label-md font-label-md" href="/alerts">Smart Alerts</a>
+<div class="flex items-center gap-1">
 <a class="text-primary border-b-2 border-primary pb-1 text-label-md font-label-md" href="/learn">Learn</a>
+<a href="#practice-terminal" class="inline-flex items-center gap-0.5 bg-amber-100 hover:bg-amber-200 text-amber-700 px-2 py-0.5 rounded-full text-[10px] font-bold transition-all" title="Jump to Paper Trading Terminal">
+  <span class="material-symbols-outlined text-[11px]" style="font-variation-settings: 'FILL' 1;">monetization_on</span>Practice
+</a>
+</div>
 <a class="text-on-surface-variant hover:text-primary transition-colors text-label-md font-label-md" href="/dashboard">Dashboard</a>
 </div>
 <div class="flex items-center gap-sm">
@@ -221,6 +235,215 @@
 </div>
 </aside>
 <!-- Main Content -->
+<main class="pt-24 pb-xl px-4 md:px-gutter max-w-container-max mx-auto">
+
+<!-- ================================================================ -->
+<!--  PAPER TRADING TERMINAL — Practice What You Learn               -->
+<!-- ================================================================ -->
+<section id="practice-terminal" class="mb-xl">
+  <!-- Section Header -->
+  <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-md mb-lg">
+    <div>
+      <div class="inline-flex items-center gap-2 bg-amber-100 text-amber-800 px-4 py-1.5 rounded-full text-label-sm mb-sm">
+        <span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">monetization_on</span>
+        <span>PRACTICE ZONE — NO REAL MONEY</span>
+      </div>
+      <h2 class="font-headline-lg text-headline-lg tracking-tight mb-xs">Apply Your Knowledge. Trade Risk-Free.</h2>
+      <p class="text-body-md text-on-surface-variant max-w-2xl">Practice every concept you just learned — Market orders, Limit orders, Stop-losses — using $100,000 in simulated funds on live-priced US stocks.</p>
+    </div>
+    <div class="flex gap-sm items-center flex-wrap">
+      <div class="flex gap-2 py-2 px-md bg-surface-container rounded-full text-xs font-semibold tp-mono shrink-0">
+        <span class="text-on-surface-variant">Cash: <b class="text-on-surface" id="stat-cash-header">$100,000.00</b></span>
+        <span class="text-on-surface-variant">|</span>
+        <span class="text-on-surface-variant">Net Equity: <b class="text-on-surface" id="stat-equity-header">$100,000.00</b></span>
+        <span class="text-on-surface-variant">|</span>
+        <span class="text-on-surface-variant">P&amp;L: <b id="stat-pnl-header" class="text-green-600">+$0.00</b></span>
+      </div>
+      <button id="reset-account-btn" class="px-4 py-2 border border-red-300 text-red-600 hover:bg-red-600 hover:text-white rounded-xl text-label-sm font-bold transition-all flex items-center gap-1">
+        <span class="material-symbols-outlined text-[16px]">restart_alt</span> Reset
+      </button>
+    </div>
+  </div>
+
+  <!-- Toast notification -->
+  <div id="notice-toast" class="hidden fixed bottom-6 right-6 z-50 px-4 py-3 rounded-xl border shadow-lg flex items-center gap-2 max-w-sm transition-all duration-300">
+    <span id="toast-icon" class="material-symbols-outlined"></span>
+    <span id="toast-text" class="text-xs font-semibold tp-mono"></span>
+  </div>
+
+  <!-- 3-column terminal grid -->
+  <div class="grid grid-cols-1 lg:grid-cols-[220px_1fr_340px] gap-md">
+
+    <!-- LEFT: Watchlist -->
+    <div class="bg-white border border-outline-variant rounded-20px flex flex-col card-shadow" style="height:600px;">
+      <div class="p-xs border-b border-outline-variant/20">
+        <div class="relative">
+          <span class="material-symbols-outlined absolute left-2 top-1/2 -translate-y-1/2 text-on-surface-variant text-[15px]">search</span>
+          <input id="watchlist-search" class="w-full pl-8 pr-2 py-1.5 bg-surface-container border-none rounded-xl text-xs focus:ring-1 focus:ring-primary/20" placeholder="Symbol..." type="text"/>
+        </div>
+      </div>
+      <div id="watchlist-items" class="flex-grow overflow-y-auto pt-scrollbar"></div>
+    </div>
+
+    <!-- CENTRE: Chart/Depth + Order Ticket -->
+    <div class="flex flex-col gap-md">
+
+      <!-- Stock Summary + View Toggle -->
+      <div class="bg-white border border-outline-variant rounded-20px p-md card-shadow">
+        <div class="flex justify-between items-start flex-wrap gap-sm mb-md">
+          <div>
+            <div class="flex items-baseline gap-xs">
+              <h3 id="terminal-symbol" class="text-2xl font-black tracking-tight tp-mono">AAPL</h3>
+              <span id="terminal-name" class="text-xs text-on-surface-variant">Apple Inc.</span>
+            </div>
+            <div class="flex items-baseline gap-sm mt-1">
+              <span id="terminal-price" class="text-2xl font-extrabold tp-mono">$214.10</span>
+              <span id="terminal-change" class="text-label-sm font-bold flex items-center gap-0.5 text-green-600">
+                <span class="material-symbols-outlined text-[14px]" id="terminal-arrow">trending_up</span>
+                <span id="terminal-change-txt">+1.25%</span>
+              </span>
+            </div>
+          </div>
+          <div class="flex gap-1 p-1 bg-surface-container rounded-xl">
+            <button id="btn-show-chart" class="px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 bg-white shadow-sm text-on-surface">
+              <span class="material-symbols-outlined text-[14px]">show_chart</span> Chart
+            </button>
+            <button id="btn-show-depth" class="px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 text-on-surface-variant">
+              <span class="material-symbols-outlined text-[14px]">layers</span> Depth
+            </button>
+          </div>
+        </div>
+        <!-- Chart area -->
+        <div id="chart-panel" class="w-full h-[260px]"><div id="apex-price-chart"></div></div>
+        <!-- Depth area -->
+        <div id="depth-panel" class="hidden w-full">
+          <div class="grid grid-cols-2 gap-md tp-mono text-xs mb-sm">
+            <div>
+              <div class="text-[9px] uppercase font-bold text-on-surface-variant mb-xs">Bids (Buyers)</div>
+              <div id="bids-ladder" class="space-y-1"></div>
+            </div>
+            <div>
+              <div class="text-[9px] uppercase font-bold text-on-surface-variant mb-xs text-right">Asks (Sellers)</div>
+              <div id="asks-ladder" class="space-y-1"></div>
+            </div>
+          </div>
+          <p class="text-[9px] text-on-surface-variant">Market orders walk the book level-by-level for a VWAP fill — larger orders get worse average prices, same as a real exchange.</p>
+        </div>
+      </div>
+
+      <!-- Order Ticket -->
+      <div class="bg-white border border-outline-variant rounded-20px p-md card-shadow">
+        <!-- Buy/Sell -->
+        <div class="grid grid-cols-2 gap-sm mb-md">
+          <button id="ticket-side-buy" class="py-2.5 rounded-xl text-sm font-bold uppercase transition-all bg-green-600 text-white border border-green-600">Buy</button>
+          <button id="ticket-side-sell" class="py-2.5 rounded-xl text-sm font-bold uppercase transition-all bg-surface-container-low text-on-surface border border-outline-variant/20">Sell</button>
+        </div>
+        <!-- Order Type -->
+        <div class="flex gap-1 p-1 bg-surface-container rounded-xl mb-md">
+          <button id="type-market" class="flex-1 py-1.5 rounded-lg text-xs font-semibold uppercase bg-white shadow-sm text-on-surface" data-active="true">Market</button>
+          <button id="type-limit" class="flex-1 py-1.5 rounded-lg text-xs font-semibold uppercase text-on-surface-variant" data-active="false">Limit</button>
+          <button id="type-stop" class="flex-1 py-1.5 rounded-lg text-xs font-semibold uppercase text-on-surface-variant" data-active="false">Stop</button>
+        </div>
+        <!-- Inputs -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-md mb-md">
+          <div class="flex flex-col gap-xs">
+            <label class="text-[9px] font-bold uppercase tracking-wider text-on-surface-variant">Quantity</label>
+            <input id="input-qty" type="number" min="1" step="1" value="1" class="w-full px-sm py-2 bg-surface-container border-none rounded-xl text-sm font-semibold tp-mono"/>
+          </div>
+          <div id="wrapper-limit-price" class="hidden flex flex-col gap-xs">
+            <label class="text-[9px] font-bold uppercase tracking-wider text-on-surface-variant">Limit Price ($)</label>
+            <input id="input-limit-price" type="number" step="0.01" class="w-full px-sm py-2 bg-surface-container border-none rounded-xl text-sm font-semibold tp-mono" placeholder="0.00"/>
+          </div>
+          <div id="wrapper-stop-price" class="hidden flex flex-col gap-xs">
+            <label class="text-[9px] font-bold uppercase tracking-wider text-on-surface-variant">Stop Price ($)</label>
+            <input id="input-stop-price" type="number" step="0.01" class="w-full px-sm py-2 bg-surface-container border-none rounded-xl text-sm font-semibold tp-mono" placeholder="0.00"/>
+          </div>
+          <div id="wrapper-best-liquidity" class="flex flex-col gap-xs">
+            <label id="label-liquidity" class="text-[9px] font-bold uppercase tracking-wider text-on-surface-variant">Best Ask</label>
+            <span id="best-liquidity-price" class="py-2 text-sm font-bold tp-mono">$214.15</span>
+          </div>
+          <div id="wrapper-tif" class="hidden flex flex-col gap-xs">
+            <label class="text-[9px] font-bold uppercase tracking-wider text-on-surface-variant">Time in Force</label>
+            <div class="flex gap-1">
+              <button id="tif-gtc" class="flex-1 py-2 text-xs font-semibold rounded-xl bg-white shadow-sm border border-outline-variant/10">GTC</button>
+              <button id="tif-gtd" class="flex-1 py-2 text-xs font-semibold rounded-xl bg-surface-container-low text-on-surface-variant">GTD</button>
+              <select id="select-gtd-min" class="hidden px-2 py-1.5 bg-surface-container border-none rounded-xl text-xs tp-mono">
+                <option value="5">5 Min</option>
+                <option value="15" selected>15 Min</option>
+                <option value="60">1 Hour</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-xs font-semibold text-on-surface-variant mb-md tp-mono">
+          <span>Estimated Value:</span>
+          <span id="est-order-value" class="text-on-surface font-bold">$0.00</span>
+        </div>
+        <div id="ticket-error" class="hidden text-xs text-red-600 font-bold mb-sm"></div>
+        <button id="ticket-submit-btn" class="w-full py-3.5 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold tracking-wider uppercase text-sm transition-all">Place MARKET BUY Order</button>
+      </div>
+    </div>
+
+    <!-- RIGHT: Stats & Tabs Panel -->
+    <div class="bg-white border border-outline-variant rounded-20px flex flex-col card-shadow" style="height:600px;">
+      <!-- Account Summary -->
+      <div class="p-md border-b border-outline-variant/20 grid grid-cols-2 gap-sm">
+        <div>
+          <span class="text-[9px] uppercase tracking-wider text-on-surface-variant">Cash</span>
+          <p class="text-sm font-bold tp-mono" id="stat-cash-sidebar">$100,000.00</p>
+        </div>
+        <div>
+          <span class="text-[9px] uppercase tracking-wider text-on-surface-variant">Equity</span>
+          <p class="text-sm font-bold tp-mono" id="stat-equity-sidebar">$100,000.00</p>
+        </div>
+        <div>
+          <span class="text-[9px] uppercase tracking-wider text-on-surface-variant">Unrealized P&amp;L</span>
+          <p class="text-sm font-bold tp-mono text-green-600" id="stat-unreal-sidebar">+$0.00</p>
+        </div>
+        <div>
+          <span class="text-[9px] uppercase tracking-wider text-on-surface-variant">Realized P&amp;L</span>
+          <p class="text-sm font-bold tp-mono" id="stat-real-sidebar">$0.00</p>
+        </div>
+      </div>
+      <!-- Tabs -->
+      <div class="flex border-b border-outline-variant/20 text-[9px] font-bold uppercase tracking-wider overflow-x-auto pt-scrollbar">
+        <button id="tab-positions" class="flex-1 min-w-[52px] py-2.5 text-center border-b-2 border-primary text-primary">POS <span id="badge-positions-count" class="opacity-60">(0)</span></button>
+        <button id="tab-orders" class="flex-1 min-w-[52px] py-2.5 text-center border-b-2 border-transparent text-on-surface-variant">ORD <span id="badge-orders-count" class="opacity-60">(0)</span></button>
+        <button id="tab-history" class="flex-1 min-w-[52px] py-2.5 text-center border-b-2 border-transparent text-on-surface-variant">HIST</button>
+        <button id="tab-trades" class="flex-1 min-w-[52px] py-2.5 text-center border-b-2 border-transparent text-on-surface-variant">TRD</button>
+        <button id="tab-stats" class="flex-1 min-w-[52px] py-2.5 text-center border-b-2 border-transparent text-on-surface-variant">STATS</button>
+      </div>
+      <!-- Tab Panels -->
+      <div class="flex-1 overflow-y-auto pt-scrollbar p-sm space-y-sm">
+        <div id="panel-positions"></div>
+        <div id="panel-orders" class="hidden"></div>
+        <div id="panel-history" class="hidden"></div>
+        <div id="panel-trades" class="hidden"></div>
+        <div id="panel-stats" class="hidden space-y-md">
+          <div id="stats-equity-chart" class="h-[100px] w-full"></div>
+          <div class="text-[9px] text-center text-on-surface-variant -mt-2 mb-sm">Equity curve, this session</div>
+          <div class="grid grid-cols-2 gap-sm tp-mono text-xs">
+            <div><span class="text-[8px] uppercase tracking-wider text-on-surface-variant">Total Trades</span><p class="font-bold" id="stat-total-trades">0</p></div>
+            <div><span class="text-[8px] uppercase tracking-wider text-on-surface-variant">Win Rate</span><p class="font-bold" id="stat-win-rate">0.0%</p></div>
+            <div><span class="text-[8px] uppercase tracking-wider text-on-surface-variant">ROI</span><p class="font-bold" id="stat-roi">0.00%</p></div>
+            <div><span class="text-[8px] uppercase tracking-wider text-on-surface-variant">Max Drawdown</span><p class="font-bold text-red-500" id="stat-drawdown">0.00%</p></div>
+            <div><span class="text-[8px] uppercase tracking-wider text-on-surface-variant">Avg Slippage</span><p class="font-bold" id="stat-avg-slip">0.0 bps</p></div>
+            <div><span class="text-[8px] uppercase tracking-wider text-on-surface-variant">Realized P&amp;L</span><p class="font-bold" id="stat-realized-pnl">$0.00</p></div>
+          </div>
+          <div class="text-[9px] text-on-surface-variant border-t border-outline-variant/20 pt-sm leading-relaxed" id="stats-records-txt">No trade summaries logged yet.</div>
+        </div>
+      </div>
+      <!-- Footer disclaimer -->
+      <div class="p-sm bg-surface-container-low border-t border-outline-variant/20 flex items-start gap-sm rounded-b-20px">
+        <span class="material-symbols-outlined text-[14px] text-on-surface-variant mt-0.5 shrink-0">info</span>
+        <p class="text-[8px] text-on-surface-variant leading-relaxed">Simulated only. No real currency is traded. Great for practising the concepts you just learned!</p>
+      </div>
+    </div>
+
+  </div><!-- /grid -->
+</section>
+
+<!-- Welcome & Streak Tracker -->
 <main class="pt-24 pb-xl px-4 md:px-gutter max-w-container-max mx-auto">
 <!-- Welcome & Streak Tracker -->
 <section class="mb-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-md">
@@ -443,6 +666,8 @@
 <div class="absolute -top-24 -right-24 w-96 h-96 bg-primary/5 rounded-full blur-3xl"></div>
 </section>
 </main>
+
+<!-- ================================================================ -->
 <!-- Footer -->
 <footer class="w-full py-xl bg-surface-container-low border-t border-outline-variant/20 mt-xl">
 <div class="flex flex-col items-center gap-md px-gutter max-w-container-max mx-auto text-center">
@@ -494,4 +719,6 @@
 <script src="assets/auth-guard.js"></script>
 <script src="assets/quiz.js"></script>
 <script src="assets/mentor-chat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<script src="assets/papertrading.js"></script>
 </body></html>

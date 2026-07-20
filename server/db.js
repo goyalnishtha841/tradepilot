@@ -126,6 +126,14 @@ async function init() {
     );
   `);
 
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS paper_trading_state (
+      user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+      state    JSONB NOT NULL DEFAULT '{}',
+      updated_at TIMESTAMPTZ DEFAULT now()
+    );
+  `);
+
   console.log('✅ Connected to database, all tables ready.');
 }
 
@@ -153,6 +161,24 @@ module.exports = {
   findByEmail,
   createUser,
   pool,
+
+  // --- Paper Trading State ---
+  async getPaperTradingState(userId) {
+    const { rows } = await pool.query(
+      `SELECT state FROM paper_trading_state WHERE user_id = $1`,
+      [userId]
+    );
+    return rows[0]?.state || null;
+  },
+
+  async savePaperTradingState(userId, state) {
+    await pool.query(
+      `INSERT INTO paper_trading_state (user_id, state, updated_at)
+       VALUES ($1, $2, now())
+       ON CONFLICT (user_id) DO UPDATE SET state = $2, updated_at = now()`,
+      [userId, JSON.stringify(state)]
+    );
+  },
 
   // --- Alerts ---
   async listAlerts(userId) {
