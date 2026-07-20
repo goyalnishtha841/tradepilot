@@ -134,11 +134,11 @@
             <!-- Step Indicators and Progress Bar -->
             <div class="mb-lg">
                 <div class="flex justify-between items-center text-label-sm text-on-surface-variant mb-xs">
-                    <span id="step-number-text">Step 1 of 5</span>
-                    <span id="step-progress-percent">20% Completed</span>
+                    <span id="step-number-text">Step 1 of 3</span>
+                    <span id="step-progress-percent">33% Completed</span>
                 </div>
                 <div class="w-full h-2 bg-surface-container rounded-full overflow-hidden">
-                    <div id="progress-bar" class="h-full bg-primary progress-bar-fill" style="width: 20%;"></div>
+                    <div id="progress-bar" class="h-full bg-primary progress-bar-fill" style="width: 33%;"></div>
                 </div>
             </div>
 
@@ -201,12 +201,12 @@
 
                         <!-- Learning Preference -->
                         <div>
-                            <label class="block text-label-md font-bold mb-sm">Your preferred learning format:</label>
+                            <label class="block text-label-md font-bold mb-sm">Your preferred learning format (Select all that apply):</label>
                             <div class="grid grid-cols-2 md:grid-cols-4 gap-sm">
-                                <button type="button" onclick="selectBtn('learningPreference', 'Text articles', this)" class="btn-group-item py-3 px-2 bg-surface-container-low hover:bg-surface-container border border-outline-variant/30 rounded-xl font-bold text-[11px] truncate">Text Narratives</button>
-                                <button type="button" onclick="selectBtn('learningPreference', 'Interactive Quizzes', this)" class="btn-group-item py-3 px-2 bg-surface-container-low hover:bg-surface-container border border-outline-variant/30 rounded-xl font-bold text-[11px] truncate">Quizzes</button>
-                                <button type="button" onclick="selectBtn('learningPreference', 'AI Mentor Chat', this)" class="btn-group-item py-3 px-2 bg-surface-container-low hover:bg-surface-container border border-outline-variant/30 rounded-xl font-bold text-[11px] truncate">Mentor Chat</button>
-                                <button type="button" onclick="selectBtn('learningPreference', 'Hands-on Portfolio Simulation', this)" class="btn-group-item py-3 px-2 bg-surface-container-low hover:bg-surface-container border border-outline-variant/30 rounded-xl font-bold text-[11px] truncate">Simulation</button>
+                                <button type="button" onclick="toggleMultiSelect('learningPreference', 'Text articles', this)" class="multi-select-item py-3 px-2 bg-surface-container-low hover:bg-surface-container border border-outline-variant/30 rounded-xl font-bold text-[11px] truncate">Text Narratives</button>
+                                <button type="button" onclick="toggleMultiSelect('learningPreference', 'Interactive Quizzes', this)" class="multi-select-item py-3 px-2 bg-surface-container-low hover:bg-surface-container border border-outline-variant/30 rounded-xl font-bold text-[11px] truncate">Quizzes</button>
+                                <button type="button" onclick="toggleMultiSelect('learningPreference', 'AI Mentor Chat', this)" class="multi-select-item py-3 px-2 bg-surface-container-low hover:bg-surface-container border border-outline-variant/30 rounded-xl font-bold text-[11px] truncate">Mentor Chat</button>
+                                <button type="button" onclick="toggleMultiSelect('learningPreference', 'Hands-on Portfolio Simulation', this)" class="multi-select-item py-3 px-2 bg-surface-container-low hover:bg-surface-container border border-outline-variant/30 rounded-xl font-bold text-[11px] truncate">Simulation</button>
                             </div>
                         </div>
                     </div>
@@ -245,88 +245,6 @@
                     </div>
                 </div>
 
-                <!-- STEP 4: Watchlist Setup -->
-                <div id="step-4" class="step-panel">
-                    <h2 class="text-headline-lg font-bold text-primary mb-xs">Create your Watchlist</h2>
-                    <p class="text-body-md text-on-surface-variant mb-lg">Add the tickers you want to monitor closely.</p>
-
-                    <div class="flex flex-col gap-md">
-                        <div class="flex gap-sm">
-                            <input type="text" id="watchlist-input" class="flex-grow border border-outline-variant/40 rounded-xl px-4 py-3 text-body-md focus:ring-2 focus:ring-primary focus:outline-none" placeholder="Enter stock symbol (e.g. AAPL, TSLA, NVDA)" style="text-transform: uppercase;"/>
-                            <button type="button" onclick="addWatchlistItem()" class="px-gutter bg-primary text-on-primary rounded-xl font-bold hover:opacity-90 transition-all active:scale-95 flex items-center justify-center">
-                                Add
-                            </button>
-                        </div>
-
-                        <div>
-                            <label class="block text-label-sm text-on-surface-variant mb-xs">Your Watchlist Tickers:</label>
-                            <div id="watchlist-container" class="flex flex-wrap gap-xs p-sm bg-surface-container-low border border-outline-variant/20 rounded-xl min-h-[80px]">
-                                <!-- Dynamically filled -->
-                            </div>
-                        </div>
-
-                        <!-- Recommended tickers -->
-                        <div>
-                            <p class="text-label-sm font-bold mb-xs">Recommended for you:</p>
-                            <div class="flex gap-xs">
-                                <button type="button" onclick="suggestTicker('AAPL')" class="py-1 px-3 border border-outline-variant/40 rounded-full text-label-sm hover:bg-surface-container">AAPL</button>
-                                <button type="button" onclick="suggestTicker('TSLA')" class="py-1 px-3 border border-outline-variant/40 rounded-full text-label-sm hover:bg-surface-container">TSLA</button>
-                                <button type="button" onclick="suggestTicker('MSFT')" class="py-1 px-3 border border-outline-variant/40 rounded-full text-label-sm hover:bg-surface-container">MSFT</button>
-                                <button type="button" onclick="suggestTicker('NVDA')" class="py-1 px-3 border border-outline-variant/40 rounded-full text-label-sm hover:bg-surface-container">NVDA</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- STEP 5: Portfolio Setup -->
-                <div id="step-5" class="step-panel">
-                    <h2 class="text-headline-lg font-bold text-primary mb-xs">Set up your Portfolio</h2>
-                    <p class="text-body-md text-on-surface-variant mb-lg">Enter any holdings you currently own (Optional).</p>
-
-                    <div class="flex flex-col gap-md">
-                        <div class="grid grid-cols-12 gap-xs sm:gap-sm items-end bg-surface-container-low p-sm border border-outline-variant/20 rounded-xl">
-                            <div class="col-span-4">
-                                <label class="block text-label-sm text-on-surface-variant mb-base" for="p-symbol">Symbol</label>
-                                <input type="text" id="p-symbol" class="w-full border border-outline-variant/40 rounded-xl px-2 py-2 text-label-md focus:outline-none" placeholder="AAPL" style="text-transform: uppercase;"/>
-                            </div>
-                            <div class="col-span-4">
-                                <label class="block text-label-sm text-on-surface-variant mb-base" for="p-qty">Quantity</label>
-                                <input type="number" id="p-qty" min="0.0001" step="any" class="w-full border border-outline-variant/40 rounded-xl px-2 py-2 text-label-md focus:outline-none" placeholder="10"/>
-                            </div>
-                            <div class="col-span-4">
-                                <label class="block text-label-sm text-on-surface-variant mb-base" for="p-cost">Avg Cost</label>
-                                <input type="number" id="p-cost" min="0.01" step="any" class="w-full border border-outline-variant/40 rounded-xl px-2 py-2 text-label-md focus:outline-none" placeholder="150.00"/>
-                            </div>
-                            <div class="col-span-12 mt-sm">
-                                <button type="button" onclick="addHoldingItem()" class="w-full py-2 bg-primary text-on-primary rounded-xl font-bold text-label-sm hover:opacity-90 transition-all active:scale-95">
-                                    Add Position
-                                </button>
-                            </div>
-                        </div>
-
-                        <div>
-                            <label class="block text-label-sm text-on-surface-variant mb-xs">Your Current Positions:</label>
-                            <div class="overflow-x-auto border border-outline-variant/20 rounded-xl bg-surface-container-low min-h-[120px]">
-                                <table class="w-full text-left text-label-md">
-                                    <thead class="bg-surface-container text-on-surface-variant border-b border-outline-variant/20">
-                                        <tr>
-                                            <th class="p-sm">Symbol</th>
-                                            <th class="p-sm text-right">Quantity</th>
-                                            <th class="p-sm text-right">Avg Cost</th>
-                                            <th class="p-sm text-center">Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="portfolio-table-body">
-                                        <tr id="empty-portfolio-row">
-                                            <td colspan="4" class="p-lg text-center text-on-surface-variant/60">No positions added yet.</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
                 <!-- Navigation Controls -->
                 <div class="flex justify-between items-center mt-xl border-t border-outline-variant/20 pt-md">
                     <button type="button" id="prev-btn" onclick="prevStep()" class="hidden px-6 py-3 border border-outline-variant/40 rounded-xl font-bold hover:bg-surface-container-low transition-all active:scale-95 text-label-md">
@@ -349,18 +267,18 @@
     <script>
         // Form wizard state
         let currentStep = 1;
-        const totalSteps = 5;
+        const totalSteps = 3;
 
         // Collected data model
         const onboardingData = {
             userType: '',
             experienceLevel: '',
             riskPreference: '',
-            learningPreference: '',
+            learningPreference: [],
             goals: [],
             sectors: [],
             watchlist: [],
-            portfolio: [] // { symbol, quantity, avgCost }
+            portfolio: []
         };
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -398,150 +316,22 @@
             clearError();
         }
 
-        // STEP 3 Checkbox multi-select selection
+        // Multi-select selection (learningPreference, goals, sectors)
         function toggleMultiSelect(field, value, btn) {
+            if (!Array.isArray(onboardingData[field])) {
+                onboardingData[field] = onboardingData[field] ? [onboardingData[field]] : [];
+            }
             const idx = onboardingData[field].indexOf(value);
             if (idx > -1) {
                 onboardingData[field].splice(idx, 1);
                 btn.classList.remove('bg-primary', 'text-on-primary', 'border-primary');
-                btn.classList.add('bg-surface-container-low', 'text-on-surface', 'border-outline-variant/20');
+                btn.classList.add('bg-surface-container-low', 'text-on-surface', 'border-outline-variant/20', 'border-outline-variant/30');
             } else {
                 onboardingData[field].push(value);
-                btn.classList.remove('bg-surface-container-low', 'text-on-surface', 'border-outline-variant/20');
+                btn.classList.remove('bg-surface-container-low', 'text-on-surface', 'border-outline-variant/20', 'border-outline-variant/30');
                 btn.classList.add('bg-primary', 'text-on-primary', 'border-primary');
             }
             clearError();
-        }
-
-        // STEP 4 Watchlist Items
-        function addWatchlistItem() {
-            const input = document.getElementById('watchlist-input');
-            const symbol = input.value.trim().toUpperCase();
-            
-            if (!symbol || !/^[A-Z]{1,6}$/.test(symbol)) {
-                showError("Please enter a valid stock symbol (1-6 letters).");
-                return;
-            }
-            
-            if (onboardingData.watchlist.includes(symbol)) {
-                showError("Symbol is already in your watchlist.");
-                return;
-            }
-            
-            onboardingData.watchlist.push(symbol);
-            input.value = '';
-            clearError();
-            renderWatchlist();
-        }
-
-        function suggestTicker(symbol) {
-            if (!onboardingData.watchlist.includes(symbol)) {
-                onboardingData.watchlist.push(symbol);
-                renderWatchlist();
-            }
-        }
-
-        function removeWatchlistSymbol(symbol) {
-            onboardingData.watchlist = onboardingData.watchlist.filter(s => s !== symbol);
-            renderWatchlist();
-        }
-
-        function renderWatchlist() {
-            const container = document.getElementById('watchlist-container');
-            container.innerHTML = '';
-            
-            if (onboardingData.watchlist.length === 0) {
-                container.innerHTML = '<span class="text-on-surface-variant/60 text-label-sm m-auto">No symbols added yet.</span>';
-                return;
-            }
-            
-            onboardingData.watchlist.forEach(symbol => {
-                const badge = document.createElement('div');
-                badge.className = 'flex items-center gap-xs bg-primary text-on-primary py-1.5 px-3 rounded-full text-label-sm font-semibold select-none';
-                badge.innerHTML = `
-                    <span>${symbol}</span>
-                    <button type="button" onclick="removeWatchlistSymbol('${symbol}')" class="material-symbols-outlined text-[16px] leading-none hover:text-red-400">close</button>
-                `;
-                container.appendChild(badge);
-            });
-        }
-
-        // STEP 5 Portfolio Holdings
-        function addHoldingItem() {
-            const symbolInput = document.getElementById('p-symbol');
-            const qtyInput = document.getElementById('p-qty');
-            const costInput = document.getElementById('p-cost');
-            
-            const symbol = symbolInput.value.trim().toUpperCase();
-            const qty = Number(qtyInput.value);
-            const cost = Number(costInput.value);
-            
-            if (!symbol || !/^[A-Z]{1,6}$/.test(symbol)) {
-                showError("Please enter a valid stock symbol.");
-                return;
-            }
-            if (qty <= 0 || isNaN(qty)) {
-                showError("Please enter a quantity greater than 0.");
-                return;
-            }
-            if (cost <= 0 || isNaN(cost)) {
-                showError("Please enter an average cost per share greater than 0.");
-                return;
-            }
-            
-            // Check if position already exists
-            const existingIndex = onboardingData.portfolio.findIndex(p => p.symbol === symbol);
-            if (existingIndex > -1) {
-                // Merge positions
-                const existing = onboardingData.portfolio[existingIndex];
-                const newQty = existing.quantity + qty;
-                const newCost = ((existing.avgCost * existing.quantity) + (cost * qty)) / newQty;
-                existing.quantity = Math.round(newQty * 10000) / 10000;
-                existing.avgCost = Math.round(newCost * 100) / 100;
-            } else {
-                onboardingData.portfolio.push({ symbol, quantity: qty, avgCost: cost });
-            }
-            
-            // Reset input values
-            symbolInput.value = '';
-            qtyInput.value = '';
-            costInput.value = '';
-            
-            clearError();
-            renderPortfolioTable();
-        }
-
-        function removeHoldingItem(symbol) {
-            onboardingData.portfolio = onboardingData.portfolio.filter(p => p.symbol !== symbol);
-            renderPortfolioTable();
-        }
-
-        function renderPortfolioTable() {
-            const tbody = document.getElementById('portfolio-table-body');
-            tbody.innerHTML = '';
-            
-            if (onboardingData.portfolio.length === 0) {
-                tbody.innerHTML = `
-                    <tr id="empty-portfolio-row">
-                        <td colspan="4" class="p-lg text-center text-on-surface-variant/60">No positions added yet.</td>
-                    </tr>
-                `;
-                return;
-            }
-            
-            onboardingData.portfolio.forEach(holding => {
-                const tr = document.createElement('tr');
-                tr.className = 'border-b border-outline-variant/10 hover:bg-surface-container-lowest';
-                tr.innerHTML = `
-                    <td class="p-sm font-semibold">${holding.symbol}</td>
-                    <td class="p-sm text-right">${holding.quantity.toLocaleString()}</td>
-                    <td class="p-sm text-right">$${holding.avgCost.toFixed(2)}</td>
-                    <td class="p-sm text-center">
-                        <button type="button" onclick="removeHoldingItem('${holding.symbol}')" class="text-error hover:underline text-label-sm font-bold">Remove</button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
         }
 
         // Navigation Wizard Controls
@@ -580,12 +370,11 @@
                     showError("Please select your risk preference profile.");
                     return false;
                 }
-                if (!onboardingData.learningPreference) {
-                    showError("Please select your preferred learning format.");
+                if (!Array.isArray(onboardingData.learningPreference) || onboardingData.learningPreference.length === 0) {
+                    showError("Please select at least one preferred learning format.");
                     return false;
                 }
             } else if (step === 3) {
-                // Goals and Sectors are optional, but let's encourage at least one goal
                 if (onboardingData.goals.length === 0) {
                     showError("Please choose at least one goal.");
                     return false;
