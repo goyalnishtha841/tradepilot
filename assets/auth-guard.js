@@ -35,9 +35,9 @@ document.addEventListener('DOMContentLoaded', function () {
     return;
   }
 
-
   // Handle onboarding redirects & session sync
   const isOnboardingPage = window.location.pathname.includes('onboarding');
+
   if (token && user) {
     // Fast path using local storage
     if (user.onboardingCompleted === false && !isOnboardingPage && requiresAuth) {
@@ -52,25 +52,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Verify with server and refresh stored user info
     fetch('/api/auth/me', {
-      headers: { 'Authorization': 'Bearer ' + token }
-    })
-    .then(res => res.json())
-    .then(data => {
-      if (data.user) {
-        const updatedUser = { 
-          id: data.user.id, 
-          name: data.user.name, 
-          email: data.user.email, 
-          onboardingCompleted: data.user.onboardingCompleted 
-        };
-        localStorage.setItem('tradepilot_user', JSON.stringify(updatedUser));
-        
-        if (!data.user.onboardingCompleted && !isOnboardingPage && requiresAuth) {
-          window.location.href = '/onboarding';
-        } else if (data.user.onboardingCompleted && isOnboardingPage) {
-          window.location.href = '/dashboard';
-        }
-      }
+      headers: { Authorization: 'Bearer ' + token }
     })
       .then(res => res.json())
       .then(data => {
@@ -85,9 +67,9 @@ document.addEventListener('DOMContentLoaded', function () {
           localStorage.setItem('tradepilot_user', JSON.stringify(updatedUser));
 
           if (!data.user.onboardingCompleted && !isOnboardingPage && requiresAuth) {
-            window.location.href = 'onboarding.html';
+            window.location.href = '/onboarding';
           } else if (data.user.onboardingCompleted && isOnboardingPage) {
-            window.location.href = 'dashboard.html';
+            window.location.href = '/dashboard';
           }
         }
       })

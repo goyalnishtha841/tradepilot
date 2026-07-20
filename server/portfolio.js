@@ -1,16 +1,29 @@
 const express = require('express');
 const db = require('./db');
 const { requireAuth } = require('./auth');
+const { getRealQuote } = require('./yahoo-finance');
 const { getMockQuote, LEGIT_SYMBOLS } = require('./mock-market');
 const { getOrGenerateNews } = require('./news-service');
 
 const router = express.Router();
 
 function isValidSymbol(symbol) {
-  return typeof symbol === 'string' && LEGIT_SYMBOLS.some(s => s.symbol === symbol.trim().toUpperCase());
+  return typeof symbol === 'string' && /^[A-Za-z.\-]{1,15}$/.test(symbol.trim());
 }
 
-// GET /api/portfolio — list holdings with live (mock) valuation
+// Real-time quote with graceful fallback to a simulated one if the live feed fails.
+async function getQuoteWithFallback(symbol) {
+  try {
+    const quote = await getRealQuote(symbol);
+    quote.sector = quote.sector || getMockQuote(symbol).sector;
+    return quote;
+  } catch (err) {
+    console.warn(`Live quote failed for ${symbol} (${err.message}), using simulated quote.`);
+    return getMockQuote(symbol);
+  }
+}
+
+// GET /api/portfolio — list holdings with live valuation
 router.get('/', requireAuth, async (req, res) => {
   try {
     const holdings = await db.listHoldings(req.user.id);
@@ -20,7 +33,7 @@ router.get('/', requireAuth, async (req, res) => {
     const sectorMap = {};
 
     const enriched = await Promise.all(holdings.map(async (h) => {
-      const quote = await getMockQuote(h.symbol);
+      const quote = await getQuoteWithFallback(h.symbol);
       const quantity = Number(h.quantity);
       const avgCost = Number(h.avgCost);
 
@@ -83,7 +96,7 @@ router.post('/', requireAuth, async (req, res) => {
     const { symbol, quantity, avgCost } = req.body;
 
     if (!isValidSymbol(symbol)) {
-      return res.status(400).json({ error: 'Please enter a supported stock symbol (e.g. AAPL, TSLA, NVDA).' });
+      return res.status(400).json({ error: 'Please enter a valid stock symbol (e.g. AAPL, TSLA, NVDA).' });
     }
 
     const qty = Number(quantity);
@@ -154,9 +167,7 @@ router.get('/news', requireAuth, async (req, res) => {
 
     const sanitized = news.map((item) => ({
       ...item,
-      url: `https://finance.yahoo.com/quote/${item.symbol
-        .trim()
-        .toUpperCase()}/news`
+      url: item.url || `https://finance.yahoo.com/quote/${item.symbol.trim().toUpperCase()}/news`
     }));
 
     res.json({ news: sanitized });

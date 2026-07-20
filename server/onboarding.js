@@ -29,11 +29,15 @@ router.post('/', requireAuth, async (req, res) => {
     } = req.body;
 
     // 1. Save preferences
+    const formattedLearningPref = Array.isArray(learningPreference)
+      ? learningPreference.join(', ')
+      : (learningPreference || '');
+
     await db.saveUserPreferences(req.user.id, {
       experienceLevel,
       userType,
       riskPreference,
-      learningPreference,
+      learningPreference: formattedLearningPref,
       goals: goals || [],
       favoriteSectors: sectors || []
     });

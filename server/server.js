@@ -11,6 +11,7 @@ const quizRouter = require('./quiz');
 const portfolioRouter = require('./portfolio');
 const watchlistRouter = require('./watchlist');
 const marketRouter = require('./market');
+const papertradingRouter = require('./papertrading');
 const db = require('./db');
 
 const app = express();
