@@ -423,7 +423,7 @@
       
       newsItems.forEach(item => {
         const card = document.createElement('a');
-        card.href = `https://finance.yahoo.com/quote/${item.symbol.trim().toUpperCase()}/news`;
+        card.href = item.url || `https://finance.yahoo.com/quote/${item.symbol.trim().toUpperCase()}/news`;
         card.target = '_blank';
         card.className = 'glass-card p-sm flex gap-md items-center group cursor-pointer hover:shadow-md transition-all bg-white dark:bg-surface-container border border-outline-variant/30 rounded-xl';
         

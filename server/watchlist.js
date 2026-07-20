@@ -74,7 +74,7 @@ router.get('/news', requireAuth, async (req, res) => {
     const news = await getOrGenerateNews('watchlist', symbols);
     const sanitized = news.map(item => ({
       ...item,
-      url: `https://finance.yahoo.com/quote/${item.symbol.trim().toUpperCase()}/news`
+      url: item.url || `https://finance.yahoo.com/quote/${item.symbol.trim().toUpperCase()}/news`
     }));
     res.json({ news: sanitized });
   } catch (err) {
