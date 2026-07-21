@@ -135,11 +135,11 @@
 <div class="flex items-center gap-xl">
 <span class="text-title-md font-title-md font-bold text-primary tracking-tight">TradePilot</span>
 <div class="hidden md:flex gap-md items-center">
+<a class="text-on-surface-variant hover:text-primary transition-colors text-label-md font-label-md" href="/dashboard">Dashboard</a>
 <a class="text-on-surface-variant hover:text-primary transition-colors text-label-md font-label-md" href="/today">Today's Narrative</a>
 <a class="text-primary border-b-2 border-primary pb-1 text-label-md font-label-md" href="/explore">Explore</a>
 <a class="text-on-surface-variant hover:text-primary transition-colors text-label-md font-label-md" href="/alerts">Smart Alerts</a>
 <a class="text-on-surface-variant hover:text-primary transition-colors text-label-md font-label-md" href="/learn">Learn</a>
-<a class="text-on-surface-variant hover:text-primary transition-colors text-label-md font-label-md" href="/dashboard">Dashboard</a>
 </div>
 </div>
 <div class="flex items-center gap-md">
@@ -210,8 +210,8 @@
 <section class="grid grid-cols-1 lg:grid-cols-12 gap-lg items-end mb-xl">
 <div class="lg:col-span-8">
 <div class="flex items-center gap-xs mb-sm">
-<span class="bg-primary text-white text-[10px] font-bold px-2 py-0.5 rounded">NASDAQ</span>
-<span class="text-label-md text-on-surface-variant">Information Technology</span>
+<span id="exchange-badge" class="bg-primary text-white text-[10px] font-bold px-2 py-0.5 rounded">NASDAQ</span>
+<span id="sector-text" class="text-label-md text-on-surface-variant">Information Technology</span>
 </div>
 <h1 id="stock-name" class="text-display-lg font-display-lg text-on-surface mb-xs">NVIDIA Corp (NVDA)</h1>
 <div class="flex items-baseline gap-md">
@@ -220,7 +220,7 @@
 <span class="material-symbols-outlined text-sm">trending_up</span>
 <span id="stock-change-text">+2.45% (+$21.34)</span>
                 </span>
-<span class="text-label-md text-on-surface-variant ml-xs">After Hours data unavailable for simulated symbols</span>
+<span id="after-hours-text" class="text-label-md text-on-surface-variant ml-xs">After Hours data unavailable for simulated symbols</span>
 </div>
 </div>
 <div class="lg:col-span-4 flex justify-end gap-sm items-center">
@@ -242,22 +242,21 @@
 <div class="lg:col-span-8 glass-card p-md overflow-hidden relative">
 <div class="flex justify-between items-center mb-lg">
 <div class="flex gap-xs">
-<button class="px-3 py-1 bg-primary text-white text-label-sm rounded-full">1D</button>
-<button class="px-3 py-1 hover:bg-surface-container text-label-sm rounded-full transition-colors">1W</button>
-<button class="px-3 py-1 hover:bg-surface-container text-label-sm rounded-full transition-colors">1M</button>
-<button class="px-3 py-1 hover:bg-surface-container text-label-sm rounded-full transition-colors">3M</button>
-<button class="px-3 py-1 hover:bg-surface-container text-label-sm rounded-full transition-colors">1Y</button>
+<button id="range-btn-1D" class="px-3 py-1 bg-primary text-white text-label-sm rounded-full">1D</button>
+<button id="range-btn-1W" class="px-3 py-1 hover:bg-surface-container text-label-sm rounded-full transition-colors">1W</button>
+<button id="range-btn-1M" class="px-3 py-1 hover:bg-surface-container text-label-sm rounded-full transition-colors">1M</button>
+<button id="range-btn-3M" class="px-3 py-1 hover:bg-surface-container text-label-sm rounded-full transition-colors">3M</button>
+<button id="range-btn-1Y" class="px-3 py-1 hover:bg-surface-container text-label-sm rounded-full transition-colors">1Y</button>
 </div>
-<button class="material-symbols-outlined text-on-surface-variant hover:text-primary">fullscreen</button>
-</div>
+<button id="chart-fullscreen-btn" class="material-symbols-outlined text-on-surface-variant hover:text-primary">fullscreen</button></div>
 <div class="h-80 w-full relative">
-<img class="w-full h-full object-contain" data-alt="Stock chart" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDmyGoye9dTsF5pTT_cD8xjvaCTzRUZ_hMz3euHYQ599vKjKq9wzfHJpT9ZnMargGEDR1NCe_ydqJCbEwOdXl9MmCDrFJvN7rrXLCTrZBybcMjEVYUM1hpPaqNkr_RDo3WbuS_0mMS1EdoyXF_4cypIo3FbE0gyMn4siHsQ0EBHCZTSuvKMubztJUBvXEE5nD838QO00MzEOGCtjqQYh7th_gW2s8vvj4iOnq3TK-8ajcZqoADeIBiEVIxsYWbrN1Du9VahdUoOAnI"/>
+<img id="stock-chart-img" class="w-full h-full object-contain" data-alt="Stock chart" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDmyGoye9dTsF5pTT_cD8xjvaCTzRUZ_hMz3euHYQ599vKjKq9wzfHJpT9ZnMargGEDR1NCe_ydqJCbEwOdXl9MmCDrFJvN7rrXLCTrZBybcMjEVYUM1hpPaqNkr_RDo3WbuS_0mMS1EdoyXF_4cypIo3FbE0gyMn4siHsQ0EBHCZTSuvKMubztJUBvXEE5nD838QO00MzEOGCtjqQYh7th_gW2s8vvj4iOnq3TK-8ajcZqoADeIBiEVIxsYWbrN1Du9VahdUoOAnI"/>
 <div class="absolute top-4 left-4 bg-white/80 backdrop-blur-sm p-3 rounded-lg border border-outline-variant shadow-sm max-w-xs">
 <p class="text-label-sm font-bold text-primary mb-1 flex items-center gap-1">
 <span class="material-symbols-outlined text-[14px]">info</span> 
-                        RSI: 64.2
+                        RSI: <span id="rsi-value">64.2</span>
                     </p>
-<p class="text-xs text-on-surface-variant leading-relaxed">
+<p id="rsi-description" class="text-xs text-on-surface-variant leading-relaxed">
                         The "Relative Strength Index" shows the stock is gaining momentum but isn't yet "overbought" (too expensive).
                     </p>
 </div>
@@ -271,19 +270,19 @@
 <span class="material-symbols-outlined">magic_button</span>
                         AI Narrative
                     </h3>
-<span class="bg-secondary text-white text-[10px] px-2 py-0.5 rounded-full font-bold">98% CONFIDENCE</span>
+<span id="ai-confidence-badge" class="bg-secondary text-white text-[10px] px-2 py-0.5 rounded-full font-bold">98% CONFIDENCE</span>
 </div>
-<p class="text-label-md leading-relaxed mb-md">
+<p id="ai-narrative-text" class="text-label-md leading-relaxed mb-md">
                     NVIDIA is surging today following a breakthrough in Blackwell chip yield reports and increased AI infrastructure spending from Google. This suggests sustained dominance in the datacenter segment through Q4.
                 </p>
 <div class="space-y-3">
 <div class="flex items-center gap-2 text-xs">
-<span class="material-symbols-outlined text-green-500 text-sm">verified</span>
-<span>Strong Buy Consensus</span>
+<span id="ai-signal-1-icon" class="material-symbols-outlined text-green-500 text-sm">verified</span>
+<span id="ai-signal-1-text">Strong Buy Consensus</span>
 </div>
 <div class="flex items-center gap-2 text-xs">
-<span class="material-symbols-outlined text-yellow-500 text-sm">warning</span>
-<span>Risk: Supply chain concentration in SE Asia.</span>
+<span id="ai-signal-2-icon" class="material-symbols-outlined text-yellow-500 text-sm">warning</span>
+<span id="ai-signal-2-text">Risk: Supply chain concentration in SE Asia.</span>
 </div>
 </div>
 </div>
@@ -296,10 +295,10 @@
 <span>Bullish</span>
 </div>
 <div class="h-2 w-full bg-surface-container rounded-full overflow-hidden flex">
-<div class="h-full bg-error w-1/5"></div>
-<div class="h-full bg-green-500 w-4/5"></div>
+<div id="mood-bar-bearish" class="h-full bg-error w-1/5"></div>
+<div id="mood-bar-bullish" class="h-full bg-green-500 w-4/5"></div>
 </div>
-<p class="text-xs text-on-surface-variant">Institutional sentiment is exceptionally high due to the Blackwell cycle anticipation.</p>
+<p id="market-mood-desc" class="text-xs text-on-surface-variant">Institutional sentiment is exceptionally high due to the Blackwell cycle anticipation.</p>
 </div>
 </div>
 </div>
@@ -361,13 +360,13 @@
 <div class="space-y-4">
 <div class="flex justify-between">
 <span class="text-label-md">P/E Ratio</span>
-<span class="text-label-md font-bold">72.4x</span>
+<span id="pe-ratio-value" class="text-label-md font-bold">72.4x</span>
 </div>
 <div class="flex justify-between">
 <span class="text-label-md">Market Cap</span>
-<span class="text-label-md font-bold">$2.24T</span>
+<span id="market-cap-value" class="text-label-md font-bold">$2.24T</span>
 </div>
-<p class="text-xs text-on-surface-variant pt-2 border-t border-outline-variant/10">
+<p id="valuation-description" class="text-xs text-on-surface-variant pt-2 border-t border-outline-variant/10">
                         P/E Ratio helps you understand if you're paying a premium for growth. NVIDIA's is high, reflecting high expectations.
                     </p>
 </div>
@@ -380,13 +379,13 @@
 <div class="space-y-4">
 <div class="flex justify-between">
 <span class="text-label-md">Revenue Growth</span>
-<span class="text-label-md font-bold text-green-600">+265%</span>
+<span id="revenue-growth-value" class="text-label-md font-bold text-green-600">+265%</span>
 </div>
 <div class="flex justify-between">
 <span class="text-label-md">Gross Margin</span>
-<span class="text-label-md font-bold">76.0%</span>
+<span id="gross-margin-value" class="text-label-md font-bold">76.0%</span>
 </div>
-<p class="text-xs text-on-surface-variant pt-2 border-t border-outline-variant/10">
+<p id="financial-health-description" class="text-xs text-on-surface-variant pt-2 border-t border-outline-variant/10">
                         Gross Margin shows how much profit is left after production costs. 76% is exceptionally strong for hardware.
                     </p>
 </div>
@@ -397,12 +396,12 @@
                     AI VERDICT
                 </h4>
 <div class="flex items-center gap-4 mb-4">
-<div class="w-12 h-12 rounded-full border-4 border-green-500 border-r-transparent animate-spin duration-[3s] flex items-center justify-center">
-<span class="text-xs font-bold animate-none">8.4</span>
+<div id="ai-verdict-ring" class="w-12 h-12 rounded-full border-4 border-green-500 border-r-transparent animate-spin duration-[3s] flex items-center justify-center">
+<span id="ai-verdict-score" class="text-xs font-bold animate-none">8.4</span>
 </div>
 <div>
-<p class="text-label-md font-bold">Overweight</p>
-<p class="text-xs text-on-surface-variant">Recommended for Growth</p>
+<p id="ai-verdict-label" class="text-label-md font-bold">Overweight</p>
+<p id="ai-verdict-desc" class="text-xs text-on-surface-variant">Recommended for Growth</p>
 </div>
 </div>
 <button class="w-full py-2 text-label-sm font-bold text-secondary border border-secondary/20 rounded-lg hover:bg-secondary/5 transition-colors">
@@ -414,33 +413,33 @@
 <div class="lg:col-span-8 flex flex-col gap-md">
 <div class="flex items-center justify-between">
 <h2 class="text-title-md font-title-md">Relevant Intelligence</h2>
-<button class="text-label-sm text-primary font-bold">View All</button>
+<button id="view-all-news-btn" class="text-label-sm text-primary font-bold">View All</button>
 </div>
 <div class="space-y-4">
-<div class="glass-card p-sm flex gap-md items-center group cursor-pointer hover:shadow-md transition-all">
+<div id="news-card-0" class="glass-card p-sm flex gap-md items-center group cursor-pointer hover:shadow-md transition-all">
 <div class="w-24 h-24 rounded-xl overflow-hidden shrink-0">
-<img class="w-full h-full object-cover group-hover:scale-105 transition-transform" data-alt="Datacenter news" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBpIHPmdC13QW6g6GaqYwvp8HU8F9ltPo4kFBR3tAcuBxPS9ctKqZt_K_TDIfiaJI6Z_QAUlLEIZKYe54XtQ0PJOm1Q05S9PDTcH4KsjNGGk9WYtetaJk8X_OwmMGQW8SI445sxwdTM0C9HoMbQew5_StLki1XpH0cxeenIhjM2788p4wtcchytW7nfGgUdbpVMurUyqBTvvxo2yRxmpC3aQnsfYHSkFMkI5skX7SbbXd0_u9QSqGm7TW1yIupdnQRD44vVi7qlyR8"/>
+<img id="news-img-0" class="w-full h-full object-cover group-hover:scale-105 transition-transform" data-alt="News" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBpIHPmdC13QW6g6GaqYwvp8HU8F9ltPo4kFBR3tAcuBxPS9ctKqZt_K_TDIfiaJI6Z_QAUlLEIZKYe54XtQ0PJOm1Q05S9PDTcH4KsjNGGk9WYtetaJk8X_OwmMGQW8SI445sxwdTM0C9HoMbQew5_StLki1XpH0cxeenIhjM2788p4wtcchytW7nfGgUdbpVMurUyqBTvvxo2yRxmpC3aQnsfYHSkFMkI5skX7SbbXd0_u9QSqGm7TW1yIupdnQRD44vVi7qlyR8"/>
 </div>
 <div class="flex-1">
 <div class="flex gap-2 mb-2">
-<span class="bg-blue-100 text-blue-600 text-[10px] px-2 py-0.5 rounded-full font-bold">AI INDUSTRY</span>
-<span class="text-label-sm text-on-surface-variant">2h ago</span>
+<span id="news-badge-0" class="bg-blue-100 text-blue-600 text-[10px] px-2 py-0.5 rounded-full font-bold">AI INDUSTRY</span>
+<span id="news-time-0" class="text-label-sm text-on-surface-variant">2h ago</span>
 </div>
-<h4 class="text-label-md font-bold group-hover:text-primary transition-colors">NVIDIA Expands Strategic Partnership with Google Cloud for Next-Gen AI</h4>
-<p class="text-xs text-on-surface-variant mt-1 line-clamp-1">The collaboration aims to optimize Blackwell GPU infrastructure for large-scale training...</p>
+<h4 id="news-title-0" class="text-label-md font-bold group-hover:text-primary transition-colors">NVIDIA Expands Strategic Partnership with Google Cloud for Next-Gen AI</h4>
+<p id="news-desc-0" class="text-xs text-on-surface-variant mt-1 line-clamp-1">The collaboration aims to optimize Blackwell GPU infrastructure for large-scale training...</p>
 </div>
 </div>
-<div class="glass-card p-sm flex gap-md items-center group cursor-pointer hover:shadow-md transition-all">
+<div id="news-card-1" class="glass-card p-sm flex gap-md items-center group cursor-pointer hover:shadow-md transition-all">
 <div class="w-24 h-24 rounded-xl overflow-hidden shrink-0">
-<img class="w-full h-full object-cover group-hover:scale-105 transition-transform" data-alt="Chip news" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB3IO3aFlhHC3NWeEfhikZoZmHuNUoiXUgEHYsz4eYJ25rzCuGCUf8SROje_GLnZmo85oc9QeOap_jkDmimLCKBNUJlgSM7qqjdCndDZHB3lnltvlUErZaKwqwH-9CtSJklipdW4DaMvu9QZgAY-MvuN7YmuTElpi_Ut_HQWHDzM_bj-1ZuuiDe8zGlz40rjOZsfZgdekBnNN73RdG1moWl2eIFJY4Tb6n47KbaXmsYExqYB1Y5VNEJjZWBkDFN3mCiryhsIxebxy8"/>
+<img id="news-img-1" class="w-full h-full object-cover group-hover:scale-105 transition-transform" data-alt="News" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB3IO3aFlhHC3NWeEfhikZoZmHuNUoiXUgEHYsz4eYJ25rzCuGCUf8SROje_GLnZmo85oc9QeOap_jkDmimLCKBNUJlgSM7qqjdCndDZHB3lnltvlUErZaKwqwH-9CtSJklipdW4DaMvu9QZgAY-MvuN7YmuTElpi_Ut_HQWHDzM_bj-1ZuuiDe8zGlz40rjOZsfZgdekBnNN73RdG1moWl2eIFJY4Tb6n47KbaXmsYExqYB1Y5VNEJjZWBkDFN3mCiryhsIxebxy8"/>
 </div>
 <div class="flex-1">
 <div class="flex gap-2 mb-2">
-<span class="bg-green-100 text-green-600 text-[10px] px-2 py-0.5 rounded-full font-bold">MARKET ANALYSIS</span>
-<span class="text-label-sm text-on-surface-variant">5h ago</span>
+<span id="news-badge-1" class="bg-green-100 text-green-600 text-[10px] px-2 py-0.5 rounded-full font-bold">MARKET ANALYSIS</span>
+<span id="news-time-1" class="text-label-sm text-on-surface-variant">5h ago</span>
 </div>
-<h4 class="text-label-md font-bold group-hover:text-primary transition-colors">Why Analysts are Raising NVDA Price Targets Ahead of GTC Conference</h4>
-<p class="text-xs text-on-surface-variant mt-1 line-clamp-1">Consensus shifts toward $1,000 as software revenue begins to materialize...</p>
+<h4 id="news-title-1" class="text-label-md font-bold group-hover:text-primary transition-colors">Why Analysts are Raising NVDA Price Targets Ahead of GTC Conference</h4>
+<p id="news-desc-1" class="text-xs text-on-surface-variant mt-1 line-clamp-1">Consensus shifts toward $1,000 as software revenue begins to materialize...</p>
 </div>
 </div>
 </div>
@@ -484,14 +483,14 @@
 </div>
 <!-- Ask AI Interaction -->
 <div class="bg-surface-container-low rounded-20 p-md border border-secondary/10 flex flex-col gap-sm">
-<p class="text-label-sm font-bold text-primary flex items-center gap-2">
+<p id="deep-dive-title" class="text-label-sm font-bold text-primary flex items-center gap-2">
 <span class="material-symbols-outlined text-base">chat_bubble</span>
                     Deep Dive NVDA
                 </p>
 <div class="flex flex-col gap-xs" id="ai-suggested-prompts">
-<button class="suggested-prompt w-full text-left p-2 bg-white rounded-lg text-xs hover:bg-primary-container hover:text-white transition-all">"Will the supply chain issues hurt Q4?"</button>
-<button class="suggested-prompt w-full text-left p-2 bg-white rounded-lg text-xs hover:bg-primary-container hover:text-white transition-all">"Explain Blackwell architecture to a 5-year old."</button>
-<button class="suggested-prompt w-full text-left p-2 bg-white rounded-lg text-xs hover:bg-primary-container hover:text-white transition-all">"How does NVDA debt compare to Apple?"</button>
+<button id="prompt-0" class="suggested-prompt w-full text-left p-2 bg-white rounded-lg text-xs hover:bg-primary-container hover:text-white transition-all">"Will the supply chain issues hurt Q4?"</button>
+<button id="prompt-1" class="suggested-prompt w-full text-left p-2 bg-white rounded-lg text-xs hover:bg-primary-container hover:text-white transition-all">"Explain Blackwell architecture to a 5-year old."</button>
+<button id="prompt-2" class="suggested-prompt w-full text-left p-2 bg-white rounded-lg text-xs hover:bg-primary-container hover:text-white transition-all">"How does NVDA debt compare to Apple?"</button>
 </div>
 <div id="ai-chat-log" class="flex flex-col gap-xs max-h-64 overflow-y-auto"></div>
 <div class="relative">
@@ -533,7 +532,7 @@
         headers: { 'Content-Type': 'application/json', ...(window.TradePilotAuth ? window.TradePilotAuth.authHeader() : {}) },
         body: JSON.stringify({
           message: message,
-          context: 'User is viewing NVDA (Nvidia) stock details on the Explore Market screen.'
+          context: `User is viewing ${window.TradePilotCurrentSymbol || 'NVDA'} stock details on the Explore Market screen.`
         })
       });
       const data = await res.json();

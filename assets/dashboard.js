@@ -78,7 +78,6 @@
       try {
         const res = await fetch(PORTFOLIO_URL, { headers: authHeaders() });
         const data = await res.json();
-
         if (res.ok) {
           renderHoldings(data.holdings, data.summary);
           renderSectorExposure(data.sectorExposure);
@@ -95,7 +94,6 @@
           // Trigger news reload for portfolio
           loadPortfolioNews();
         }
-
       } catch (err) {
         console.error('Could not load holdings', err);
       }
@@ -209,7 +207,6 @@
         console.error('Could not load watchlist', err);
       }
     }
-
 
     // Set dynamic username
     const user = window.TradePilotAuth.getUser();

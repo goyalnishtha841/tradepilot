@@ -11,6 +11,7 @@ const quizRouter = require('./quiz');
 const portfolioRouter = require('./portfolio');
 const watchlistRouter = require('./watchlist');
 const marketRouter = require('./market');
+const papertradingRouter = require('./papertrading');
 const db = require('./db');
 
 const app = express();
@@ -133,6 +134,24 @@ ${context ? `\n\nContext about what the user is currently looking at: ${context}
   }
 });
 
+function listenOnPort(port, attempt = 1) {
+  const server = app.listen(port, () => {
+    console.log(`\n✅ TradePilot server running!`);
+    console.log(`   Open this in your browser: http://localhost:${port}/home.html\n`);
+  });
+
+  server.on('error', (err) => {
+    if (err.code === 'EADDRINUSE' && attempt < 5) {
+      const nextPort = port + 1;
+      console.warn(`Port ${port} is busy. Trying ${nextPort} instead...`);
+      server.close(() => listenOnPort(nextPort, attempt + 1));
+    } else {
+      console.error('Failed to start server:', err);
+      process.exit(1);
+    }
+  });
+}
+
 async function start() {
   try {
     await db.init();
@@ -143,10 +162,7 @@ async function start() {
     process.exit(1);
   }
 
-  app.listen(PORT, () => {
-    console.log(`\n✅ TradePilot server running!`);
-    console.log(`   Open this in your browser: http://localhost:${PORT}/home.html\n`);
-  });
+  listenOnPort(PORT);
 }
 
 start();

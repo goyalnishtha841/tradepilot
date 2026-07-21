@@ -1,9 +1,7 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-
 const fetch = require('node-fetch');
-
 const db = require('./db');
 
 const router = express.Router();
@@ -55,9 +53,6 @@ router.post('/signup', async (req, res) => {
     const user = await db.createUser({ name: name.trim(), email: email.trim(), passwordHash });
     const token = signToken(user);
 
-
-    res.json({ token, user: { id: user.id, name: user.name, email: user.email, onboardingCompleted: false } });
-
     res.json({
       token,
       user: {
@@ -93,7 +88,6 @@ router.post('/signin', async (req, res) => {
     }
 
     const token = signToken(user);
-
     const prefs = await db.getUserPreferences(user.id);
     const onboardingCompleted = prefs ? prefs.onboarding_completed : false;
 
@@ -131,7 +125,6 @@ function requireAuth(req, res, next) {
 }
 
 // GET /api/auth/me — used by pages to check "am I logged in?"
-
 router.get('/me', requireAuth, async (req, res) => {
   try {
     const prefs = await db.getUserPreferences(req.user.id);
@@ -148,7 +141,6 @@ router.get('/me', requireAuth, async (req, res) => {
     console.error('Error in /me preference check:', err);
     res.json({ user: req.user });
   }
-
 });
 
 // PATCH /api/auth/profile — update display name
@@ -200,7 +192,6 @@ router.post('/change-password', requireAuth, async (req, res) => {
     res.status(500).json({ error: 'Could not change your password.' });
   }
 });
-
 
 // GET /api/auth/google/client-id
 router.get('/google/client-id', (req, res) => {
@@ -268,7 +259,6 @@ router.post('/google', async (req, res) => {
     res.status(500).json({ error: 'Something went wrong signing you in with Google.' });
   }
 });
-
 
 module.exports = { router, requireAuth };
 module.exports = { router, requireAuth };

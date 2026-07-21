@@ -341,6 +341,7 @@ router.delete('/:id', requireAuth, async (req, res) => {
   }
 });
 
+
 // GET /api/alerts/history — recent real trigger events, factual descriptions only (no invented reasoning)
 router.get('/history', requireAuth, async (req, res) => {
   try {
@@ -409,3 +410,5 @@ router.get('/insights', requireAuth, async (req, res) => {
 });
 
 module.exports = router;
+
+
