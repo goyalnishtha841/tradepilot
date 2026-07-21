@@ -193,14 +193,14 @@
 <div class="space-y-base">
 <span id="narrative-date-badge" class="text-label-sm font-label-sm text-on-tertiary-container uppercase tracking-widest bg-tertiary-fixed px-xs py-[2px] rounded">Loading…</span>
 <h1 class="font-headline-lg text-headline-lg md:text-display-lg md:font-display-lg text-primary">Today's Narrative</h1>
-<p class="text-body-lg font-body-lg text-on-surface-variant max-w-2xl">The market is currently digesting mixed inflation data while tech giants prepare for a significant pivot.</p>
+<p id="narrative-subtitle" class="text-body-lg font-body-lg text-on-surface-variant max-w-2xl">Loading today's market overview…</p>
 </div>
 <div class="flex gap-sm shrink-0">
 <button id="export-narrative-btn" class="flex items-center gap-xs border border-outline-variant/50 text-on-surface-variant px-md py-sm rounded-xl hover:bg-surface-container transition-all group h-fit">
 <span class="material-symbols-outlined text-[20px]">picture_as_pdf</span>
 <span class="text-label-md font-label-md">Export</span>
 </button>
-<button class="flex items-center gap-xs bg-primary text-white px-md py-sm rounded-xl hover:shadow-lg transition-all group shrink-0 h-fit">
+<button id="full-summary-btn" class="flex items-center gap-xs bg-primary text-white px-md py-sm rounded-xl hover:shadow-lg transition-all group shrink-0 h-fit">
 <span class="material-symbols-outlined text-[20px]">description</span>
 <span class="text-label-md font-label-md">Full Summary</span>
 <span class="material-symbols-outlined text-[18px] group-hover:translate-x-1 transition-transform">arrow_forward</span>
@@ -265,126 +265,38 @@ Regenerate
 </div>
 <h2 class="text-title-md font-title-md">Direct Financial Impact</h2>
 </div>
-<span class="text-label-sm font-label-sm text-on-surface-variant">Live Sync</span>
+<span id="dfi-live-badge" class="text-label-sm font-label-sm text-on-surface-variant">Loading…</span>
 </div>
-<div class="flex items-baseline gap-sm mb-lg">
-<span class="text-display-lg font-bold text-red-600">-$4,210</span>
-<span class="text-title-md font-semibold text-red-500 bg-red-50 px-2 py-0.5 rounded">-2.4%</span>
-</div>
-<div class="mb-lg">
-<h3 class="text-label-sm font-label-sm text-secondary uppercase tracking-widest mb-xs">AI Exposure Analysis</h3>
-<p class="text-label-md font-label-md text-on-surface-variant">Your portfolio is currently 64% exposed to news narratives regarding interest rate volatility. The PPI cooling has negatively impacted your hedging positions in defensive staples.</p>
-</div>
-<div class="space-y-sm">
-<div class="p-sm bg-surface-container-low rounded-xl border border-outline-variant/20 flex items-center justify-between">
-<div class="flex items-center gap-md">
-<div class="w-10 h-10 rounded-full bg-white flex items-center justify-center font-bold text-xs border border-outline-variant/10">PG</div>
-<div>
-<div class="text-label-md font-bold">Procter &amp; Gamble</div>
-<div class="w-24 h-1.5 bg-surface-container rounded-full mt-1">
-<div class="h-full bg-red-500 rounded-full" style="width: 85%"></div>
-</div>
-</div>
-</div>
-<div class="text-right">
-<div class="text-label-md font-bold text-red-600">-$1,120</div>
-<div class="text-label-sm text-on-surface-variant">Critical Severity</div>
-</div>
-</div>
-<div class="p-sm bg-surface-container-low rounded-xl border border-outline-variant/20 flex items-center justify-between">
-<div class="flex items-center gap-md">
-<div class="w-10 h-10 rounded-full bg-white flex items-center justify-center font-bold text-xs border border-outline-variant/10">WMT</div>
-<div>
-<div class="text-label-md font-bold">Walmart Inc.</div>
-<div class="w-24 h-1.5 bg-surface-container rounded-full mt-1">
-<div class="h-full bg-orange-400 rounded-full" style="width: 45%"></div>
-</div>
-</div>
-</div>
-<div class="text-right">
-<div class="text-label-md font-bold text-red-600">-$840</div>
-<div class="text-label-sm text-on-surface-variant">Medium Severity</div>
-</div>
-</div>
+<div id="dfi-content">
+<p class="text-body-md text-on-surface-variant">Loading your portfolio's real-time impact…</p>
 </div>
 </div>
 </div>
 <!-- Sentiment Heatmap & News -->
 <div class="grid grid-cols-1 lg:grid-cols-12 gap-md mb-xl">
-<!-- Sentiment Heatmap -->
+<!-- Sector Momentum -->
 <div class="lg:col-span-5 bg-white border border-outline-variant/30 rounded-[20px] p-lg shadow-sm">
 <div class="flex items-center justify-between mb-lg">
-<h2 class="text-title-md font-title-md">Sentiment Heatmap</h2>
-<span class="material-symbols-outlined text-on-surface-variant cursor-help">info</span>
+<h2 class="text-title-md font-title-md">Sector Momentum</h2>
+<span class="material-symbols-outlined text-on-surface-variant cursor-help" title="Live % change today for each sector's benchmark ETF (XLK, XLF, XLE, XLV, XLRE, XLU)">info</span>
 </div>
-<!-- Mock Heatmap -->
-<div class="grid grid-cols-5 gap-xs h-64">
-<div class="bg-green-600 rounded-lg flex items-center justify-center text-white font-bold">Tech</div>
-<div class="bg-green-500 rounded-lg flex items-center justify-center text-white text-xs">Fin</div>
-<div class="bg-green-400 rounded-lg"></div>
-<div class="bg-gray-200 rounded-lg"></div>
-<div class="bg-red-300 rounded-lg"></div>
-<div class="bg-green-500 rounded-lg"></div>
-<div class="bg-green-600 rounded-lg"></div>
-<div class="bg-red-400 rounded-lg"></div>
-<div class="bg-red-500 rounded-lg"></div>
-<div class="bg-red-600 rounded-lg"></div>
-<div class="bg-green-200 rounded-lg"></div>
-<div class="bg-gray-100 rounded-lg"></div>
-<div class="bg-green-700 rounded-lg"></div>
-<div class="bg-green-400 rounded-lg"></div>
-<div class="bg-green-300 rounded-lg"></div>
-<div class="bg-red-200 rounded-lg"></div>
-<div class="bg-red-100 rounded-lg"></div>
-<div class="bg-gray-100 rounded-lg"></div>
-<div class="bg-gray-200 rounded-lg"></div>
-<div class="bg-green-100 rounded-lg"></div>
+<div id="sector-momentum-grid" class="grid grid-cols-2 gap-xs h-64">
+<div class="col-span-2 flex items-center justify-center text-label-sm text-on-surface-variant">Loading live sector data…</div>
 </div>
 <div class="flex justify-between mt-md text-label-sm font-label-sm text-on-surface-variant">
-<span>Bearish (-100)</span>
+<span>Down</span>
 <div class="flex-1 mx-md h-2 bg-gradient-to-r from-red-500 via-gray-200 to-green-500 rounded-full mt-1"></div>
-<span>Bullish (+100)</span>
+<span>Up</span>
 </div>
 </div>
 <!-- News Feed -->
 <div class="lg:col-span-7 bg-white border border-outline-variant/30 rounded-[20px] p-lg shadow-sm flex flex-col">
 <div class="flex items-center justify-between mb-lg">
 <h2 class="text-title-md font-title-md">Narrative Feed</h2>
-<div class="flex gap-xs">
-<span class="px-xs py-1 rounded bg-surface-container text-label-sm border border-outline-variant/30">Impact: High</span>
+<span id="narrative-feed-badge" class="px-xs py-1 rounded bg-surface-container text-label-sm border border-outline-variant/30">Live</span>
 </div>
-</div>
-<div class="space-y-md flex-1 overflow-y-auto max-h-[280px] pr-sm custom-scrollbar">
-<div class="flex gap-md group cursor-pointer border-b border-outline-variant/10 pb-md">
-<div class="w-12 h-12 rounded-lg bg-green-100 flex-shrink-0 flex items-center justify-center text-green-700 font-bold">+$</div>
-<div>
-<div class="flex items-center gap-sm">
-<span class="text-label-sm font-label-sm text-green-600 font-bold">Positive Impact</span>
-<span class="text-label-sm font-label-sm text-on-surface-variant">12 mins ago</span>
-</div>
-<h4 class="text-body-md font-body-md font-semibold group-hover:text-primary transition-colors">US PPI data comes in lower than expected, calming inflation nerves.</h4>
-</div>
-</div>
-<div class="flex gap-md group cursor-pointer border-b border-outline-variant/10 pb-md">
-<div class="w-12 h-12 rounded-lg bg-red-100 flex-shrink-0 flex items-center justify-center text-red-700 font-bold">!</div>
-<div>
-<div class="flex items-center gap-sm">
-<span class="text-label-sm font-label-sm text-red-600 font-bold">Critical Alert</span>
-<span class="text-label-sm font-label-sm text-on-surface-variant">45 mins ago</span>
-</div>
-<h4 class="text-body-md font-body-md font-semibold group-hover:text-primary transition-colors">Bank of England hints at potential rate cuts by summer, weakening the Pound.</h4>
-</div>
-</div>
-<div class="flex gap-md group cursor-pointer">
-<div class="w-12 h-12 rounded-lg bg-blue-100 flex-shrink-0 flex items-center justify-center text-blue-700 font-bold">AI</div>
-<div>
-<div class="flex items-center gap-sm">
-<span class="text-label-sm font-label-sm text-blue-600 font-bold">Market Insight</span>
-<span class="text-label-sm font-label-sm text-on-surface-variant">1 hour ago</span>
-</div>
-<h4 class="text-body-md font-body-md font-semibold group-hover:text-primary transition-colors">Major tech giants announce unified framework for AI ethics, bolstering sector sentiment.</h4>
-</div>
-</div>
+<div id="narrative-feed-list" class="space-y-md flex-1 overflow-y-auto max-h-[280px] pr-sm custom-scrollbar">
+<p class="text-label-sm text-on-surface-variant">Loading recent news…</p>
 </div>
 </div>
 </div>
@@ -392,110 +304,37 @@ Regenerate
 <div class="grid grid-cols-1 lg:grid-cols-12 gap-md mb-xl">
 <div class="lg:col-span-12 bg-white border border-outline-variant/30 rounded-[20px] p-lg shadow-sm">
 <h2 class="text-title-md font-title-md mb-lg">Sector Performance</h2>
-<div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-md">
-<div class="p-md rounded-xl bg-surface-container-low border border-outline-variant/20 hover:border-primary transition-all">
-<div class="text-label-sm font-label-sm text-on-surface-variant mb-xs">Technology</div>
-<div class="text-headline-sm font-headline-sm text-green-600">+2.4%</div>
-<div class="mt-sm text-label-md font-label-md leading-relaxed">Driven by high demand for AI hardware.</div>
-</div>
-<div class="p-md rounded-xl bg-surface-container-low border border-outline-variant/20 hover:border-primary transition-all">
-<div class="text-label-sm font-label-sm text-on-surface-variant mb-xs">Financials</div>
-<div class="text-headline-sm font-headline-sm text-green-600">+1.1%</div>
-<div class="mt-sm text-label-md font-label-md leading-relaxed">Stronger yield curves benefiting banks.</div>
-</div>
-<div class="p-md rounded-xl bg-surface-container-low border border-outline-variant/20 hover:border-primary transition-all">
-<div class="text-label-sm font-label-sm text-on-surface-variant mb-xs">Energy</div>
-<div class="text-headline-sm font-headline-sm text-red-600">-0.8%</div>
-<div class="mt-sm text-label-md font-label-md leading-relaxed">Crude prices stabilizing after surge.</div>
-</div>
-<div class="p-md rounded-xl bg-surface-container-low border border-outline-variant/20 hover:border-primary transition-all">
-<div class="text-label-sm font-label-sm text-on-surface-variant mb-xs">Healthcare</div>
-<div class="text-headline-sm font-headline-sm text-on-surface-variant">0.0%</div>
-<div class="mt-sm text-label-md font-label-md leading-relaxed">Defensive play as market risk appetite rises.</div>
-</div>
-<div class="p-md rounded-xl bg-surface-container-low border border-outline-variant/20 hover:border-primary transition-all">
-<div class="text-label-sm font-label-sm text-on-surface-variant mb-xs">Real Estate</div>
-<div class="text-headline-sm font-headline-sm text-red-600">-1.4%</div>
-<div class="mt-sm text-label-md font-label-md leading-relaxed">Mortgage rate uncertainty dampening buy-in.</div>
-</div>
-<div class="p-md rounded-xl bg-surface-container-low border border-outline-variant/20 hover:border-primary transition-all">
-<div class="text-label-sm font-label-sm text-on-surface-variant mb-xs">Utilities</div>
-<div class="text-headline-sm font-headline-sm text-red-600">-0.5%</div>
-<div class="mt-sm text-label-md font-label-md leading-relaxed">Capital outflow towards growth stocks.</div>
+<div id="sector-performance-grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-md">
+<p class="text-label-sm text-on-surface-variant">Loading live sector data…</p>
 </div>
 </div>
 </div>
-</div>
-<!-- Gainers / Losers with AI Snippets -->
+<!-- Gainers / Losers -->
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-md mb-xl">
 <!-- Gainers -->
 <div class="bg-white border border-outline-variant/30 rounded-[20px] p-lg shadow-sm">
-<div class="flex items-center gap-sm mb-lg">
+<div class="flex items-center gap-sm mb-lg justify-between">
+<div class="flex items-center gap-sm">
 <span class="material-symbols-outlined text-green-600">arrow_upward</span>
 <h2 class="text-title-md font-title-md">Top Gainers</h2>
 </div>
-<div class="space-y-md">
-<div class="flex items-start justify-between group">
-<div class="flex gap-md">
-<div class="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center font-bold">NV</div>
-<div>
-<h4 class="font-semibold text-body-md">NVDA</h4>
-<p class="text-label-sm font-label-sm text-on-surface-variant">Nvidia Corp</p>
+<span id="gainers-scope-badge" class="text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant"></span>
 </div>
-</div>
-<div class="text-right">
-<div class="text-green-600 font-bold">+4.2%</div>
-<div class="bg-green-50 text-[10px] text-green-700 px-xs py-0.5 rounded-full mt-xs">AI: "Surprise supply chain win"</div>
-</div>
-</div>
-<div class="flex items-start justify-between group">
-<div class="flex gap-md">
-<div class="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center font-bold">TS</div>
-<div>
-<h4 class="font-semibold text-body-md">TSLA</h4>
-<p class="text-label-sm font-label-sm text-on-surface-variant">Tesla Inc</p>
-</div>
-</div>
-<div class="text-right">
-<div class="text-green-600 font-bold">+2.8%</div>
-<div class="bg-green-50 text-[10px] text-green-700 px-xs py-0.5 rounded-full mt-xs">AI: "China demand rebound"</div>
-</div>
-</div>
+<div id="top-gainers-list" class="space-y-md">
+<p class="text-label-sm text-on-surface-variant">Loading…</p>
 </div>
 </div>
 <!-- Losers -->
 <div class="bg-white border border-outline-variant/30 rounded-[20px] p-lg shadow-sm">
-<div class="flex items-center gap-sm mb-lg">
+<div class="flex items-center gap-sm mb-lg justify-between">
+<div class="flex items-center gap-sm">
 <span class="material-symbols-outlined text-red-600">arrow_downward</span>
 <h2 class="text-title-md font-title-md">Top Losers</h2>
 </div>
-<div class="space-y-md">
-<div class="flex items-start justify-between group">
-<div class="flex gap-md">
-<div class="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center font-bold">AP</div>
-<div>
-<h4 class="font-semibold text-body-md">AAPL</h4>
-<p class="text-label-sm font-label-sm text-on-surface-variant">Apple Inc</p>
+<span id="losers-scope-badge" class="text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant"></span>
 </div>
-</div>
-<div class="text-right">
-<div class="text-red-600 font-bold">-1.2%</div>
-<div class="bg-red-50 text-[10px] text-red-700 px-xs py-0.5 rounded-full mt-xs">AI: "Regulatory headwinds"</div>
-</div>
-</div>
-<div class="flex items-start justify-between group">
-<div class="flex gap-md">
-<div class="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center font-bold">AM</div>
-<div>
-<h4 class="font-semibold text-body-md">AMZN</h4>
-<p class="text-label-sm font-label-sm text-on-surface-variant">Amazon.com</p>
-</div>
-</div>
-<div class="text-right">
-<div class="text-red-600 font-bold">-0.9%</div>
-<div class="bg-red-50 text-[10px] text-red-700 px-xs py-0.5 rounded-full mt-xs">AI: "Logistics cost surge"</div>
-</div>
-</div>
+<div id="top-losers-list" class="space-y-md">
+<p class="text-label-sm text-on-surface-variant">Loading…</p>
 </div>
 </div>
 </div>
@@ -508,16 +347,16 @@ Regenerate
 <p class="text-body-md font-body-md mb-lg">Need deeper clarity on a specific trend? Type your question below to explore further.</p>
 <div class="flex gap-sm">
 <div class="flex-1 bg-white rounded-xl border border-outline-variant/30 px-md py-sm flex items-center shadow-inner">
-<input class="w-full bg-transparent border-none focus:ring-0 text-body-md text-on-surface" placeholder="e.g., 'How will PPI affect tech stocks next week?'" type="text"/>
-<span class="material-symbols-outlined text-on-surface-variant/50 cursor-pointer">mic</span>
+<input id="followup-input" class="w-full bg-transparent border-none focus:ring-0 text-body-md text-on-surface" placeholder="e.g., 'How will PPI affect tech stocks next week?'" type="text"/>
 </div>
-<button class="primary-gradient text-white px-lg py-sm rounded-xl font-label-md hover:shadow-lg transition-all">Analyze</button>
+<button id="followup-ask-btn" class="primary-gradient text-white px-lg py-sm rounded-xl font-label-md hover:shadow-lg transition-all">Analyze</button>
 </div>
 <div class="mt-md flex gap-sm flex-wrap">
-<button class="px-md py-1.5 rounded-full border border-outline-variant/30 text-label-sm hover:bg-white transition-colors">Compare with 2008 inflation</button>
-<button class="px-md py-1.5 rounded-full border border-outline-variant/30 text-label-sm hover:bg-white transition-colors">What is PPI exactly?</button>
-<button class="px-md py-1.5 rounded-full border border-outline-variant/30 text-label-sm hover:bg-white transition-colors">Summarize impact on my Portfolio</button>
+<button class="followup-chip px-md py-1.5 rounded-full border border-outline-variant/30 text-label-sm hover:bg-white transition-colors">What's driving today's biggest sector move?</button>
+<button class="followup-chip px-md py-1.5 rounded-full border border-outline-variant/30 text-label-sm hover:bg-white transition-colors">What is PPI exactly?</button>
+<button class="followup-chip px-md py-1.5 rounded-full border border-outline-variant/30 text-label-sm hover:bg-white transition-colors">Summarize impact on my portfolio</button>
 </div>
+<div id="followup-answer" class="hidden mt-lg p-md bg-white rounded-xl border border-outline-variant/30 text-body-md text-on-surface"></div>
 </div>
 </main>
 <!-- Footer -->
@@ -533,18 +372,33 @@ Regenerate
 <p class="text-body-md font-body-md text-on-surface-variant max-w-xl">© 2024 TradePilot. Empowering effortless mastery through AI intelligence.</p>
 </div>
 </footer>
+<!-- Full Summary Modal -->
+<div id="full-summary-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-md">
+<div class="bg-white rounded-[20px] max-w-2xl w-full max-h-[85vh] overflow-y-auto p-lg relative">
+<button id="full-summary-close-btn" class="absolute top-4 right-4 p-2 rounded-full hover:bg-surface-container-low">
+<span class="material-symbols-outlined">close</span>
+</button>
+<h2 class="text-title-lg font-title-lg mb-md">Today's Full Narrative</h2>
+<p id="full-summary-date" class="text-label-sm text-on-surface-variant mb-lg"></p>
+<div id="full-summary-body" class="space-y-md text-body-md text-on-surface leading-relaxed"></div>
+</div>
+</div>
 <script>
-        // Micro-interaction for Heatmap hover
-        document.querySelectorAll('.grid-cols-5 > div').forEach(box => {
-            box.addEventListener('mouseenter', () => {
+        // Micro-interaction for hoverable grid tiles (sector momentum + others)
+        document.addEventListener('mouseover', (e) => {
+            const box = e.target.closest('[data-hover-tile]');
+            if (box) {
                 box.style.transform = 'scale(1.05)';
                 box.style.zIndex = '10';
                 box.style.transition = 'transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
-            });
-            box.addEventListener('mouseleave', () => {
+            }
+        });
+        document.addEventListener('mouseout', (e) => {
+            const box = e.target.closest('[data-hover-tile]');
+            if (box) {
                 box.style.transform = 'scale(1)';
                 box.style.zIndex = '1';
-            });
+            }
         });
     </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>

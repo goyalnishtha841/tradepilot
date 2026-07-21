@@ -47,6 +47,22 @@ async function init() {
   `);
 
   await pool.query(`
+    CREATE TABLE IF NOT EXISTS alert_trigger_history (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      alert_id INTEGER REFERENCES alerts(id) ON DELETE SET NULL,
+      symbol TEXT NOT NULL,
+      alert_type TEXT NOT NULL,
+      priority TEXT NOT NULL,
+      condition TEXT NOT NULL,
+      target_price NUMERIC NOT NULL,
+      price_at_trigger NUMERIC NOT NULL,
+      alert_created_at TIMESTAMPTZ NOT NULL,
+      triggered_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+  `);
+
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS chat_messages (
       id SERIAL PRIMARY KEY,
       user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -215,6 +231,74 @@ module.exports = {
       [alertId, userId]
     );
     return rowCount > 0;
+  },
+
+  // --- Alert trigger history (real, logged once per trigger event) ---
+  async logAlertTrigger(userId, { alertId, symbol, alertType, priority, condition, targetPrice, priceAtTrigger, alertCreatedAt }) {
+    await pool.query(
+      `INSERT INTO alert_trigger_history
+         (user_id, alert_id, symbol, alert_type, priority, condition, target_price, price_at_trigger, alert_created_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+      [userId, alertId, symbol, alertType, priority, condition, targetPrice, priceAtTrigger, alertCreatedAt]
+    );
+  },
+
+  async listTriggerHistory(userId, limit = 10) {
+    const { rows } = await pool.query(
+      `SELECT id, alert_id AS "alertId", symbol, alert_type AS "alertType", priority, condition,
+              target_price AS "targetPrice", price_at_trigger AS "priceAtTrigger",
+              alert_created_at AS "alertCreatedAt", triggered_at AS "triggeredAt"
+       FROM alert_trigger_history WHERE user_id = $1 ORDER BY triggered_at DESC LIMIT $2`,
+      [userId, limit]
+    );
+    return rows;
+  },
+
+  async getMostActiveSymbol(userId) {
+    const { rows } = await pool.query(
+      `SELECT symbol, COUNT(*) AS count FROM alert_trigger_history
+       WHERE user_id = $1 GROUP BY symbol ORDER BY count DESC LIMIT 1`,
+      [userId]
+    );
+    return rows[0] || null;
+  },
+
+  async getAvgTimeToTriggerHours(userId) {
+    const { rows } = await pool.query(
+      `SELECT AVG(EXTRACT(EPOCH FROM (triggered_at - alert_created_at)) / 3600.0) AS avg_hours
+       FROM alert_trigger_history WHERE user_id = $1`,
+      [userId]
+    );
+    const avg = rows[0] && rows[0].avg_hours;
+    return avg != null ? Math.round(Number(avg) * 10) / 10 : null;
+  },
+
+  // Self-healing: any alert whose status is 'triggered' but has no matching row in
+  // alert_trigger_history (e.g. the original fire-and-forget insert failed) gets
+  // backfilled here using the data already on the alert itself. Safe to call repeatedly.
+  async backfillMissingTriggerHistory(userId) {
+    const { rows: missing } = await pool.query(
+      `SELECT a.id, a.symbol, a.alert_type, a.priority, a.condition, a.target_price,
+              a.last_checked_price, a.created_at, a.triggered_at
+       FROM alerts a
+       WHERE a.user_id = $1 AND a.status = 'triggered' AND a.triggered_at IS NOT NULL
+         AND NOT EXISTS (
+           SELECT 1 FROM alert_trigger_history h WHERE h.alert_id = a.id
+         )`,
+      [userId]
+    );
+
+    for (const row of missing) {
+      await pool.query(
+        `INSERT INTO alert_trigger_history
+           (user_id, alert_id, symbol, alert_type, priority, condition, target_price, price_at_trigger, alert_created_at, triggered_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+        [
+          userId, row.id, row.symbol, row.alert_type, row.priority, row.condition,
+          row.target_price, row.last_checked_price || row.target_price, row.created_at, row.triggered_at
+        ]
+      );
+    }
   },
 
   // --- Chat history ---

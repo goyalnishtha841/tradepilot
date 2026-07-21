@@ -2,9 +2,10 @@ const express = require('express');
 const fetch = require('node-fetch');
 const { requireAuth } = require('./auth');
 const db = require('./db');
-const { getRealQuote, getNews } = require('./yahoo-finance');
-const { getMockQuote, getSectorForSymbol } = require('./mock-market');
+const { getRealQuote, getNews, getMarketMovers } = require('./yahoo-finance');
+const { getMockQuote, getSectorForSymbol, LEGIT_SYMBOLS } = require('./mock-market');
 const { COMPLIANCE_INSTRUCTION } = require('./compliance');
+const { SECTOR_ETFS } = require('./sector-etfs');
 
 const router = express.Router();
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
@@ -18,6 +19,114 @@ async function getQuoteWithFallback(symbol) {
     return getMockQuote(symbol);
   }
 }
+
+// GET /api/narrative/snapshot — real-time data for every widget on Today's Narrative
+// EXCEPT the AI text (that's POST /). Sector performance, gainers/losers, and the
+// financial-impact panel are computed live from Yahoo Finance quotes; nothing here is invented.
+router.get('/snapshot', requireAuth, async (req, res) => {
+  try {
+    const [sectorResults, universeResults, holdings] = await Promise.all([
+      Promise.all(SECTOR_ETFS.map(async (s) => {
+        try {
+          const q = await getRealQuote(s.symbol);
+          return { ...s, changePercent: q.changePercent, simulated: false };
+        } catch (err) {
+          return { ...s, changePercent: getMockQuote(s.symbol).changePercent, simulated: true };
+        }
+      })),
+      Promise.all(LEGIT_SYMBOLS.map(async ({ symbol, name }) => {
+        try {
+          const q = await getRealQuote(symbol);
+          return { symbol, name, changePercent: q.changePercent, price: q.price, simulated: false };
+        } catch (err) {
+          const mq = getMockQuote(symbol);
+          return { symbol, name, changePercent: mq.changePercent, price: mq.price, simulated: true };
+        }
+      })),
+      db.listHoldings(req.user.id)
+    ]);
+
+    // Sector performance (real, from sector ETFs)
+    const sectorPerformance = sectorResults.sort((a, b) => b.changePercent - a.changePercent);
+
+    // Gainers / losers — try Yahoo's real market-wide screener first (genuinely
+    // ranks the whole market, not a fixed list). Falls back to the small fixed
+    // watchlist universe only if the screener endpoint is unavailable.
+    let gainers, losers, moversScope;
+    try {
+      const [marketGainers, marketLosers] = await Promise.all([
+        getMarketMovers('gainers', 5),
+        getMarketMovers('losers', 5)
+      ]);
+      gainers = marketGainers.slice(0, 3).map((m) => ({ ...m, simulated: false }));
+      losers = marketLosers.slice(0, 3).map((m) => ({ ...m, simulated: false }));
+      moversScope = 'market-wide';
+    } catch (err) {
+      console.warn(`Market-wide movers unavailable (${err.message}), falling back to fixed universe.`);
+      const sorted = [...universeResults].sort((a, b) => b.changePercent - a.changePercent);
+      gainers = sorted.filter((s) => s.changePercent > 0).slice(0, 3);
+      losers = sorted.filter((s) => s.changePercent < 0).slice(-3).reverse();
+      moversScope = 'limited-universe';
+    }
+
+    // Direct financial impact (real, from the user's actual holdings)
+    let directFinancialImpact = null;
+    if (holdings.length > 0) {
+      const enrichedHoldings = await Promise.all(holdings.map(async (h) => {
+        const q = await getQuoteWithFallback(h.symbol);
+        const dollarChange = Math.round(q.changeAbs * Number(h.quantity) * 100) / 100;
+        return { symbol: h.symbol, dollarChange, changePercent: q.changePercent, simulated: q.simulated };
+      }));
+      const totalDollarChange = Math.round(enrichedHoldings.reduce((sum, h) => sum + h.dollarChange, 0) * 100) / 100;
+      const movers = enrichedHoldings
+        .sort((a, b) => Math.abs(b.dollarChange) - Math.abs(a.dollarChange))
+        .slice(0, 3)
+        .map((h) => ({
+          symbol: h.symbol,
+          dollarChange: h.dollarChange,
+          changePercent: h.changePercent,
+          severity: Math.abs(h.changePercent) >= 3 ? 'Critical' : Math.abs(h.changePercent) >= 1 ? 'Medium' : 'Low'
+        }));
+      directFinancialImpact = {
+        totalDollarChange,
+        movers,
+        anySimulated: enrichedHoldings.some((h) => h.simulated)
+      };
+    }
+
+    // Narrative feed (real recent news, from the user's own symbols where possible, else broad market)
+    const newsSymbols = holdings.length > 0
+      ? [...new Set(holdings.map((h) => h.symbol.trim().toUpperCase()))].slice(0, 3)
+      : ['SPY', 'QQQ'];
+    const newsResults = await Promise.all(
+      newsSymbols.map(async (s) => {
+        try {
+          return await getNews(s, 2);
+        } catch (err) {
+          return [];
+        }
+      })
+    );
+    const narrativeFeed = newsResults
+      .flat()
+      .filter((n) => n.publishedAt)
+      .sort((a, b) => b.publishedAt - a.publishedAt)
+      .slice(0, 6);
+
+    res.json({
+      sectorPerformance,
+      gainers,
+      losers,
+      moversScope,
+      directFinancialImpact,
+      narrativeFeed,
+      generatedAt: new Date().toISOString()
+    });
+  } catch (err) {
+    console.error('Narrative snapshot error:', err);
+    res.status(500).json({ error: 'Could not load live market data for this page.' });
+  }
+});
 
 // POST /api/narrative — generates today's personalized AI market narrative,
 // grounded in the logged-in user's REAL watchlist + holdings quotes and
