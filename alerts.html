@@ -209,75 +209,25 @@
                     </button>
 </div>
 </header>
-<!-- Urgent Action Center (Condensed) -->
+<!-- Urgent Action Center (real, from your own alerts) -->
 <section class="space-y-sm">
 <h3 class="text-label-sm font-bold text-error uppercase tracking-wider flex items-center gap-xs">
 <span class="material-symbols-outlined text-[16px]">emergency</span>
                     Urgent Action Center
                 </h3>
-<div class="grid grid-cols-1 md:grid-cols-2 gap-sm">
-<div class="bg-error-container/20 border border-error/20 rounded-20px p-md flex items-center gap-md">
-<div class="w-12 h-12 bg-error-container rounded-full flex items-center justify-center flex-shrink-0">
-<span class="material-symbols-outlined text-error">priority_high</span>
-</div>
-<div class="flex-1">
-<h4 class="text-label-md font-bold text-on-surface">$NVDA Stop-Loss Risk</h4>
-<p class="text-[12px] text-on-surface-variant">Price near $845 support level.</p>
-</div>
-<button class="px-4 py-2 bg-error text-white text-label-sm font-bold rounded-lg shadow-sm hover:opacity-90">Hedge</button>
-</div>
-<div class="bg-secondary-container/20 border border-secondary/20 rounded-20px p-md flex items-center gap-md">
-<div class="w-12 h-12 bg-secondary-container rounded-full flex items-center justify-center flex-shrink-0">
-<span class="material-symbols-outlined text-secondary">trending_up</span>
-</div>
-<div class="flex-1">
-<h4 class="text-label-md font-bold text-on-surface">$BTC Momentum Breakout</h4>
-<p class="text-[12px] text-on-surface-variant">Institutional flows hit 10-day high.</p>
-</div>
-<button class="px-4 py-2 bg-secondary text-white text-label-sm font-bold rounded-lg shadow-sm hover:opacity-90">Review</button>
-</div>
+<div id="urgent-action-center" class="grid grid-cols-1 md:grid-cols-2 gap-sm">
+<p class="text-label-sm text-on-surface-variant">Loading…</p>
 </div>
 </section>
-<!-- Alert Categories Grid (Bento Style) -->
-<div class="grid grid-cols-1 md:grid-cols-4 gap-sm">
-<div class="p-md bg-white border border-outline-variant/30 rounded-20px shadow-sm hover:shadow-md transition-all group cursor-pointer">
-<div class="flex justify-between items-start mb-xs">
-<span class="material-symbols-outlined text-primary p-2 bg-surface-container rounded-lg">monetization_on</span>
-<span class="text-label-sm font-label-sm text-on-surface-variant">12 Active</span>
-</div>
-<h3 class="text-label-md font-bold text-on-surface">Price Targets</h3>
-<p class="text-label-sm text-on-surface-variant mt-1">Specific price thresholds and breakouts.</p>
-</div>
-<div class="p-md bg-white border border-outline-variant/30 rounded-20px shadow-sm hover:shadow-md transition-all group cursor-pointer">
-<div class="flex justify-between items-start mb-xs">
-<span class="material-symbols-outlined text-primary p-2 bg-surface-container rounded-lg">bar_chart</span>
-<span class="text-label-sm font-label-sm text-on-surface-variant">4 Active</span>
-</div>
-<h3 class="text-label-md font-bold text-on-surface">Volume Spikes</h3>
-<p class="text-label-sm text-on-surface-variant mt-1">Unusual institutional buying pressure.</p>
-</div>
-<div class="p-md bg-white border border-outline-variant/30 rounded-20px shadow-sm hover:shadow-md transition-all group cursor-pointer">
-<div class="flex justify-between items-start mb-xs">
-<span class="material-symbols-outlined text-primary p-2 bg-surface-container rounded-lg">newspaper</span>
-<span class="text-label-sm font-label-sm text-on-surface-variant">8 Active</span>
-</div>
-<h3 class="text-label-md font-bold text-on-surface">News Impact</h3>
-<p class="text-label-sm text-on-surface-variant mt-1">Real-time alerts for market movers.</p>
-</div>
-<div class="p-md bg-white border border-outline-variant/30 rounded-20px shadow-sm hover:shadow-md transition-all group cursor-pointer">
-<div class="flex justify-between items-start mb-xs">
-<span class="material-symbols-outlined text-primary p-2 bg-surface-container rounded-lg">psychology</span>
-<span class="text-label-sm font-label-sm text-on-surface-variant">2 Active</span>
-</div>
-<h3 class="text-label-md font-bold text-on-surface">AI Sentiment</h3>
-<p class="text-label-sm text-on-surface-variant mt-1">Shift in social and analyst mood.</p>
-</div>
+<!-- Alert Categories (real counts, from your own alerts) -->
+<div id="alert-categories-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-sm">
+<p class="text-label-sm text-on-surface-variant">Loading…</p>
 </div>
 <!-- Your Alerts (real, live data) -->
 <section class="space-y-md">
 <div class="flex items-center justify-between">
 <h2 class="font-title-md text-title-md text-on-surface">Your Alerts</h2>
-<span class="text-label-sm text-on-surface-variant">Prices simulated for demo purposes</span>
+<span id="alerts-data-badge" class="text-label-sm text-on-surface-variant"></span>
 </div>
 <div id="alert-form-success" class="hidden bg-secondary-container text-on-secondary-container text-label-sm font-label-md rounded-xl px-4 py-2"></div>
 <div id="your-alerts-list" class="grid grid-cols-1 gap-sm">
@@ -286,117 +236,27 @@ You don't have any alerts yet — click "Create New Alert" above to set one up.
 </p>
 </div>
 </section>
-<!-- Active Alerts Feed -->
+<!-- Recent Triggers (real, from your alert trigger history) -->
 <section class="space-y-md">
 <div class="flex items-center justify-between">
 <h2 class="font-title-md text-title-md text-on-surface">Recent Triggers</h2>
-<div class="flex gap-xs">
-<button class="px-3 py-1 bg-surface-container-high rounded-full text-label-sm font-label-sm">Priority: All</button>
-<button class="px-3 py-1 bg-white border border-outline-variant rounded-full text-label-sm font-label-sm">Time: 24h</button>
 </div>
-</div>
-<div class="grid grid-cols-1 gap-md">
-<!-- Alert Card: Critical -->
-<div class="bg-white border border-outline-variant/30 rounded-20px p-md shadow-sm border-l-4 border-l-error">
-<div class="flex flex-col lg:flex-row gap-md">
-<div class="flex-1 space-y-sm">
-<div class="flex items-center gap-sm">
-<span class="px-2 py-0.5 bg-error-container text-on-error-container rounded text-label-sm font-label-sm">CRITICAL</span>
-<span class="text-label-sm text-on-surface-variant">2 mins ago</span>
-<h4 class="text-title-md font-title-md">$NVDA Sudden Reversal</h4>
-</div>
-<div class="bg-surface-container-low p-sm rounded-xl border border-outline-variant/20">
-<p class="text-label-md font-bold mb-xs">Why it triggered:</p>
-<p class="text-body-md text-on-surface-variant">Price dropped 3.2% in 45 seconds following a massive block trade of 500k shares at the $845 support level. AI sentiment shifted from "Bullish" to "Uncertain" instantly.</p>
-</div>
-<div class="grid grid-cols-1 md:grid-cols-2 gap-sm">
-<div class="bg-surface-container-low p-sm rounded-xl border border-outline-variant/20">
-<p class="text-label-sm font-bold text-error mb-xs">Financial Impact:</p>
-<p class="text-label-md text-on-surface-variant">Potential volatility expansion of 15%. Direct impact on tech sector indices expected within the hour.</p>
-</div>
-<div class="bg-primary-container p-sm rounded-xl border border-primary/20">
-<p class="text-label-sm font-bold text-on-primary-container mb-xs">What to know:</p>
-<p class="text-label-md text-on-primary-container">Semiconductor exposure across the sector may see wider price swings following this move.</p>
-</div>
-</div>
-</div>
-<div class="lg:w-64 flex flex-col gap-sm">
-<button class="w-full py-3 bg-surface-container-high text-on-surface rounded-xl text-label-md font-bold flex items-center justify-center gap-2">
-<span class="material-symbols-outlined text-[20px]">visibility</span> Analyze Chart
-                                </button>
-<div class="p-sm bg-tertiary-fixed rounded-xl">
-<p class="text-[10px] uppercase font-bold text-on-tertiary-fixed-variant mb-xs">Learning Lab</p>
-<p class="text-label-sm font-bold text-on-tertiary-fixed">Understanding Block Trade Dynamics</p>
-</div>
-</div>
-</div>
-</div>
-<!-- Alert Card: High -->
-<div class="bg-white border border-outline-variant/30 rounded-20px p-md shadow-sm border-l-4 border-l-secondary">
-<div class="flex flex-col lg:flex-row gap-md">
-<div class="flex-1 space-y-sm">
-<div class="flex items-center gap-sm">
-<span class="px-2 py-0.5 bg-secondary-container text-on-secondary-container rounded text-label-sm font-label-sm">HIGH</span>
-<span class="text-label-sm text-on-surface-variant">1 hour ago</span>
-<h4 class="text-title-md font-title-md">$BTC Institutional Sentiment Shift</h4>
-</div>
-<div class="bg-surface-container-low p-sm rounded-xl border border-outline-variant/20">
-<p class="text-label-md font-bold mb-xs">Why it triggered:</p>
-<p class="text-body-md text-on-surface-variant">Consensus among top 50 financial newsletters shifted toward "Accumulation" phase as Spot ETF flows hit a 10-day high.</p>
-</div>
-<div class="grid grid-cols-1 md:grid-cols-2 gap-sm">
-<div class="bg-surface-container-low p-sm rounded-xl border border-outline-variant/20">
-<p class="text-label-sm font-bold text-secondary mb-xs">Financial Impact:</p>
-<p class="text-label-md text-on-surface-variant">Medium-term bullish structure confirmation. Liquidity depth improved by 12% in the last 4 hours.</p>
-</div>
-<div class="bg-primary-container p-sm rounded-xl border border-primary/20">
-<p class="text-label-sm font-bold text-on-primary-container mb-xs">What to know:</p>
-<p class="text-label-md text-on-primary-container">Crypto-linked equities like COIN and MSTR often move in the same direction as this kind of sentiment shift.</p>
-</div>
-</div>
-</div>
-<div class="lg:w-64 flex flex-col gap-sm">
-<button class="w-full py-3 bg-surface-container-high text-on-surface rounded-xl text-label-md font-bold">Deep Research</button>
-<div class="p-sm bg-surface-container rounded-xl">
-<p class="text-[10px] uppercase font-bold text-on-surface-variant mb-xs">Learning Lab</p>
-<p class="text-label-sm font-bold text-on-surface">Spot ETF Flow Mechanics</p>
-</div>
-</div>
-</div>
-</div>
+<div id="recent-triggers-list" class="grid grid-cols-1 gap-md">
+<p class="text-label-sm text-on-surface-variant">Loading…</p>
 </div>
 </section>
-<!-- Alert History & Analytics Section -->
+<!-- Alert History & Analytics Section (real, computed from your trigger history) -->
 <section class="grid grid-cols-1 md:grid-cols-3 gap-md">
 <div class="md:col-span-2 bg-white border border-outline-variant/30 rounded-20px p-md overflow-hidden">
-<h3 class="font-title-md text-title-md mb-md">Alert Performance History</h3>
-<div class="relative h-64 w-full bg-surface-container-lowest rounded-xl flex items-center justify-center overflow-hidden">
-<div class="absolute inset-0 bg-cover bg-center opacity-80" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuA3cAHbJ-C8nXSo07REU7dp5ZAHDkDbsL9-JTd_4yL9piB5pIui_XRIzrGiuB2SERfNH4vcnJsR-UYvFyzWn82ef4V9Poxean7IKv9iZgdJJD-h78wB8756k-Yo9Mm9eR6B_URt9rl94QIl260oPChXDdr7b-WJEySyle4-tqJO3BEA0n52uvLSgD2dD3txmfg12vtY2ab-rLpXuXetu7ihggJJKmV9N0DQkVrCXGf19firOc6ynigM6QBki9tm3fFskMLaVPMr9_I')"></div>
-<div class="relative z-10 text-center bg-white/60 backdrop-blur px-4 py-2 rounded-lg border border-white">
-<p class="text-label-md font-bold">84% Signal Accuracy</p>
-<p class="text-[10px] text-on-surface-variant">Measured over the last 30 days</p>
-</div>
+<h3 class="font-title-md text-title-md mb-md">Signal Accuracy</h3>
+<div id="signal-accuracy-display" class="relative h-64 w-full bg-surface-container-lowest rounded-xl flex items-center justify-center overflow-hidden">
+<p class="text-label-sm text-on-surface-variant">Loading…</p>
 </div>
 </div>
 <div class="bg-white border border-outline-variant/30 rounded-20px p-md space-y-md">
 <h3 class="font-title-md text-title-md">Alert Insights</h3>
-<div class="space-y-sm">
-<div class="flex items-center justify-between p-sm bg-surface-container-low rounded-xl">
-<span class="text-label-md">Most Active Asset</span>
-<span class="font-bold">$TSLA</span>
-</div>
-<div class="flex items-center justify-between p-sm bg-surface-container-low rounded-xl">
-<span class="text-label-md">Avg Response Time</span>
-<span class="font-bold">14.2s</span>
-</div>
-<div class="flex items-center justify-between p-sm bg-surface-container-low rounded-xl">
-<span class="text-label-md">Profitable Triggers</span>
-<span class="font-bold text-secondary">71%</span>
-</div>
-<div class="p-sm bg-primary-container text-on-primary-container rounded-xl">
-<p class="text-label-sm font-bold mb-xs">AI Tip:</p>
-<p class="text-[12px] leading-tight opacity-90">Your News alerts have 2x better performance than Price alerts. Consider weighting your News alerts higher.</p>
-</div>
+<div id="alert-insights-list" class="space-y-sm">
+<p class="text-label-sm text-on-surface-variant">Loading…</p>
 </div>
 </div>
 </section>
@@ -438,15 +298,17 @@ You don't have any alerts yet — click "Create New Alert" above to set one up.
 </div>
 </div>
 <div id="alert-price-condition-wrap">
-<label class="text-label-sm font-bold text-on-surface-variant block mb-1">Trigger Condition</label>
+<label id="alert-condition-label" class="text-label-sm font-bold text-on-surface-variant block mb-1">Trigger Condition</label>
 <div class="flex gap-xs items-center bg-surface-container p-4 rounded-xl border border-outline-variant/50">
-<span class="text-on-surface-variant">Price goes</span>
+<span id="alert-condition-verb" class="text-on-surface-variant">Price goes</span>
 <select id="alert-condition" class="bg-white border border-outline-variant rounded-lg px-2 py-1 text-label-md">
 <option value="above">above</option>
 <option value="below">below</option>
 </select>
 <input id="alert-target-price" class="flex-1 bg-white border border-outline-variant rounded-lg px-2 py-1 text-label-md w-24" placeholder="0.00" type="number" step="0.01"/>
+<span id="alert-target-unit" class="text-on-surface-variant text-label-sm"></span>
 </div>
+<p id="alert-condition-hint" class="text-[11px] text-on-surface-variant mt-1"></p>
 </div>
 <div class="p-sm bg-surface-container-low rounded-xl border border-outline-variant/30">
 <div class="flex items-center gap-xs mb-1">
@@ -454,6 +316,13 @@ You don't have any alerts yet — click "Create New Alert" above to set one up.
 <span class="text-label-sm font-bold">AI Context</span>
 </div>
 <p class="text-[12px] text-on-surface-variant">When this alert triggers, TradePilot will describe what happened in plain language. It won't tell you to buy, sell, or hold anything — that requires a compliance review we haven't done yet.</p>
+</div>
+<div id="alert-type-note" class="hidden bg-surface-container-low rounded-xl border border-outline-variant/30 p-sm">
+<div class="flex items-center gap-xs mb-1">
+<span class="material-symbols-outlined text-[16px] text-primary">info</span>
+<span id="alert-type-note-label" class="text-label-sm font-bold">How this alert type works</span>
+</div>
+<p id="alert-type-note-text" class="text-[12px] text-on-surface-variant"></p>
 </div>
 </div>
 <div class="flex gap-md pt-md">

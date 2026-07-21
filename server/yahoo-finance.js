@@ -39,6 +39,11 @@ async function getRealQuote(symbolRaw) {
   const changeAbs = price - previousClose;
   const changePercent = (changeAbs / previousClose) * 100;
 
+  // regularMarketVolume is genuinely present on the chart endpoint's meta object.
+  // averageDailyVolume3Month/10Day are NOT — those live in the quoteSummary
+  // endpoint instead, so they're returned from getFundamentals(), not here.
+  const volume = typeof meta.regularMarketVolume === 'number' ? meta.regularMarketVolume : null;
+
   return {
     symbol: meta.symbol || symbol,
     price: Math.round(price * 100) / 100,
@@ -47,7 +52,8 @@ async function getRealQuote(symbolRaw) {
     currency: meta.currency || 'USD',
     exchange: meta.fullExchangeName || meta.exchangeName || '—',
     postMarketPrice: typeof meta.postMarketPrice === 'number' ? Math.round(meta.postMarketPrice * 100) / 100 : null,
-    postMarketChangePercent: typeof meta.postMarketChangePercent === 'number' ? Math.round(meta.postMarketChangePercent * 100) / 100 : null
+    postMarketChangePercent: typeof meta.postMarketChangePercent === 'number' ? Math.round(meta.postMarketChangePercent * 100) / 100 : null,
+    volume
   };
 }
 
@@ -163,7 +169,24 @@ async function getFundamentals(symbolRaw) {
   const financialData = result.financialData || {};
   const assetProfile = result.assetProfile || {};
   const price = result.price || {};
-  const raw = (obj, key) => (obj && obj[key] && typeof obj[key].raw === 'number') ? obj[key].raw : null;
+  const raw = (obj, key) => (obj && obj[key] && typeof obj[key].raw === 'number') ? obj[key].raw
+    : (obj && typeof obj[key] === 'number' ? obj[key] : null);
+
+  // Diagnostic: if this ever fails to find volume data again, this log shows
+  // Yahoo's ACTUAL field names for this module instead of us guessing a third time.
+  if (process.env.DEBUG_YAHOO_FIELDS) {
+    console.log(`[DEBUG] summaryDetail keys for ${symbol}:`, Object.keys(summaryDetail));
+  }
+
+  const volumeCandidates = ['volume', 'regularMarketVolume'];
+  const avgVolumeCandidates = ['averageDailyVolume3Month', 'averageVolume', 'averageDailyVolume10Day', 'averageVolume10days'];
+  const firstMatch = (obj, keys) => {
+    for (const k of keys) {
+      const v = raw(obj, k);
+      if (v != null) return v;
+    }
+    return null;
+  };
 
   return {
     peRatio: raw(summaryDetail, 'trailingPE'),
@@ -172,7 +195,9 @@ async function getFundamentals(symbolRaw) {
     grossMargin: raw(financialData, 'grossMargins'),
     sector: assetProfile.sector || null,
     industry: assetProfile.industry || null,
-    exchange: price.exchangeName || null
+    exchange: price.exchangeName || null,
+    volume: firstMatch(summaryDetail, volumeCandidates),
+    avgVolume: firstMatch(summaryDetail, avgVolumeCandidates)
   };
 }
 
@@ -216,4 +241,38 @@ async function getNews(symbolRaw, count = 2) {
   });
 }
 
-module.exports = { getRealQuote, getHistoricalData, getFundamentals, getNews };
+// ---------- Component 5: Market-wide Gainers/Losers ----------
+// Uses Yahoo's public predefined screener (day_gainers / day_losers) — this is a
+// genuinely market-wide ranking, not limited to a fixed watchlist. Less documented/
+// stable than the chart endpoint, so callers should have a fallback if this fails.
+
+async function getMarketMovers(type = 'gainers', count = 5) {
+  const scrId = type === 'gainers' ? 'day_gainers' : 'day_losers';
+  const url = `${YAHOO_BASE}/v1/finance/screener/predefined/saved?formatted=false&scrIds=${scrId}&count=${count}&lang=en-US&region=US`;
+  const data = await fetchJson(url);
+
+  const result = data && data.finance && data.finance.result && data.finance.result[0];
+  const quotes = (result && Array.isArray(result.quotes)) ? result.quotes : [];
+
+  if (quotes.length === 0) {
+    throw new Error('MARKET_MOVERS_UNAVAILABLE');
+  }
+
+  function unwrap(field) {
+    if (field == null) return null;
+    return typeof field === 'object' && 'raw' in field ? field.raw : field;
+  }
+
+  return quotes.map((q) => {
+    const price = unwrap(q.regularMarketPrice);
+    const changePercent = unwrap(q.regularMarketChangePercent);
+    return {
+      symbol: q.symbol,
+      name: q.shortName || q.longName || q.symbol,
+      price: typeof price === 'number' ? Math.round(price * 100) / 100 : null,
+      changePercent: typeof changePercent === 'number' ? Math.round(changePercent * 100) / 100 : null
+    };
+  }).filter((q) => typeof q.price === 'number' && typeof q.changePercent === 'number');
+}
+
+module.exports = { getRealQuote, getHistoricalData, getFundamentals, getNews, getMarketMovers };

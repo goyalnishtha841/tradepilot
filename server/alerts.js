@@ -1,8 +1,10 @@
 const express = require('express');
 const db = require('./db');
 const { requireAuth } = require('./auth');
-const { getRealQuote } = require('./yahoo-finance');
-const { getMockPrice } = require('./mock-market');
+const { getRealQuote, getNews, getFundamentals } = require('./yahoo-finance');
+const { getMockPrice, getSectorForSymbol } = require('./mock-market');
+const { getSectorEtfFor } = require('./sector-etfs');
+const { getRecentFilings } = require('./sec-edgar');
 
 const router = express.Router();
 
@@ -16,11 +18,26 @@ const VALID_ALERT_TYPES = [
   'Sector Impact',
   'Portfolio Relevance'
 ];
-// Only these types have a live data feed to check against right now.
-// The rest are saved and displayed but not yet auto-evaluated — each would need
-// its own real data pipeline (volume feed, filings feed, sentiment model, etc.)
-// beyond real-time price, which is out of scope for this pass.
-const MONITORED_TYPES = ['Price Threshold'];
+// Every type below has a real, live data feed backing it — including Filing now,
+// via SEC EDGAR's free public API.
+const MONITORED_TYPES = [
+  'Price Threshold',
+  'Volume Movement',
+  'News',
+  'Filing',
+  'Sentiment Shift',
+  'Sector Impact',
+  'Portfolio Relevance'
+];
+// News and Filing don't need a condition/target price — they fire on the next
+// real article/filing. Every other monitored type needs a numeric threshold.
+const TYPES_REQUIRING_TARGET = [
+  'Price Threshold',
+  'Volume Movement',
+  'Sentiment Shift',
+  'Sector Impact',
+  'Portfolio Relevance'
+];
 
 function isValidSymbol(symbol) {
   return typeof symbol === 'string' && /^[A-Za-z.\-]{1,15}$/.test(symbol.trim());
@@ -37,40 +54,224 @@ async function getPriceWithFallback(symbol) {
   }
 }
 
-// GET /api/alerts — list this user's alerts, auto-checking monitored types against real-time price
+// ---------- Per-type evaluators ----------
+// Each returns { currentPrice, simulated, shouldTrigger, displayValue, unavailable? }
+// currentPrice is always the underlying stock price (for consistent display),
+// displayValue is the specific real metric that type actually monitors.
+
+async function evaluatePriceThreshold(alert) {
+  const { price, simulated } = await getPriceWithFallback(alert.symbol);
+  const target = Number(alert.targetPrice);
+  const shouldTrigger = alert.condition === 'above' ? price >= target : price <= target;
+  return { currentPrice: price, simulated, shouldTrigger, displayValue: `$${price}` };
+}
+
+async function evaluateVolumeMovement(alert) {
+  try {
+    const [quote, fundamentals] = await Promise.all([
+      getRealQuote(alert.symbol),
+      getFundamentals(alert.symbol)
+    ]);
+    const volume = quote.volume;
+    const avgVolume = fundamentals.avgVolume;
+    if (volume == null || !avgVolume) {
+      return { currentPrice: quote.price, simulated: false, shouldTrigger: false, displayValue: 'volume data unavailable for this symbol', unavailable: true };
+    }
+    const volumeRatio = Math.round((volume / avgVolume) * 100) / 100;
+    const target = Number(alert.targetPrice);
+    const shouldTrigger = alert.condition === 'above' ? volumeRatio >= target : volumeRatio <= target;
+    return { currentPrice: quote.price, simulated: false, shouldTrigger, displayValue: `${volumeRatio}x average volume` };
+  } catch (err) {
+    const { price } = await getPriceWithFallback(alert.symbol);
+    return { currentPrice: price, simulated: true, shouldTrigger: false, displayValue: 'volume data temporarily unavailable', unavailable: true };
+  }
+}
+
+async function evaluateSectorImpact(alert) {
+  const { price } = await getPriceWithFallback(alert.symbol);
+  const sector = getSectorForSymbol(alert.symbol);
+  const etf = getSectorEtfFor(sector);
+  if (!etf) {
+    return { currentPrice: price, simulated: true, shouldTrigger: false, displayValue: 'sector data unavailable for this symbol', unavailable: true };
+  }
+  try {
+    const etfQuote = await getRealQuote(etf.symbol);
+    const target = Number(alert.targetPrice);
+    const shouldTrigger = alert.condition === 'above' ? etfQuote.changePercent >= target : etfQuote.changePercent <= -target;
+    return {
+      currentPrice: price,
+      simulated: false,
+      shouldTrigger,
+      displayValue: `${sector} sector ${etfQuote.changePercent > 0 ? '+' : ''}${etfQuote.changePercent}% today`
+    };
+  } catch (err) {
+    return { currentPrice: price, simulated: true, shouldTrigger: false, displayValue: 'sector data temporarily unavailable', unavailable: true };
+  }
+}
+
+async function evaluatePortfolioRelevance(alert, userId) {
+  const { price, simulated } = await getPriceWithFallback(alert.symbol);
+  const holdings = await db.listHoldings(userId);
+  const inPortfolio = holdings.some((h) => h.symbol.trim().toUpperCase() === alert.symbol);
+
+  if (!inPortfolio) {
+    return { currentPrice: price, simulated, shouldTrigger: false, displayValue: `not currently in your portfolio — add a $${alert.symbol} holding for this alert to activate`, unavailable: true };
+  }
+
+  try {
+    const quote = await getRealQuote(alert.symbol);
+    const target = Number(alert.targetPrice);
+    const shouldTrigger = alert.condition === 'above' ? quote.changePercent >= target : quote.changePercent <= -target;
+    return {
+      currentPrice: quote.price,
+      simulated: false,
+      shouldTrigger,
+      displayValue: `${quote.changePercent > 0 ? '+' : ''}${quote.changePercent}% today, held in your portfolio`
+    };
+  } catch (err) {
+    return { currentPrice: price, simulated: true, shouldTrigger: false, displayValue: 'price data temporarily unavailable', unavailable: true };
+  }
+}
+
+async function evaluateNews(alert) {
+  const { price } = await getPriceWithFallback(alert.symbol);
+  try {
+    const news = await getNews(alert.symbol, 3);
+    const createdAt = new Date(alert.createdAt).getTime();
+    const freshItem = news.find((n) => n.publishedAt && n.publishedAt > createdAt);
+    return {
+      currentPrice: price,
+      simulated: false,
+      shouldTrigger: !!freshItem,
+      displayValue: freshItem ? `New: "${freshItem.title}" — ${freshItem.publisher}` : 'no new articles since you created this alert'
+    };
+  } catch (err) {
+    return { currentPrice: price, simulated: true, shouldTrigger: false, displayValue: 'news data temporarily unavailable', unavailable: true };
+  }
+}
+
+// Simple keyword heuristic over REAL headlines — this is NOT true AI sentiment
+// analysis (that needs an NLP model/paid API this app doesn't have). It's an
+// honest, clearly-labeled approximation: count finance-relevant positive vs.
+// negative words across real recent headlines for the symbol.
+const POSITIVE_WORDS = ['surge', 'soar', 'beat', 'upgrade', 'bullish', 'rally', 'gain', 'record high', 'strong', 'jumps', 'outperform', 'breakthrough', 'buy rating', 'rises'];
+const NEGATIVE_WORDS = ['plunge', 'miss', 'downgrade', 'bearish', 'crash', 'falls', 'weak', 'cut', 'lawsuit', 'probe', 'sell-off', 'slump', 'underperform', 'warns', 'drops'];
+
+function scoreHeadline(title) {
+  const t = title.toLowerCase();
+  let score = 0;
+  POSITIVE_WORDS.forEach((w) => { if (t.includes(w)) score += 1; });
+  NEGATIVE_WORDS.forEach((w) => { if (t.includes(w)) score -= 1; });
+  return score;
+}
+
+async function evaluateSentimentShift(alert) {
+  const { price } = await getPriceWithFallback(alert.symbol);
+  try {
+    const news = await getNews(alert.symbol, 5);
+    if (!news.length) {
+      return { currentPrice: price, simulated: true, shouldTrigger: false, displayValue: 'no recent news to score', unavailable: true };
+    }
+    const netScore = news.reduce((sum, n) => sum + scoreHeadline(n.title), 0);
+    const target = Number(alert.targetPrice);
+    const shouldTrigger = alert.condition === 'above' ? netScore >= target : netScore <= -target;
+    return {
+      currentPrice: price,
+      simulated: false,
+      shouldTrigger,
+      displayValue: `keyword sentiment score ${netScore} (heuristic, from ${news.length} real headlines — not AI sentiment)`
+    };
+  } catch (err) {
+    return { currentPrice: price, simulated: true, shouldTrigger: false, displayValue: 'sentiment data temporarily unavailable', unavailable: true };
+  }
+}
+
+// Real SEC EDGAR filing data — no API key, fires on the next actual 10-K/10-Q/8-K/etc.
+// filed for this symbol after the alert was created.
+async function evaluateFiling(alert) {
+  const { price } = await getPriceWithFallback(alert.symbol);
+  try {
+    const filings = await getRecentFilings(alert.symbol, 5);
+    const createdAt = new Date(alert.createdAt).getTime();
+    const freshFiling = filings.find((f) => new Date(f.filingDate).getTime() > createdAt);
+    return {
+      currentPrice: price,
+      simulated: false,
+      shouldTrigger: !!freshFiling,
+      displayValue: freshFiling
+        ? `New SEC filing: ${freshFiling.form} filed ${freshFiling.filingDate}`
+        : 'no new SEC filings since you created this alert'
+    };
+  } catch (err) {
+    if (err.message === 'CIK_NOT_FOUND') {
+      return { currentPrice: price, simulated: true, shouldTrigger: false, displayValue: 'SEC filing data not available for this symbol (may not be a US-listed company)', unavailable: true };
+    }
+    return { currentPrice: price, simulated: true, shouldTrigger: false, displayValue: 'SEC filing data temporarily unavailable', unavailable: true };
+  }
+}
+
+async function evaluateAlert(alert, userId) {
+  switch (alert.alertType) {
+    case 'Price Threshold': return evaluatePriceThreshold(alert);
+    case 'Volume Movement': return evaluateVolumeMovement(alert);
+    case 'Sector Impact': return evaluateSectorImpact(alert);
+    case 'Portfolio Relevance': return evaluatePortfolioRelevance(alert, userId);
+    case 'News': return evaluateNews(alert);
+    case 'Filing': return evaluateFiling(alert);
+    case 'Sentiment Shift': return evaluateSentimentShift(alert);
+    default: return null;
+  }
+}
+
+// GET /api/alerts — list this user's alerts, auto-checking every monitored type against real data
 router.get('/', requireAuth, async (req, res) => {
   try {
     const alerts = await db.listAlerts(req.user.id);
 
     const updated = await Promise.all(alerts.map(async (alert) => {
-      const { price: currentPrice, simulated } = await getPriceWithFallback(alert.symbol);
       const monitored = MONITORED_TYPES.includes(alert.alertType);
 
-      if (!monitored || alert.status !== 'active') {
-        return { ...alert, currentPrice, simulated, monitored };
+      if (!monitored) {
+        const { price, simulated } = await getPriceWithFallback(alert.symbol);
+        return { ...alert, currentPrice: price, simulated, monitored: false };
       }
 
-      const target = Number(alert.targetPrice);
-      const shouldTrigger =
-        (alert.condition === 'above' && currentPrice >= target) ||
-        (alert.condition === 'below' && currentPrice <= target);
+      const evalResult = await evaluateAlert(alert, req.user.id);
 
-      if (shouldTrigger) {
+      if (alert.status !== 'active') {
+        return { ...alert, currentPrice: evalResult.currentPrice, simulated: evalResult.simulated, displayValue: evalResult.displayValue, monitored: true };
+      }
+
+      if (evalResult.shouldTrigger) {
         const triggeredAt = new Date().toISOString();
         await db.updateAlertStatus(alert.id, {
           status: 'triggered',
-          lastCheckedPrice: currentPrice,
+          lastCheckedPrice: evalResult.currentPrice,
           triggeredAt
         });
-        return { ...alert, status: 'triggered', currentPrice, simulated, triggeredAt, monitored: true };
+        try {
+          await db.logAlertTrigger(req.user.id, {
+            alertId: alert.id,
+            symbol: alert.symbol,
+            alertType: alert.alertType,
+            priority: alert.priority,
+            condition: alert.condition,
+            targetPrice: alert.targetPrice,
+            priceAtTrigger: evalResult.currentPrice,
+            alertCreatedAt: alert.createdAt
+          });
+        } catch (e) {
+          console.error('Failed to log alert trigger history (will self-heal via backfill):', e);
+        }
+        return { ...alert, status: 'triggered', currentPrice: evalResult.currentPrice, simulated: evalResult.simulated, displayValue: evalResult.displayValue, triggeredAt, monitored: true };
       }
 
       await db.updateAlertStatus(alert.id, {
         status: 'active',
-        lastCheckedPrice: currentPrice,
+        lastCheckedPrice: evalResult.currentPrice,
         triggeredAt: alert.triggeredAt || null
       });
-      return { ...alert, currentPrice, simulated, monitored: true };
+      return { ...alert, currentPrice: evalResult.currentPrice, simulated: evalResult.simulated, displayValue: evalResult.displayValue, monitored: true };
     }));
 
     res.json({ alerts: updated });
@@ -91,18 +292,20 @@ router.post('/', requireAuth, async (req, res) => {
     if (alertType && !VALID_ALERT_TYPES.includes(alertType)) {
       return res.status(400).json({ error: 'Invalid alert type.' });
     }
-    const isMonitoredType = MONITORED_TYPES.includes(alertType || 'Price Threshold');
+    const resolvedType = alertType || 'Price Threshold';
+    const isMonitoredType = MONITORED_TYPES.includes(resolvedType);
+    const requiresTarget = TYPES_REQUIRING_TARGET.includes(resolvedType);
 
     let condToSave = 'above';
     let priceToSave = 0.01;
 
-    if (isMonitoredType) {
+    if (requiresTarget) {
       if (!VALID_CONDITIONS.includes(condition)) {
         return res.status(400).json({ error: 'Condition must be "above" or "below".' });
       }
       const price = Number(targetPrice);
       if (!targetPrice || isNaN(price) || price <= 0) {
-        return res.status(400).json({ error: 'Please enter a valid target price.' });
+        return res.status(400).json({ error: 'Please enter a valid target value.' });
       }
       condToSave = condition;
       priceToSave = price;
@@ -110,7 +313,7 @@ router.post('/', requireAuth, async (req, res) => {
 
     const alert = await db.createAlert(req.user.id, {
       symbol: symbol.trim().toUpperCase(),
-      alertType: alertType || 'Price Threshold',
+      alertType: resolvedType,
       priority: priority || 'Medium',
       condition: condToSave,
       targetPrice: priceToSave
@@ -135,6 +338,73 @@ router.delete('/:id', requireAuth, async (req, res) => {
   } catch (err) {
     console.error('Delete alert error:', err);
     res.status(500).json({ error: 'Could not delete alert.' });
+  }
+});
+
+// GET /api/alerts/history — recent real trigger events, factual descriptions only (no invented reasoning)
+router.get('/history', requireAuth, async (req, res) => {
+  try {
+    await db.backfillMissingTriggerHistory(req.user.id);
+    const history = await db.listTriggerHistory(req.user.id, 10);
+    res.json({ history });
+  } catch (err) {
+    console.error('Alert history error:', err);
+    res.status(500).json({ error: 'Could not load alert history.' });
+  }
+});
+
+// GET /api/alerts/insights — real aggregates computed from actual trigger history.
+// Returns nulls (not fake numbers) for anything without enough data yet.
+router.get('/insights', requireAuth, async (req, res) => {
+  try {
+    await db.backfillMissingTriggerHistory(req.user.id);
+    const [mostActive, avgTimeToTriggerHours, history] = await Promise.all([
+      db.getMostActiveSymbol(req.user.id),
+      db.getAvgTimeToTriggerHours(req.user.id),
+      db.listTriggerHistory(req.user.id, 50)
+    ]);
+
+    let signalAccuracy = null;
+    let signalSampleSize = 0;
+    if (history.length > 0) {
+      const eligible = history.filter((h) => {
+        const hoursSinceTrigger = (Date.now() - new Date(h.triggeredAt).getTime()) / 3600000;
+        return hoursSinceTrigger >= 1;
+      });
+      // Only these types have a clean "did the signal hold" concept — News fires
+      // once on a specific new article, so "still holds" doesn't apply the same way.
+      const scorable = eligible.filter((h) => ['Price Threshold', 'Volume Movement', 'Sector Impact', 'Portfolio Relevance', 'Sentiment Shift'].includes(h.alertType));
+      if (scorable.length > 0) {
+        const results = await Promise.all(scorable.map(async (h) => {
+          try {
+            // Re-run this history entry's own alert type through its real evaluator,
+            // using its original condition/target — correct per-type comparison
+            // (price vs $, volume vs ratio, sector/portfolio/sentiment vs %/score).
+            const pseudoAlert = { symbol: h.symbol, alertType: h.alertType, condition: h.condition, targetPrice: h.targetPrice, createdAt: h.alertCreatedAt };
+            const evalResult = await evaluateAlert(pseudoAlert, req.user.id);
+            return evalResult ? evalResult.shouldTrigger : null;
+          } catch (err) {
+            return null;
+          }
+        }));
+        const valid = results.filter((r) => r !== null);
+        signalSampleSize = valid.length;
+        if (valid.length > 0) {
+          signalAccuracy = Math.round((valid.filter(Boolean).length / valid.length) * 100);
+        }
+      }
+    }
+
+    res.json({
+      mostActiveSymbol: mostActive ? mostActive.symbol : null,
+      totalTriggers: history.length,
+      avgTimeToTriggerHours,
+      signalAccuracy,
+      signalSampleSize
+    });
+  } catch (err) {
+    console.error('Alert insights error:', err);
+    res.status(500).json({ error: 'Could not load alert insights.' });
   }
 });
 
