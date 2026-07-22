@@ -85,6 +85,7 @@
     let orderSide = "BUY"; // "BUY" or "SELL"
     let orderType = "MARKET"; // "MARKET", "LIMIT", or "STOP"
     let timeInForce = "GTC"; // "GTC" or "GTD"
+    let activeChartStyle = "candlestick"; // "candlestick", "hollow", "line", "area", "bar"
     let saveTimeout = null;
 
     // ApexCharts references
@@ -802,6 +803,7 @@
         if (centerView === "chart") {
             renderPriceChart(selectedSymbol, p.history);
         }
+        renderFundamentals(selectedSymbol);
     }
 
     function renderDepthLadder() {
@@ -1011,34 +1013,127 @@
         }
     }
 
-    // --- Charting logic via ApexCharts ---
-    function renderPriceChart(symbol, history) {
-        const isDark = document.documentElement.classList.contains('dark');
-        const chartData = history.map(h => ({ x: h.t, y: h.price }));
+    let activeRange = '1D';
+
+    // Generate Candlestick OHLC data for ApexCharts
+    function generateCandlestickData(p, history, range = '1D') {
+        const now = Date.now();
+        let count = 30;
+        let stepMs = 5 * 60 * 1000; // 5 min candles for 1D
         
+        if (range === '1M') {
+            count = 30;
+            stepMs = 24 * 60 * 60 * 1000;
+        } else if (range === '6M') {
+            count = 45;
+            stepMs = 4 * 24 * 60 * 60 * 1000;
+        } else if (range === '1Y') {
+            count = 52;
+            stepMs = 7 * 24 * 60 * 60 * 1000;
+        }
+        
+        const candles = [];
+        let currentPrice = p.prevClose || p.ltp || 100;
+        
+        for (let i = count; i >= 1; i--) {
+            const t = now - i * stepMs;
+            const change = (Math.random() - 0.49) * 0.015 * currentPrice;
+            const open = round2(currentPrice);
+            const close = round2(Math.max(0.1, currentPrice + change));
+            const high = round2(Math.max(open, close) + Math.random() * 0.008 * currentPrice);
+            const low = round2(Math.max(0.05, Math.min(open, close) - Math.random() * 0.008 * currentPrice));
+            
+            candles.push({ x: t, y: [open, high, low, close] });
+            currentPrice = close;
+        }
+        
+        // Push latest live tick as current candle
+        if (history && history.length > 0) {
+            const open = history[0].price;
+            const close = history[history.length - 1].price;
+            const high = Math.max(...history.map(h => h.price));
+            const low = Math.min(...history.map(h => h.price));
+            candles.push({ x: now, y: [open, high, low, close] });
+        }
+        
+        return candles;
+    }
+
+    // --- Charting logic via ApexCharts (Multi-style: Candles, Hollow, Line, Area, Bar) ---
+    function renderPriceChart(symbol, history, range = activeRange, style = activeChartStyle) {
+        const isDark = document.documentElement.classList.contains('dark');
+        const p = state.prices[symbol] || { ltp: 100, prevClose: 100 };
+        const rawCandles = generateCandlestickData(p, history, range);
+        
+        let apexType = 'candlestick';
+        let seriesData = rawCandles;
+        let strokeConfig = { curve: 'smooth', width: 2 };
+        let plotOptions = {
+            candlestick: {
+                colors: { upward: '#16a34a', downward: '#dc2626' }
+            }
+        };
+        let colors = ['#16a34a'];
+
+        if (style === 'hollow') {
+            apexType = 'candlestick';
+            plotOptions = {
+                candlestick: {
+                    colors: { upward: isDark ? '#0f172a' : '#ffffff', downward: '#dc2626' },
+                    wick: { useFillColor: true }
+                }
+            };
+        } else if (style === 'line') {
+            apexType = 'line';
+            seriesData = rawCandles.map(c => ({ x: c.x, y: c.y[3] }));
+            colors = ['#2563eb'];
+        } else if (style === 'area') {
+            apexType = 'area';
+            seriesData = rawCandles.map(c => ({ x: c.x, y: c.y[3] }));
+            colors = ['#16a34a'];
+        } else if (style === 'bar') {
+            apexType = 'bar';
+            seriesData = rawCandles.map(c => ({ x: c.x, y: c.y[3] }));
+            colors = ['#e89a23'];
+        }
+
+        // Re-create chart if type changed
+        if (priceChart && priceChart.w && priceChart.w.config && priceChart.w.config.chart.type !== apexType) {
+            priceChart.destroy();
+            priceChart = null;
+        }
+
         const options = {
             chart: {
                 id: 'price-chart',
-                type: 'area',
-                height: 280,
+                type: apexType,
+                height: 240,
                 animations: { enabled: false },
-                toolbar: { show: false },
+                toolbar: {
+                    show: true,
+                    autoSelected: 'zoom',
+                    tools: {
+                        download: false,
+                        selection: true,
+                        zoom: true,
+                        zoomin: true,
+                        zoomout: true,
+                        pan: true,
+                        reset: true
+                    }
+                },
+                zoom: {
+                    enabled: true,
+                    type: 'xy',
+                    autoScaleYaxis: true
+                },
                 background: 'transparent',
                 foreColor: isDark ? '#94a3b8' : '#64748b'
             },
-            colors: ['#e89a23'],
-            dataLabels: { enabled: false },
-            stroke: { curve: 'monotoneCubic', width: 2 },
-            fill: {
-                type: 'gradient',
-                gradient: {
-                    shadeIntensity: 1,
-                    opacityFrom: 0.35,
-                    opacityTo: 0.0,
-                    stops: [0, 90, 100]
-                }
-            },
-            series: [{ name: 'Price', data: chartData }],
+            colors: colors,
+            stroke: strokeConfig,
+            plotOptions: plotOptions,
+            series: [{ name: symbol, data: seriesData }],
             xaxis: {
                 type: 'datetime',
                 labels: {
@@ -1135,6 +1230,358 @@
         }
     }
 
+    // Company Financial Fundamentals Database
+    const FUNDAMENTALS = {
+        AAPL: { rev: "$119.58B (+2.1%)", net: "$33.92B", eps: "$2.18 (+$0.08 Beat)", margin: "30.7%", cash: "$61.55B", debt: "$106.63B", fcf: "$99.58B", ratios: "0.88 Quick / 1.45x D/E" },
+        AMZN: { rev: "$169.96B (+13.9%)", net: "$10.62B", eps: "$1.00 (+$0.20 Beat)", margin: "18.2%", cash: "$86.78B", debt: "$67.15B", fcf: "$36.81B", ratios: "1.05 Quick / 0.75x D/E" },
+        BTC: { rev: "N/A (Decentralized)", net: "N/A (PoW Reward 3.125)", eps: "N/A (21M Max Supply)", margin: "N/A", cash: "$1.30T MCap", debt: "$0.00 (No Liabilities)", fcf: "Hashrate 650 EH/s", ratios: "Crypto Commodity Asset" },
+        GOOGL: { rev: "$86.31B (+13.5%)", net: "$20.69B", eps: "$1.64 (+$0.05 Beat)", margin: "27.5%", cash: "$110.97B", debt: "$28.88B", fcf: "$69.49B", ratios: "1.89 Quick / 0.12x D/E" },
+        MSFT: { rev: "$62.02B (+17.6%)", net: "$21.87B", eps: "$2.93 (+$0.15 Beat)", margin: "44.6%", cash: "$81.02B", debt: "$71.54B", fcf: "$67.45B", ratios: "1.22 Quick / 0.35x D/E" },
+        NVDA: { rev: "$26.04B (+262%)", net: "$14.88B", eps: "$6.12 (+$0.53 Beat)", margin: "64.9%", cash: "$31.44B", debt: "$11.05B", fcf: "$39.31B", ratios: "3.52 Quick / 0.22x D/E" },
+        SPY: { rev: "$528.40 NAV", net: "500 Large-Cap Equities", eps: "Exp Ratio 0.09%", margin: "10.8% ROE", cash: "$510B AUM", debt: "N/A (ETF Trust)", fcf: "Yield 1.25%", ratios: "P/E 24.5x" },
+        TSLA: { rev: "$25.17B (+3.5%)", net: "$7.93B", eps: "$0.71 (-$0.03 Miss)", margin: "17.2%", cash: "$29.09B", debt: "$5.21B", fcf: "$4.35B", ratios: "1.34 Quick / 0.08x D/E" },
+        XOM: { rev: "$84.34B (-6.3%)", net: "$7.63B", eps: "$2.48 (+$0.27 Beat)", margin: "12.1%", cash: "$31.54B", debt: "$41.52B", fcf: "$35.24B", ratios: "1.10 Quick / 0.20x D/E" }
+    };
+
+    function renderFundamentals(sym) {
+        const data = FUNDAMENTALS[sym] || FUNDAMENTALS.AAPL;
+        const setTxt = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
+        setTxt('fund-q-rev', data.rev);
+        setTxt('fund-q-net', data.net);
+        setTxt('fund-q-eps', data.eps);
+        setTxt('fund-q-margin', data.margin);
+        setTxt('fund-b-cash', data.cash);
+        setTxt('fund-b-debt', data.debt);
+        setTxt('fund-b-fcf', data.fcf);
+        setTxt('fund-b-ratios', data.ratios);
+
+        fetchFinnhubFundamentals(sym);
+    }
+
+    async function fetchFinnhubFundamentals(sym) {
+        try {
+            const res = await fetch(`/api/papertrading/fundamentals/${sym}`, { headers: authHeaders() });
+            const data = await res.json();
+            if (data && data.fundamentals) {
+                const f = data.fundamentals;
+                const setTxt = (id, txt) => { const el = document.getElementById(id); if (el && txt && txt !== 'N/A') el.textContent = txt; };
+                if (f.revenueGrowth && f.revenueGrowth !== 'N/A') setTxt('fund-q-rev', `${f.revenueGrowth} 3Y Rev`);
+                if (f.marketCap && f.marketCap !== 'N/A') setTxt('fund-q-net', f.marketCap);
+                if (f.week52Low !== 'N/A' && f.week52High !== 'N/A') setTxt('fund-q-eps', `52W: ${f.week52Low} - ${f.week52High}`);
+                if (f.peRatio && f.peRatio !== 'N/A') setTxt('fund-q-margin', `P/E: ${f.peRatio}`);
+                if (f.marketCap && f.marketCap !== 'N/A') setTxt('fund-b-cash', f.marketCap);
+                if (f.debtToEquity && f.debtToEquity !== 'N/A') setTxt('fund-b-debt', `D/E: ${f.debtToEquity}`);
+                if (f.roe && f.roe !== 'N/A') setTxt('fund-b-fcf', `ROE: ${f.roe}`);
+                if (f.quickRatio !== 'N/A' || f.dividendYield !== 'N/A') setTxt('fund-b-ratios', `Quick: ${f.quickRatio} | Div: ${f.dividendYield}`);
+            }
+        } catch (err) {
+            console.warn('Finnhub fundamentals fallback:', err);
+        }
+    }
+
+    async function fetchSymbolFinnhubNews(symbol) {
+        const listEl = document.getElementById('finnhub-news-list');
+        if (!listEl) return;
+        listEl.innerHTML = `<p class="text-[10px] text-on-surface-variant italic">Loading live Finnhub news for ${symbol}...</p>`;
+        try {
+            const res = await fetch(`/api/papertrading/news/${symbol}`, { headers: authHeaders() });
+            const data = await res.json();
+            if (!data.news || data.news.length === 0) {
+                listEl.innerHTML = `<p class="text-[10px] text-on-surface-variant italic">No recent Finnhub news articles found for ${symbol}.</p>`;
+                return;
+            }
+            listEl.innerHTML = data.news.map(item => `
+                <div class="p-2 bg-surface-container rounded-xl border border-outline-variant/10">
+                    <a href="${item.url}" target="_blank" class="font-bold text-primary hover:underline line-clamp-1 text-xs block mb-0.5">${item.headline}</a>
+                    <p class="text-[10px] text-on-surface-variant line-clamp-2 mb-1">${item.summary}</p>
+                    <div class="flex justify-between text-[8px] font-semibold text-on-surface-variant/80 uppercase">
+                        <span>${item.source}</span>
+                        <span>${item.datetime}</span>
+                    </div>
+                </div>
+            `).join('');
+        } catch (err) {
+            listEl.innerHTML = `<p class="text-[10px] text-red-500 font-semibold">Unable to connect to Finnhub news stream.</p>`;
+        }
+    }
+
+    // --- Mode Switcher, Disclaimers, Custom Cash & Guided Tour ---
+    function initNewFeatures() {
+        // 1. Depth Panel Sub-tabs (Order Book vs Quarterly vs Balance vs Finnhub News)
+        const subBook = document.getElementById('subtab-orderbook');
+        const subQuarter = document.getElementById('subtab-quarterly');
+        const subBalance = document.getElementById('subtab-balancesheet');
+        const subNews = document.getElementById('subtab-news');
+        const panelBook = document.getElementById('subpanel-orderbook');
+        const panelQuarter = document.getElementById('subpanel-quarterly');
+        const panelBalance = document.getElementById('subpanel-balancesheet');
+        const panelNews = document.getElementById('subpanel-news');
+
+        if (subBook && subQuarter && subBalance && subNews && panelBook && panelQuarter && panelBalance && panelNews) {
+            const setSubActive = (activeBtn, activePanel) => {
+                [subBook, subQuarter, subBalance, subNews].forEach(b => b.className = "flex-1 py-1 rounded-lg text-on-surface-variant hover:text-on-surface");
+                [panelBook, panelQuarter, panelBalance, panelNews].forEach(p => p.classList.add('hidden'));
+                activeBtn.className = "flex-1 py-1 rounded-lg bg-white shadow-sm text-primary font-bold";
+                activePanel.classList.remove('hidden');
+                renderFundamentals(selectedSymbol);
+            };
+
+            subBook.addEventListener('click', () => setSubActive(subBook, panelBook));
+            subQuarter.addEventListener('click', () => setSubActive(subQuarter, panelQuarter));
+            subBalance.addEventListener('click', () => setSubActive(subBalance, panelBalance));
+            subNews.addEventListener('click', () => {
+                setSubActive(subNews, panelNews);
+                fetchSymbolFinnhubNews(selectedSymbol);
+            });
+        }
+
+        // 2. Chart Type selector dropdown (Solid Candles, Hollow Candles, Line, Area, Bar)
+        const chartTypeSelect = document.getElementById('select-chart-type');
+        if (chartTypeSelect) {
+            chartTypeSelect.addEventListener('change', (e) => {
+                activeChartStyle = e.target.value;
+                if (state.prices && state.prices[selectedSymbol]) {
+                    renderPriceChart(selectedSymbol, state.prices[selectedSymbol].history, activeRange, activeChartStyle);
+                }
+            });
+        }
+
+        // 3. Timeframe selector buttons
+        document.querySelectorAll('#chart-timeframe-controls .tf-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('#chart-timeframe-controls .tf-btn').forEach(b => {
+                    b.className = "tf-btn px-2 py-0.5 rounded-lg text-on-surface-variant hover:text-on-surface";
+                });
+                btn.className = "tf-btn px-2 py-0.5 rounded-lg bg-white shadow-sm text-primary font-bold";
+                activeRange = btn.getAttribute('data-range');
+                if (state.prices && state.prices[selectedSymbol]) {
+                    renderPriceChart(selectedSymbol, state.prices[selectedSymbol].history, activeRange, activeChartStyle);
+                }
+            });
+        });
+
+        // 3. Mode Switcher (Practice vs Theory)
+        const practiceBtn = document.getElementById('nav-mode-practice');
+        const theoryBtn = document.getElementById('nav-mode-theory');
+        const practiceSec = document.getElementById('section-practice');
+        const theorySec = document.getElementById('section-theory');
+
+        if (practiceBtn && theoryBtn && practiceSec && theorySec) {
+            practiceBtn.addEventListener('click', () => {
+                practiceBtn.className = "px-6 py-2 rounded-xl text-xs font-bold transition-all bg-white text-primary shadow-sm flex items-center gap-2";
+                theoryBtn.className = "px-6 py-2 rounded-xl text-xs font-bold transition-all text-on-surface-variant hover:text-on-surface flex items-center gap-2";
+                practiceSec.classList.remove('hidden');
+                theorySec.classList.add('hidden');
+                setTimeout(() => { if (priceChart) priceChart.windowResizeHandler(); }, 50);
+            });
+
+            theoryBtn.addEventListener('click', () => {
+                theoryBtn.className = "px-6 py-2 rounded-xl text-xs font-bold transition-all bg-white text-primary shadow-sm flex items-center gap-2";
+                practiceBtn.className = "px-6 py-2 rounded-xl text-xs font-bold transition-all text-on-surface-variant hover:text-on-surface flex items-center gap-2";
+                theorySec.classList.remove('hidden');
+                practiceSec.classList.add('hidden');
+            });
+        }
+
+        checkDisclaimerModal();
+        initCashAndTierControls();
+        initTourEvents();
+    }
+
+    // Disclaimer modal logic
+    function checkDisclaimerModal() {
+        const modal = document.getElementById('disclaimer-modal');
+        const closeBtn = document.getElementById('btn-close-disclaimer');
+        const chkHide = document.getElementById('chk-hide-disclaimer');
+        
+        if (!modal) return;
+        const isDismissed = localStorage.getItem('tradepilot_disclaimer_dismissed');
+        if (!isDismissed) {
+            modal.classList.remove('hidden');
+        }
+        
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => {
+                modal.classList.add('hidden');
+                if (chkHide && chkHide.checked) {
+                    localStorage.setItem('tradepilot_disclaimer_dismissed', 'true');
+                }
+            });
+        }
+    }
+
+    // Cash config & difficulty tier controls
+    function initCashAndTierControls() {
+        const cashModal = document.getElementById('cash-modal');
+        const btnConfig = document.getElementById('btn-customize-cash');
+        const btnClose = document.getElementById('btn-close-cash-modal');
+        const btnRandom = document.getElementById('btn-random-cash');
+        const tierSelect = document.getElementById('select-difficulty-tier');
+        
+        if (btnConfig && cashModal) {
+            btnConfig.addEventListener('click', () => cashModal.classList.remove('hidden'));
+        }
+        if (btnClose && cashModal) {
+            btnClose.addEventListener('click', () => cashModal.classList.add('hidden'));
+        }
+        
+        document.querySelectorAll('.btn-preset-cash').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const amount = parseFloat(btn.getAttribute('data-cash'));
+                setPortfolioCash(amount);
+                if (cashModal) cashModal.classList.add('hidden');
+            });
+        });
+        
+        if (btnRandom) {
+            btnRandom.addEventListener('click', () => {
+                const randomAmounts = [15000, 25000, 75000, 150000, 250000, 1000000];
+                const amount = randomAmounts[Math.floor(Math.random() * randomAmounts.length)];
+                setPortfolioCash(amount);
+                if (cashModal) cashModal.classList.add('hidden');
+            });
+        }
+        
+        if (tierSelect) {
+            const savedTier = localStorage.getItem('tradepilot_difficulty_tier') || 'intermediate';
+            tierSelect.value = savedTier;
+            tierSelect.addEventListener('change', (e) => {
+                localStorage.setItem('tradepilot_difficulty_tier', e.target.value);
+                showNotice("UPDATED", `Guidance level set to: ${e.target.options[e.target.selectedIndex].text}`);
+            });
+        }
+    }
+
+    function setPortfolioCash(amount) {
+        if (!state.account) state.account = { balance: 100000, initialBalance: 100000 };
+        state.account.balance = amount;
+        state.account.initialBalance = amount;
+        updateDOM();
+        queueSaveState();
+        showNotice("UPDATED", `Starting cash updated to ${fmtUSD(amount)}`);
+    }
+
+    // Interactive Tour & "Describe Screen" engine (Viewport-Bounded & 6 Detailed Steps)
+    const TOUR_STEPS = [
+        {
+            target: '#watchlist-search',
+            title: '1. Watchlist & Live Symbols',
+            desc: 'Search and select US stocks (AAPL, NVDA, TSLA) or Crypto (BTC) to switch active quotes and order book depth.'
+        },
+        {
+            target: '#chart-panel',
+            title: '2. Candlestick Price Chart',
+            desc: 'Analyze live OHLC Candlesticks with timeframe range toggles (1D, 1M, 6M, 1Y) for multi-horizon trend analysis.'
+        },
+        {
+            target: '#btn-show-depth',
+            title: '3. Depth & Company Fundamentals',
+            desc: 'Toggle Depth view to inspect Order Book Bids/Asks, 10-Q Quarterly Revenue/EPS, and SEC Balance Sheet ratios.'
+        },
+        {
+            target: '#ticket-submit-btn',
+            title: '4. Order Execution Ticket',
+            desc: 'Execute Market orders, Limit orders, or Stop-loss triggers with real-time VWAP slippage estimation.'
+        },
+        {
+            target: '#panel-positions',
+            title: '5. Account Stats & Open Positions',
+            desc: 'Monitor Cash, Net Equity, P&L, Open Positions, Resting Orders, and session Trade History in real time.'
+        },
+        {
+            target: '#select-difficulty-tier',
+            title: '6. Guidance Level & Cash Config',
+            desc: 'Customize your guidance level (Beginner, Intermediate, Advanced) or reset/randomize starting cash balance anytime!'
+        }
+    ];
+
+    let currentTourStep = 0;
+
+    function startGuidedTour() {
+        const tourCard = document.getElementById('tour-card');
+        if (!tourCard) return;
+        currentTourStep = 0;
+        showTourStep(0);
+    }
+
+    function showTourStep(stepIdx) {
+        const tourCard = document.getElementById('tour-card');
+        if (!tourCard || stepIdx >= TOUR_STEPS.length) {
+            if (tourCard) tourCard.classList.add('hidden');
+            localStorage.setItem('tradepilot_tutorial_completed', 'true');
+            return;
+        }
+        
+        const step = TOUR_STEPS[stepIdx];
+        const targetEl = document.querySelector(step.target);
+        if (!targetEl) return;
+        
+        document.getElementById('tour-step-badge').textContent = `Step ${stepIdx + 1} of ${TOUR_STEPS.length}`;
+        document.getElementById('tour-title').textContent = step.title;
+        document.getElementById('tour-desc').textContent = step.desc;
+        
+        tourCard.classList.remove('hidden');
+        
+        const rect = targetEl.getBoundingClientRect();
+        const cardWidth = 320;
+        const cardHeight = 180;
+        
+        // Strict Viewport-Bounded positioning calculation
+        let topPos = rect.bottom + 12;
+        if (topPos + cardHeight > window.innerHeight - 20) {
+            topPos = Math.max(70, rect.top - cardHeight - 12);
+        }
+        let leftPos = Math.max(20, Math.min(window.innerWidth - cardWidth - 20, rect.left));
+        
+        tourCard.style.position = 'fixed';
+        tourCard.style.top = `${topPos}px`;
+        tourCard.style.left = `${leftPos}px`;
+        tourCard.style.zIndex = '9999';
+    }
+
+    function initTourEvents() {
+        const describeBtn = document.getElementById('btn-describe-screen');
+        const nextBtn = document.getElementById('tour-next-btn');
+        const skipBtn = document.getElementById('tour-skip-btn');
+        const closeBtn = document.getElementById('tour-close-btn');
+        const tourCard = document.getElementById('tour-card');
+        
+        if (describeBtn) {
+            describeBtn.addEventListener('click', () => startGuidedTour());
+        }
+        if (nextBtn) {
+            nextBtn.addEventListener('click', () => {
+                currentTourStep++;
+                if (currentTourStep < TOUR_STEPS.length) {
+                    showTourStep(currentTourStep);
+                } else {
+                    if (tourCard) tourCard.classList.add('hidden');
+                    localStorage.setItem('tradepilot_tutorial_completed', 'true');
+                    showNotice("TUTORIAL", "Tour completed! You are ready to trade.");
+                }
+            });
+        }
+        if (skipBtn && tourCard) {
+            skipBtn.addEventListener('click', () => {
+                tourCard.classList.add('hidden');
+                localStorage.setItem('tradepilot_tutorial_completed', 'true');
+            });
+        }
+        if (closeBtn && tourCard) {
+            closeBtn.addEventListener('click', () => {
+                tourCard.classList.add('hidden');
+                localStorage.setItem('tradepilot_tutorial_completed', 'true');
+            });
+        }
+        
+        // Auto-launch tour on first login
+        const isCompleted = localStorage.getItem('tradepilot_tutorial_completed');
+        if (!isCompleted) {
+            setTimeout(() => startGuidedTour(), 1000);
+        }
+    }
+
+>>>>>>> 6ca0f31 (New Changes in Learn Page)
     // --- Kickstart elements on load (guard: only init if terminal HTML is on this page) ---
     document.addEventListener('DOMContentLoaded', () => {
         if (!document.getElementById('apex-price-chart')) return; // not on this page

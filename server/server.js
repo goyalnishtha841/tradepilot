@@ -31,7 +31,6 @@ app.use('/api/watchlist', watchlistRouter);
 app.use('/api/market', marketRouter);
 app.use('/api/papertrading', papertradingRouter);
 app.use('/api/news', require('./news'));
-//app.use('/api/explore', require('./explore'));
 
 // Middleware to redirect direct .html requests to clean paths
 app.use((req, res, next) => {

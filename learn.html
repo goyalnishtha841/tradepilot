@@ -272,10 +272,10 @@
   </div>
 
   <!-- 3-column terminal grid -->
-  <div class="grid grid-cols-1 lg:grid-cols-[220px_1fr_340px] gap-md">
+  <div class="grid grid-cols-1 lg:grid-cols-[230px_1fr_350px] gap-md">
 
     <!-- LEFT: Watchlist -->
-    <div class="bg-white border border-outline-variant rounded-20px flex flex-col card-shadow" style="height:600px;">
+    <div class="bg-white border border-outline-variant rounded-20px flex flex-col card-shadow" style="height:520px;">
       <div class="p-xs border-b border-outline-variant/20">
         <div class="relative">
           <span class="material-symbols-outlined absolute left-2 top-1/2 -translate-y-1/2 text-on-surface-variant text-[15px]">search</span>
@@ -290,97 +290,155 @@
 
       <!-- Stock Summary + View Toggle -->
       <div class="bg-white border border-outline-variant rounded-20px p-md card-shadow">
-        <div class="flex justify-between items-start flex-wrap gap-sm mb-md">
+        <div class="flex justify-between items-start flex-wrap gap-xs mb-xs">
           <div>
             <div class="flex items-baseline gap-xs">
               <h3 id="terminal-symbol" class="text-2xl font-black tracking-tight tp-mono">AAPL</h3>
-              <span id="terminal-name" class="text-xs text-on-surface-variant">Apple Inc.</span>
+              <span id="terminal-name" class="text-xs text-on-surface-variant font-medium">Apple Inc.</span>
             </div>
-            <div class="flex items-baseline gap-sm mt-1">
+            <div class="flex items-baseline gap-sm mt-0.5">
               <span id="terminal-price" class="text-2xl font-extrabold tp-mono">$214.10</span>
-              <span id="terminal-change" class="text-label-sm font-bold flex items-center gap-0.5 text-green-600">
+              <span id="terminal-change" class="text-xs font-bold flex items-center gap-0.5 text-green-600">
                 <span class="material-symbols-outlined text-[14px]" id="terminal-arrow">trending_up</span>
                 <span id="terminal-change-txt">+1.25%</span>
               </span>
             </div>
           </div>
-          <div class="flex gap-1 p-1 bg-surface-container rounded-xl">
-            <button id="btn-show-chart" class="px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 bg-white shadow-sm text-on-surface">
-              <span class="material-symbols-outlined text-[14px]">show_chart</span> Chart
-            </button>
-            <button id="btn-show-depth" class="px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 text-on-surface-variant">
-              <span class="material-symbols-outlined text-[14px]">layers</span> Depth
-            </button>
+          <div class="flex items-center gap-xs flex-wrap">
+            <!-- Timeframe selector -->
+            <div id="chart-timeframe-controls" class="flex gap-1 p-1 bg-surface-container rounded-xl text-[10px] font-bold">
+              <button data-range="1D" class="tf-btn px-2 py-0.5 rounded-lg bg-white shadow-sm text-primary">1D</button>
+              <button data-range="1M" class="tf-btn px-2 py-0.5 rounded-lg text-on-surface-variant hover:text-on-surface">1M</button>
+              <button data-range="6M" class="tf-btn px-2 py-0.5 rounded-lg text-on-surface-variant hover:text-on-surface">6M</button>
+              <button data-range="1Y" class="tf-btn px-2 py-0.5 rounded-lg text-on-surface-variant hover:text-on-surface">1Y</button>
+            </div>
+
+            <!-- Chart Type Dropdown -->
+            <div class="flex items-center gap-0.5 bg-surface-container rounded-xl px-1.5 py-0.5 border border-outline-variant/10">
+              <span class="material-symbols-outlined text-[13px] text-on-surface-variant">candlestick_chart</span>
+              <select id="select-chart-type" class="bg-transparent border-none text-[10px] font-bold text-on-surface py-0.5 px-0.5 focus:ring-0 cursor-pointer">
+                <option value="candlestick" selected>Solid Candles</option>
+                <option value="hollow">Hollow Candles</option>
+                <option value="line">Line Graph</option>
+                <option value="area">Area Mountain</option>
+                <option value="bar">Bar Chart</option>
+              </select>
+            </div>
+
+            <div class="flex gap-1 p-1 bg-surface-container rounded-xl">
+              <button id="btn-show-chart" class="px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1 bg-white shadow-sm text-on-surface">
+                <span class="material-symbols-outlined text-[13px]">show_chart</span> Chart
+              </button>
+              <button id="btn-show-depth" class="px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1 text-on-surface-variant">
+                <span class="material-symbols-outlined text-[13px]">layers</span> Depth
+              </button>
+            </div>
           </div>
         </div>
-        <!-- Chart area -->
-        <div id="chart-panel" class="w-full h-[260px]"><div id="apex-price-chart"></div></div>
-        <!-- Depth area -->
-        <div id="depth-panel" class="hidden w-full">
-          <div class="grid grid-cols-2 gap-md tp-mono text-xs mb-sm">
-            <div>
-              <div class="text-[9px] uppercase font-bold text-on-surface-variant mb-xs">Bids (Buyers)</div>
-              <div id="bids-ladder" class="space-y-1"></div>
+        <!-- Prominent Chart area -->
+        <div id="chart-panel" class="w-full h-[240px]"><div id="apex-price-chart"></div></div>
+        <!-- Depth & Financials area -->
+        <div id="depth-panel" class="hidden w-full min-h-[240px]">
+          <!-- Depth Sub-tabs -->
+          <div class="flex gap-1 p-1 bg-surface-container rounded-xl text-[9px] font-bold uppercase mb-xs">
+            <button id="subtab-orderbook" class="flex-1 py-1 rounded-lg bg-white shadow-sm text-primary">Order Book</button>
+            <button id="subtab-quarterly" class="flex-1 py-1 rounded-lg text-on-surface-variant hover:text-on-surface">Quarterly</button>
+            <button id="subtab-balancesheet" class="flex-1 py-1 rounded-lg text-on-surface-variant hover:text-on-surface">Balance</button>
+            <button id="subtab-news" class="flex-1 py-1 rounded-lg text-on-surface-variant hover:text-on-surface">Finnhub News</button>
+          </div>
+          <!-- Order Book -->
+          <div id="subpanel-orderbook" class="space-y-xs">
+            <div class="grid grid-cols-2 gap-md tp-mono text-xs mb-xs">
+              <div>
+                <div class="text-[9px] uppercase font-bold text-on-surface-variant mb-xs">Bids (Buyers)</div>
+                <div id="bids-ladder" class="space-y-1"></div>
+              </div>
+              <div>
+                <div class="text-[9px] uppercase font-bold text-on-surface-variant mb-xs text-right">Asks (Sellers)</div>
+                <div id="asks-ladder" class="space-y-1"></div>
+              </div>
             </div>
-            <div>
-              <div class="text-[9px] uppercase font-bold text-on-surface-variant mb-xs text-right">Asks (Sellers)</div>
-              <div id="asks-ladder" class="space-y-1"></div>
+            <p class="text-[9px] text-on-surface-variant">Market orders walk the book level-by-level for a VWAP fill — larger orders get worse average prices, same as a real exchange.</p>
+          </div>
+          <!-- Quarterly Results -->
+          <div id="subpanel-quarterly" class="hidden space-y-xs tp-mono text-xs">
+            <div class="grid grid-cols-2 gap-xs bg-surface-container p-2 rounded-xl">
+              <div><span class="text-[8px] uppercase tracking-wider text-on-surface-variant">Q4 Revenue</span><p id="fund-q-rev" class="font-bold text-on-surface">$119.58B (+2.1%)</p></div>
+              <div><span class="text-[8px] uppercase tracking-wider text-on-surface-variant">Q4 Net Income</span><p id="fund-q-net" class="font-bold text-green-600">$33.92B</p></div>
+              <div><span class="text-[8px] uppercase tracking-wider text-on-surface-variant">EPS (Beat/Miss)</span><p id="fund-q-eps" class="font-bold text-green-600">$2.18 (+0.08 Beat)</p></div>
+              <div><span class="text-[8px] uppercase tracking-wider text-on-surface-variant">Operating Margin</span><p id="fund-q-margin" class="font-bold text-on-surface">30.7%</p></div>
+            </div>
+            <p class="text-[9px] text-on-surface-variant italic">Latest 10-Q filing summary verified by AI financial analyst.</p>
+          </div>
+          <!-- Balance Sheet -->
+          <div id="subpanel-balancesheet" class="hidden space-y-xs tp-mono text-xs">
+            <div class="grid grid-cols-2 gap-xs bg-surface-container p-2 rounded-xl">
+              <div><span class="text-[8px] uppercase tracking-wider text-on-surface-variant">Total Cash &amp; ST</span><p id="fund-b-cash" class="font-bold text-on-surface">$61.55B</p></div>
+              <div><span class="text-[8px] uppercase tracking-wider text-on-surface-variant">Total Debt</span><p id="fund-b-debt" class="font-bold text-red-500">$106.63B</p></div>
+              <div><span class="text-[8px] uppercase tracking-wider text-on-surface-variant">Free Cash Flow</span><p id="fund-b-fcf" class="font-bold text-green-600">$99.58B</p></div>
+              <div><span class="text-[8px] uppercase tracking-wider text-on-surface-variant">Quick Ratio / D/E</span><p id="fund-b-ratios" class="font-bold text-on-surface">0.88 / 1.45x</p></div>
+            </div>
+            <p class="text-[9px] text-on-surface-variant italic">Audited annual SEC balance sheet metrics.</p>
+          </div>
+          <!-- Finnhub News Sub-panel -->
+          <div id="subpanel-news" class="hidden space-y-xs text-xs max-h-[190px] overflow-y-auto pt-scrollbar">
+            <div id="finnhub-news-list" class="space-y-2">
+              <p class="text-[10px] text-on-surface-variant italic">Loading live Finnhub news...</p>
             </div>
           </div>
-          <p class="text-[9px] text-on-surface-variant">Market orders walk the book level-by-level for a VWAP fill — larger orders get worse average prices, same as a real exchange.</p>
         </div>
       </div>
 
       <!-- Order Ticket -->
-      <div class="bg-white border border-outline-variant rounded-20px p-md card-shadow">
+      <div class="bg-white border border-outline-variant rounded-20px p-sm card-shadow">
         <!-- Buy/Sell -->
-        <div class="grid grid-cols-2 gap-sm mb-md">
-          <button id="ticket-side-buy" class="py-2.5 rounded-xl text-sm font-bold uppercase transition-all bg-green-600 text-white border border-green-600">Buy</button>
-          <button id="ticket-side-sell" class="py-2.5 rounded-xl text-sm font-bold uppercase transition-all bg-surface-container-low text-on-surface border border-outline-variant/20">Sell</button>
+        <div class="grid grid-cols-2 gap-xs mb-xs">
+          <button id="ticket-side-buy" class="py-1.5 rounded-xl text-xs font-bold uppercase transition-all bg-green-600 text-white border border-green-600">Buy</button>
+          <button id="ticket-side-sell" class="py-1.5 rounded-xl text-xs font-bold uppercase transition-all bg-surface-container-low text-on-surface border border-outline-variant/20">Sell</button>
         </div>
         <!-- Order Type -->
-        <div class="flex gap-1 p-1 bg-surface-container rounded-xl mb-md">
-          <button id="type-market" class="flex-1 py-1.5 rounded-lg text-xs font-semibold uppercase bg-white shadow-sm text-on-surface" data-active="true">Market</button>
-          <button id="type-limit" class="flex-1 py-1.5 rounded-lg text-xs font-semibold uppercase text-on-surface-variant" data-active="false">Limit</button>
-          <button id="type-stop" class="flex-1 py-1.5 rounded-lg text-xs font-semibold uppercase text-on-surface-variant" data-active="false">Stop</button>
+        <div class="flex gap-1 p-0.5 bg-surface-container rounded-xl mb-xs">
+          <button id="type-market" class="flex-1 py-1 rounded-lg text-[10px] font-semibold uppercase bg-white shadow-sm text-on-surface" data-active="true">Market</button>
+          <button id="type-limit" class="flex-1 py-1 rounded-lg text-[10px] font-semibold uppercase text-on-surface-variant" data-active="false">Limit</button>
+          <button id="type-stop" class="flex-1 py-1 rounded-lg text-[10px] font-semibold uppercase text-on-surface-variant" data-active="false">Stop</button>
         </div>
         <!-- Inputs -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-md mb-md">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-xs mb-xs">
           <div class="flex flex-col gap-xs">
-            <label class="text-[9px] font-bold uppercase tracking-wider text-on-surface-variant">Quantity</label>
-            <input id="input-qty" type="number" min="1" step="1" value="1" class="w-full px-sm py-2 bg-surface-container border-none rounded-xl text-sm font-semibold tp-mono"/>
+            <label class="text-[8px] font-bold uppercase tracking-wider text-on-surface-variant">Quantity</label>
+            <input id="input-qty" type="number" min="1" step="1" value="1" class="w-full px-2 py-1 bg-surface-container border-none rounded-xl text-xs font-semibold tp-mono"/>
           </div>
           <div id="wrapper-limit-price" class="hidden flex flex-col gap-xs">
-            <label class="text-[9px] font-bold uppercase tracking-wider text-on-surface-variant">Limit Price ($)</label>
-            <input id="input-limit-price" type="number" step="0.01" class="w-full px-sm py-2 bg-surface-container border-none rounded-xl text-sm font-semibold tp-mono" placeholder="0.00"/>
+            <label class="text-[8px] font-bold uppercase tracking-wider text-on-surface-variant">Limit Price ($)</label>
+            <input id="input-limit-price" type="number" step="0.01" class="w-full px-2 py-1 bg-surface-container border-none rounded-xl text-xs font-semibold tp-mono" placeholder="0.00"/>
           </div>
           <div id="wrapper-stop-price" class="hidden flex flex-col gap-xs">
-            <label class="text-[9px] font-bold uppercase tracking-wider text-on-surface-variant">Stop Price ($)</label>
-            <input id="input-stop-price" type="number" step="0.01" class="w-full px-sm py-2 bg-surface-container border-none rounded-xl text-sm font-semibold tp-mono" placeholder="0.00"/>
+            <label class="text-[8px] font-bold uppercase tracking-wider text-on-surface-variant">Stop Price ($)</label>
+            <input id="input-stop-price" type="number" step="0.01" class="w-full px-2 py-1 bg-surface-container border-none rounded-xl text-xs font-semibold tp-mono" placeholder="0.00"/>
           </div>
           <div id="wrapper-best-liquidity" class="flex flex-col gap-xs">
-            <label id="label-liquidity" class="text-[9px] font-bold uppercase tracking-wider text-on-surface-variant">Best Ask</label>
-            <span id="best-liquidity-price" class="py-2 text-sm font-bold tp-mono">$214.15</span>
+            <label id="label-liquidity" class="text-[8px] font-bold uppercase tracking-wider text-on-surface-variant">Best Ask</label>
+            <span id="best-liquidity-price" class="py-1 text-xs font-bold tp-mono">$214.15</span>
           </div>
           <div id="wrapper-tif" class="hidden flex flex-col gap-xs">
-            <label class="text-[9px] font-bold uppercase tracking-wider text-on-surface-variant">Time in Force</label>
+            <label class="text-[8px] font-bold uppercase tracking-wider text-on-surface-variant">TIF</label>
             <div class="flex gap-1">
-              <button id="tif-gtc" class="flex-1 py-2 text-xs font-semibold rounded-xl bg-white shadow-sm border border-outline-variant/10">GTC</button>
-              <button id="tif-gtd" class="flex-1 py-2 text-xs font-semibold rounded-xl bg-surface-container-low text-on-surface-variant">GTD</button>
-              <select id="select-gtd-min" class="hidden px-2 py-1.5 bg-surface-container border-none rounded-xl text-xs tp-mono">
-                <option value="5">5 Min</option>
-                <option value="15" selected>15 Min</option>
-                <option value="60">1 Hour</option>
+              <button id="tif-gtc" class="flex-1 py-1 text-[10px] font-semibold rounded-xl bg-white shadow-sm border border-outline-variant/10">GTC</button>
+              <button id="tif-gtd" class="flex-1 py-1 text-[10px] font-semibold rounded-xl bg-surface-container-low text-on-surface-variant">GTD</button>
+              <select id="select-gtd-min" class="hidden px-1 py-1 bg-surface-container border-none rounded-xl text-[10px] tp-mono">
+                <option value="5">5m</option>
+                <option value="15" selected>15m</option>
+                <option value="60">1h</option>
               </select>
             </div>
           </div>
         </div>
-        <div class="flex justify-between items-center text-xs font-semibold text-on-surface-variant mb-md tp-mono">
+        <div class="flex justify-between items-center text-[10px] font-semibold text-on-surface-variant mb-xs tp-mono">
           <span>Estimated Value:</span>
           <span id="est-order-value" class="text-on-surface font-bold">$0.00</span>
         </div>
-        <div id="ticket-error" class="hidden text-xs text-red-600 font-bold mb-sm"></div>
-        <button id="ticket-submit-btn" class="w-full py-3.5 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold tracking-wider uppercase text-sm transition-all">Place MARKET BUY Order</button>
+        <div id="ticket-error" class="hidden text-xs text-red-600 font-bold mb-xs"></div>
+        <button id="ticket-submit-btn" class="w-full py-2 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold tracking-wider uppercase text-xs transition-all">Place MARKET BUY Order</button>
       </div>
     </div>
 
