@@ -1011,34 +1011,77 @@
         }
     }
 
-    // --- Charting logic via ApexCharts ---
-    function renderPriceChart(symbol, history) {
+    let activeRange = '1D';
+
+    // Generate Candlestick OHLC data for ApexCharts
+    function generateCandlestickData(p, history, range = '1D') {
+        const now = Date.now();
+        let count = 30;
+        let stepMs = 5 * 60 * 1000; // 5 min candles for 1D
+        
+        if (range === '1M') {
+            count = 30;
+            stepMs = 24 * 60 * 60 * 1000;
+        } else if (range === '6M') {
+            count = 45;
+            stepMs = 4 * 24 * 60 * 60 * 1000;
+        } else if (range === '1Y') {
+            count = 52;
+            stepMs = 7 * 24 * 60 * 60 * 1000;
+        }
+        
+        const candles = [];
+        let currentPrice = p.prevClose || p.ltp || 100;
+        
+        for (let i = count; i >= 1; i--) {
+            const t = now - i * stepMs;
+            const change = (Math.random() - 0.49) * 0.015 * currentPrice;
+            const open = round2(currentPrice);
+            const close = round2(Math.max(0.1, currentPrice + change));
+            const high = round2(Math.max(open, close) + Math.random() * 0.008 * currentPrice);
+            const low = round2(Math.max(0.05, Math.min(open, close) - Math.random() * 0.008 * currentPrice));
+            
+            candles.push({ x: t, y: [open, high, low, close] });
+            currentPrice = close;
+        }
+        
+        // Push latest live tick as current candle
+        if (history && history.length > 0) {
+            const open = history[0].price;
+            const close = history[history.length - 1].price;
+            const high = Math.max(...history.map(h => h.price));
+            const low = Math.min(...history.map(h => h.price));
+            candles.push({ x: now, y: [open, high, low, close] });
+        }
+        
+        return candles;
+    }
+
+    // --- Charting logic via ApexCharts (Candlestick mode) ---
+    function renderPriceChart(symbol, history, range = activeRange) {
         const isDark = document.documentElement.classList.contains('dark');
-        const chartData = history.map(h => ({ x: h.t, y: h.price }));
+        const p = state.prices[symbol] || { ltp: 100, prevClose: 100 };
+        const candleSeries = generateCandlestickData(p, history, range);
         
         const options = {
             chart: {
                 id: 'price-chart',
-                type: 'area',
-                height: 280,
+                type: 'candlestick',
+                height: 220,
                 animations: { enabled: false },
                 toolbar: { show: false },
                 background: 'transparent',
                 foreColor: isDark ? '#94a3b8' : '#64748b'
             },
-            colors: ['#e89a23'],
-            dataLabels: { enabled: false },
-            stroke: { curve: 'monotoneCubic', width: 2 },
-            fill: {
-                type: 'gradient',
-                gradient: {
-                    shadeIntensity: 1,
-                    opacityFrom: 0.35,
-                    opacityTo: 0.0,
-                    stops: [0, 90, 100]
+            plotOptions: {
+                candlestick: {
+                    colors: {
+                        upward: '#16a34a',
+                        downward: '#dc2626'
+                    }
                 }
             },
-            series: [{ name: 'Price', data: chartData }],
+            series: [{ name: symbol, data: candleSeries }],
             xaxis: {
                 type: 'datetime',
                 labels: {
@@ -1062,7 +1105,7 @@
             },
             tooltip: {
                 theme: isDark ? 'dark' : 'light',
-                x: { format: 'HH:mm:ss' }
+                x: { format: 'dd MMM HH:mm' }
             }
         };
 
@@ -1135,12 +1178,227 @@
         }
     }
 
+    // --- Mode Switcher, Disclaimers, Custom Cash & Guided Tour ---
+    function initNewFeatures() {
+        // 1. Timeframe selector buttons
+        document.querySelectorAll('#chart-timeframe-controls .tf-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('#chart-timeframe-controls .tf-btn').forEach(b => {
+                    b.className = "tf-btn px-2 py-1 rounded-lg text-on-surface-variant hover:text-on-surface";
+                });
+                btn.className = "tf-btn px-2 py-1 rounded-lg bg-white shadow-sm text-primary font-bold";
+                activeRange = btn.getAttribute('data-range');
+                if (state.prices && state.prices[selectedSymbol]) {
+                    renderPriceChart(selectedSymbol, state.prices[selectedSymbol].history, activeRange);
+                }
+            });
+        });
+
+        // 2. Mode Switcher (Practice vs Theory)
+        const practiceBtn = document.getElementById('nav-mode-practice');
+        const theoryBtn = document.getElementById('nav-mode-theory');
+        const practiceSec = document.getElementById('section-practice');
+        const theorySec = document.getElementById('section-theory');
+
+        if (practiceBtn && theoryBtn && practiceSec && theorySec) {
+            practiceBtn.addEventListener('click', () => {
+                practiceBtn.className = "px-6 py-2 rounded-xl text-xs font-bold transition-all bg-white text-primary shadow-sm flex items-center gap-2";
+                theoryBtn.className = "px-6 py-2 rounded-xl text-xs font-bold transition-all text-on-surface-variant hover:text-on-surface flex items-center gap-2";
+                practiceSec.classList.remove('hidden');
+                theorySec.classList.add('hidden');
+                setTimeout(() => { if (priceChart) priceChart.windowResizeHandler(); }, 50);
+            });
+
+            theoryBtn.addEventListener('click', () => {
+                theoryBtn.className = "px-6 py-2 rounded-xl text-xs font-bold transition-all bg-white text-primary shadow-sm flex items-center gap-2";
+                practiceBtn.className = "px-6 py-2 rounded-xl text-xs font-bold transition-all text-on-surface-variant hover:text-on-surface flex items-center gap-2";
+                theorySec.classList.remove('hidden');
+                practiceSec.classList.add('hidden');
+            });
+        }
+
+        checkDisclaimerModal();
+        initCashAndTierControls();
+        initTourEvents();
+    }
+
+    // Disclaimer modal logic
+    function checkDisclaimerModal() {
+        const modal = document.getElementById('disclaimer-modal');
+        const closeBtn = document.getElementById('btn-close-disclaimer');
+        const chkHide = document.getElementById('chk-hide-disclaimer');
+        
+        if (!modal) return;
+        const isDismissed = localStorage.getItem('tradepilot_disclaimer_dismissed');
+        if (!isDismissed) {
+            modal.classList.remove('hidden');
+        }
+        
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => {
+                modal.classList.add('hidden');
+                if (chkHide && chkHide.checked) {
+                    localStorage.setItem('tradepilot_disclaimer_dismissed', 'true');
+                }
+            });
+        }
+    }
+
+    // Cash config & difficulty tier controls
+    function initCashAndTierControls() {
+        const cashModal = document.getElementById('cash-modal');
+        const btnConfig = document.getElementById('btn-customize-cash');
+        const btnClose = document.getElementById('btn-close-cash-modal');
+        const btnRandom = document.getElementById('btn-random-cash');
+        const tierSelect = document.getElementById('select-difficulty-tier');
+        
+        if (btnConfig && cashModal) {
+            btnConfig.addEventListener('click', () => cashModal.classList.remove('hidden'));
+        }
+        if (btnClose && cashModal) {
+            btnClose.addEventListener('click', () => cashModal.classList.add('hidden'));
+        }
+        
+        document.querySelectorAll('.btn-preset-cash').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const amount = parseFloat(btn.getAttribute('data-cash'));
+                setPortfolioCash(amount);
+                if (cashModal) cashModal.classList.add('hidden');
+            });
+        });
+        
+        if (btnRandom) {
+            btnRandom.addEventListener('click', () => {
+                const randomAmounts = [15000, 25000, 75000, 150000, 250000, 1000000];
+                const amount = randomAmounts[Math.floor(Math.random() * randomAmounts.length)];
+                setPortfolioCash(amount);
+                if (cashModal) cashModal.classList.add('hidden');
+            });
+        }
+        
+        if (tierSelect) {
+            const savedTier = localStorage.getItem('tradepilot_difficulty_tier') || 'intermediate';
+            tierSelect.value = savedTier;
+            tierSelect.addEventListener('change', (e) => {
+                localStorage.setItem('tradepilot_difficulty_tier', e.target.value);
+                showNotice("UPDATED", `Guidance level set to: ${e.target.options[e.target.selectedIndex].text}`);
+            });
+        }
+    }
+
+    function setPortfolioCash(amount) {
+        if (!state.account) state.account = { balance: 100000, initialBalance: 100000 };
+        state.account.balance = amount;
+        state.account.initialBalance = amount;
+        updateDOM();
+        queueSaveState();
+        showNotice("UPDATED", `Starting cash updated to ${fmtUSD(amount)}`);
+    }
+
+    // Interactive Tour & "Describe Screen" engine
+    const TOUR_STEPS = [
+        {
+            target: '#watchlist-search',
+            title: 'Watchlist & Symbol Search',
+            desc: 'Search and select US equities (AAPL, NVDA, TSLA) or Crypto (BTC) to load live quotes and depth.'
+        },
+        {
+            target: '#chart-panel',
+            title: 'Candlestick Chart & Timeframes',
+            desc: 'Analyze price movements with live OHLC Candlestick charts and switch timeframes (1D, 1M, 6M, 1Y).'
+        },
+        {
+            target: '#ticket-submit-btn',
+            title: 'Order Execution Ticket',
+            desc: 'Execute Market orders, Limit orders, or Stop-loss triggers with custom share quantities and TIF.'
+        },
+        {
+            target: '#select-difficulty-tier',
+            title: 'Stats & Guidance Levels',
+            desc: 'Track Cash, Net Equity, P&L, and adjust your guidance level (Beginner, Intermediate, Advanced) anytime!'
+        }
+    ];
+
+    let currentTourStep = 0;
+
+    function startGuidedTour() {
+        const tourCard = document.getElementById('tour-card');
+        if (!tourCard) return;
+        currentTourStep = 0;
+        showTourStep(0);
+    }
+
+    function showTourStep(stepIdx) {
+        const tourCard = document.getElementById('tour-card');
+        if (!tourCard || stepIdx >= TOUR_STEPS.length) {
+            if (tourCard) tourCard.classList.add('hidden');
+            localStorage.setItem('tradepilot_tutorial_completed', 'true');
+            return;
+        }
+        
+        const step = TOUR_STEPS[stepIdx];
+        const targetEl = document.querySelector(step.target);
+        if (!targetEl) return;
+        
+        document.getElementById('tour-step-badge').textContent = `Step ${stepIdx + 1} of ${TOUR_STEPS.length}`;
+        document.getElementById('tour-title').textContent = step.title;
+        document.getElementById('tour-desc').textContent = step.desc;
+        
+        const rect = targetEl.getBoundingClientRect();
+        tourCard.style.top = `${Math.max(80, rect.top + window.scrollY - 140)}px`;
+        tourCard.style.left = `${Math.max(20, Math.min(window.innerWidth - 340, rect.left + window.scrollX))}px`;
+        tourCard.classList.remove('hidden');
+    }
+
+    function initTourEvents() {
+        const describeBtn = document.getElementById('btn-describe-screen');
+        const nextBtn = document.getElementById('tour-next-btn');
+        const skipBtn = document.getElementById('tour-skip-btn');
+        const closeBtn = document.getElementById('tour-close-btn');
+        const tourCard = document.getElementById('tour-card');
+        
+        if (describeBtn) {
+            describeBtn.addEventListener('click', () => startGuidedTour());
+        }
+        if (nextBtn) {
+            nextBtn.addEventListener('click', () => {
+                currentTourStep++;
+                if (currentTourStep < TOUR_STEPS.length) {
+                    showTourStep(currentTourStep);
+                } else {
+                    if (tourCard) tourCard.classList.add('hidden');
+                    localStorage.setItem('tradepilot_tutorial_completed', 'true');
+                    showNotice("TUTORIAL", "Tour completed! You are ready to trade.");
+                }
+            });
+        }
+        if (skipBtn && tourCard) {
+            skipBtn.addEventListener('click', () => {
+                tourCard.classList.add('hidden');
+                localStorage.setItem('tradepilot_tutorial_completed', 'true');
+            });
+        }
+        if (closeBtn && tourCard) {
+            closeBtn.addEventListener('click', () => {
+                tourCard.classList.add('hidden');
+                localStorage.setItem('tradepilot_tutorial_completed', 'true');
+            });
+        }
+        
+        // Auto-launch tour on first login
+        const isCompleted = localStorage.getItem('tradepilot_tutorial_completed');
+        if (!isCompleted) {
+            setTimeout(() => startGuidedTour(), 1000);
+        }
+    }
+
     // --- Kickstart elements on load (guard: only init if terminal HTML is on this page) ---
     document.addEventListener('DOMContentLoaded', () => {
         if (!document.getElementById('apex-price-chart')) return; // not on this page
         window.cancelPaperOrder = cancelOrder; // Expose globally immediately
         loadSimulatorState();
         fetchRealTimePrices(); // Initial real-time fetch
+        initNewFeatures();     // Initialize tour, modals, mode switcher, timeframes & tiers
         setInterval(tickSimulation, TICK_MS);
         setInterval(fetchRealTimePrices, 15000); // Poll real prices every 15s
     });
