@@ -381,6 +381,17 @@ module.exports = {
     return rowCount > 0;
   },
 
+  async updateHolding(userId, holdingId, { quantity, avgCost }) {
+    const { rows } = await pool.query(
+      `UPDATE holdings
+       SET quantity = $1, avg_cost = $2
+       WHERE id = $3 AND user_id = $4
+       RETURNING id, symbol, quantity, avg_cost AS "avgCost", created_at AS "createdAt"`,
+      [quantity, avgCost, holdingId, userId]
+    );
+    return rows[0] || null;
+  },
+
   // --- Watchlist ---
   async listWatchlist(userId) {
     const { rows } = await pool.query(

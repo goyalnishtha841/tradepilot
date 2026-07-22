@@ -1,21 +1,20 @@
 const express = require('express');
 const db = require('./db');
 const { requireAuth } = require('./auth');
-const { getRealQuote } = require('./yahoo-finance');
+const { getRealQuote, getRealQuoteWithSector } = require('./yahoo-finance');
 const { getMockQuote, LEGIT_SYMBOLS } = require('./mock-market');
 const { getOrGenerateNews } = require('./news-service');
 
 const router = express.Router();
 
 function isValidSymbol(symbol) {
-  return typeof symbol === 'string' && /^[A-Za-z.\-]{1,15}$/.test(symbol.trim());
+  return typeof symbol === 'string' && /^[A-Za-z0-9.\-]{1,15}$/.test(symbol.trim());
 }
 
 // Real-time quote with graceful fallback to a simulated one if the live feed fails.
 async function getQuoteWithFallback(symbol) {
   try {
-    const quote = await getRealQuote(symbol);
-    quote.sector = quote.sector || getMockQuote(symbol).sector;
+    const quote = await getRealQuoteWithSector(symbol);
     return quote;
   } catch (err) {
     console.warn(`Live quote failed for ${symbol} (${err.message}), using simulated quote.`);
@@ -50,6 +49,7 @@ router.get('/', requireAuth, async (req, res) => {
 
       return {
         ...h,
+        companyName: quote.companyName || h.symbol,
         currentPrice: quote.price,
         sector,
         marketValue: Math.round(marketValue * 100) / 100,
@@ -99,6 +99,16 @@ router.post('/', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'Please enter a valid stock symbol (e.g. AAPL, TSLA, NVDA).' });
     }
 
+    const sym = symbol.trim().toUpperCase();
+    try {
+      await getRealQuote(sym);
+    } catch (err) {
+      if (err.message === 'SYMBOL_NOT_FOUND') {
+        return res.status(400).json({ error: `Stock symbol '${sym}' does not exist in the real world.` });
+      }
+      console.warn(`Verification of ${sym} during add skipped due to: ${err.message}`);
+    }
+
     const qty = Number(quantity);
 
     if (!quantity || isNaN(qty) || qty <= 0) {
@@ -144,6 +154,46 @@ router.delete('/:id', requireAuth, async (req, res) => {
     console.error('Delete holding error:', err);
     res.status(500).json({
       error: 'Could not delete holding.'
+    });
+  }
+});
+
+// PATCH /api/portfolio/:id
+router.patch('/:id', requireAuth, async (req, res) => {
+  try {
+    const { quantity, avgCost } = req.body;
+    const holdingId = req.params.id;
+
+    const qty = Number(quantity);
+    if (quantity === undefined || isNaN(qty) || qty <= 0) {
+      return res.status(400).json({
+        error: 'Quantity must be greater than 0.'
+      });
+    }
+
+    const cost = Number(avgCost);
+    if (avgCost === undefined || isNaN(cost) || cost < 0) {
+      return res.status(400).json({
+        error: 'Average buy price must be a valid positive number.'
+      });
+    }
+
+    const updated = await db.updateHolding(req.user.id, holdingId, {
+      quantity: qty,
+      avgCost: cost
+    });
+
+    if (!updated) {
+      return res.status(404).json({
+        error: 'Holding not found or unauthorized.'
+      });
+    }
+
+    res.json({ holding: updated });
+  } catch (err) {
+    console.error('Update holding error:', err);
+    res.status(500).json({
+      error: 'Could not update holding.'
     });
   }
 });

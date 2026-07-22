@@ -1,7 +1,13 @@
 const fetch = require('node-fetch');
 const db = require('./db');
 
+const { getNews: getYahooNews } = require('./yahoo-finance');
+
 const FINNHUB_API_KEY = process.env.FINNHUB_API_KEY;
+
+if (!FINNHUB_API_KEY) {
+  console.warn('Market news provider disabled: FINNHUB_API_KEY is not configured');
+}
 
 // Symbols that don't work with Finnhub's /company-news endpoint
 // (crypto, ETFs, indices). We fall back to general market news for these.
@@ -78,8 +84,19 @@ async function fetchGeneralNews(symbol) {
  */
 async function fetchRealNews(symbol) {
   if (!FINNHUB_API_KEY) {
-    console.warn('⚠️  FINNHUB_API_KEY not set in server/.env — cannot fetch real news.');
-    return [];
+    console.warn('⚠️  FINNHUB_API_KEY not set in server/.env — falling back to Yahoo Finance news.');
+    try {
+      const yNews = await getYahooNews(symbol, 3);
+      return yNews.map(item => ({
+        symbol,
+        title: item.title || 'Untitled',
+        description: `Source: ${item.publisher || 'Yahoo Finance'}`,
+        url: item.link || `https://finance.yahoo.com/quote/${symbol.toUpperCase()}`
+      }));
+    } catch (err) {
+      console.warn(`Yahoo fallback news fetch failed for ${symbol}:`, err.message);
+      return [];
+    }
   }
 
   if (NON_STOCK_SYMBOLS.has(symbol.toUpperCase())) {
@@ -136,4 +153,79 @@ async function getOrGenerateNews(table, symbols) {
   return allNews;
 }
 
-module.exports = { getOrGenerateNews };
+let cachedHeadlines = null;
+let cachedAt = null;
+const CACHE_TTL_MS = 5 * 60 * 1000;
+
+async function getMarketHeadlines() {
+  const now = Date.now();
+  
+  if (cachedHeadlines && cachedAt && (now - cachedAt < CACHE_TTL_MS)) {
+    return {
+      news: cachedHeadlines,
+      updatedAt: new Date(cachedAt).toISOString()
+    };
+  }
+
+  try {
+    if (!FINNHUB_API_KEY) {
+      throw new Error('FINNHUB_API_KEY is not configured');
+    }
+
+    const url = `https://finnhub.io/api/v1/news?category=general&token=${FINNHUB_API_KEY}`;
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error(`Finnhub news provider returned status code ${response.status}`);
+    }
+
+    const articles = await response.json();
+    if (!Array.isArray(articles)) {
+      throw new Error('Invalid response format from Finnhub news provider');
+    }
+
+    const validArticles = articles.filter(art => art && art.headline && art.url);
+    const seenTitles = new Set();
+    const seenUrls = new Set();
+    const uniqueArticles = [];
+
+    for (const art of validArticles) {
+      const title = art.headline.trim();
+      const url = art.url.trim();
+      if (!seenTitles.has(title) && !seenUrls.has(url)) {
+        seenTitles.add(title);
+        seenUrls.add(url);
+        uniqueArticles.push({
+          title,
+          url,
+          source: art.source || 'Finnhub',
+          publishedAt: art.datetime ? new Date(art.datetime * 1000).toISOString() : new Date().toISOString()
+        });
+      }
+    }
+
+    uniqueArticles.sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));
+    const headlines = uniqueArticles.slice(0, 12);
+    
+    cachedHeadlines = headlines;
+    cachedAt = now;
+
+    return {
+      news: headlines,
+      updatedAt: new Date(now).toISOString()
+    };
+  } catch (err) {
+    console.error('Market headlines fetch error:', err.message);
+    if (cachedHeadlines && cachedAt) {
+      console.warn('Returning stale cached headlines due to provider fetch failure.');
+      return {
+        news: cachedHeadlines,
+        stale: true,
+        updatedAt: new Date(cachedAt).toISOString()
+      };
+    }
+    throw err;
+  }
+}
+
+module.exports = { getOrGenerateNews, getMarketHeadlines };

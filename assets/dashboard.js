@@ -1,6 +1,8 @@
 (function () {
   const PORTFOLIO_URL = '/api/portfolio';
   const WATCHLIST_URL = '/api/watchlist';
+  const MARKET_HEADLINES_URL = '/api/news/market-headlines';
+  const NEWS_REFRESH_MS = 5 * 60 * 1000;
 
   document.addEventListener('DOMContentLoaded', function () {
     const holdingsList = document.getElementById('holdings-list');
@@ -20,7 +22,20 @@
     const watchlistContainer = document.getElementById('dashboard-watchlist');
     const watchlistEmpty = document.getElementById('watchlist-empty-state');
 
+    const portfolioNewsList = document.getElementById('portfolio-news-list');
+    const watchlistNewsList = document.getElementById('watchlist-news-list');
+
     if (!holdingsList) return; // not on this page
+
+    // Lock flags to prevent overlapping duplicate requests
+    let isFetchingPortfolio = false;
+    let isFetchingWatchlist = false;
+    let isFetchingNews = false;
+
+    // Cache latest fetched data to avoid duplicate API calls
+    let lastPortfolioData = null;
+    let lastUpdatedTime = '';
+    let editingHoldingId = null;
 
     function authHeaders(extra) {
       const h = window.TradePilotAuth ? window.TradePilotAuth.authHeader() : {};
@@ -28,12 +43,119 @@
     }
 
     function fmtMoney(n) {
+      if (n === null || n === undefined || isNaN(n)) return 'N/A';
       return '$' + Number(n).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    // --- Skeletons ---
+    function showHoldingsSkeleton() {
+      holdingsList.querySelectorAll('.holding-row').forEach((el) => el.remove());
+      holdingsEmpty.classList.add('hidden');
+      for (let i = 0; i < 3; i++) {
+        const row = document.createElement('div');
+        row.className = 'holding-row holding-skeleton animate-pulse flex justify-between items-center p-sm border border-outline-variant/10 rounded-xl gap-sm';
+        row.innerHTML = `
+          <div class="flex items-center gap-sm w-2/3">
+            <div class="w-10 h-10 bg-slate-200 dark:bg-slate-700 rounded-lg"></div>
+            <div class="flex-grow space-y-2">
+              <div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-12"></div>
+              <div class="h-3 bg-slate-200 dark:bg-slate-700 rounded w-24"></div>
+            </div>
+          </div>
+          <div class="text-right space-y-2 w-1/4 flex flex-col items-end">
+            <div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-16"></div>
+            <div class="h-3 bg-slate-200 dark:bg-slate-700 rounded w-12"></div>
+          </div>
+        `;
+        holdingsList.appendChild(row);
+      }
+    }
+
+    function showWatchlistSkeleton() {
+      watchlistContainer.querySelectorAll('.watchlist-row').forEach((el) => el.remove());
+      watchlistEmpty.classList.add('hidden');
+      for (let i = 0; i < 3; i++) {
+        const row = document.createElement('div');
+        row.className = 'watchlist-row watchlist-skeleton animate-pulse flex justify-between items-center p-sm border border-outline-variant/10 rounded-xl gap-sm';
+        row.innerHTML = `
+          <div class="flex items-center gap-sm w-2/3">
+            <div class="w-10 h-10 bg-slate-200 dark:bg-slate-700 rounded-lg"></div>
+            <div class="flex-grow space-y-2">
+              <div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-12"></div>
+              <div class="h-3 bg-slate-200 dark:bg-slate-700 rounded w-16"></div>
+            </div>
+          </div>
+          <div class="text-right w-1/6 flex flex-col items-end">
+            <div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-12"></div>
+          </div>
+        `;
+        watchlistContainer.appendChild(row);
+      }
+    }
+
+    function showNewsSkeleton(listElement) {
+      if (!listElement) return;
+      listElement.innerHTML = '';
+      const emptyTextEl = listElement.id === 'portfolio-news-list'
+        ? document.getElementById('portfolio-news-empty')
+        : document.getElementById('watchlist-news-empty');
+      if (emptyTextEl) emptyTextEl.classList.add('hidden');
+
+      for (let i = 0; i < 2; i++) {
+        const card = document.createElement('div');
+        card.className = 'news-skeleton animate-pulse p-sm flex gap-md items-center border border-outline-variant/10 rounded-xl bg-white dark:bg-surface-container';
+        card.innerHTML = `
+          <div class="w-12 h-12 rounded-xl bg-slate-200 dark:bg-slate-700 shrink-0"></div>
+          <div class="flex-grow space-y-2">
+            <div class="flex gap-2">
+              <div class="h-3 bg-slate-200 dark:bg-slate-700 rounded w-10"></div>
+              <div class="h-3 bg-slate-200 dark:bg-slate-700 rounded w-12"></div>
+            </div>
+            <div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-3/4"></div>
+            <div class="h-3 bg-slate-200 dark:bg-slate-700 rounded w-5/6"></div>
+          </div>
+        `;
+        listElement.appendChild(card);
+      }
+    }
+
+    function showPortfolioError(msg) {
+      holdingsList.innerHTML = `<p class="text-label-sm text-error p-md bg-error-container/20 rounded-xl text-center">${msg}</p>`;
+      const container = document.getElementById('sector-exposure-chart-container');
+      if (container) {
+        container.innerHTML = `<p class="text-label-sm text-error p-md text-center">Failed to load sector breakdown.</p>`;
+      }
+    }
+
+    function showWatchlistError(msg) {
+      watchlistContainer.innerHTML = `<p class="text-label-sm text-error p-md bg-error-container/20 rounded-xl text-center">${msg}</p>`;
+    }
+
+    // --- Time-based Greetings ---
+    function updateGreeting() {
+      const greetingEl = document.getElementById('dashboard-greeting');
+      if (!greetingEl) return;
+      const hours = new Date().getHours();
+      let greeting = 'Good morning';
+      if (hours >= 12 && hours < 18) {
+        greeting = 'Good afternoon';
+      } else if (hours >= 18) {
+        greeting = 'Good evening';
+      }
+      greetingEl.textContent = greeting;
+    }
+    updateGreeting();
+
+    function updateLastUpdatedStatus() {
+      const statusEl = document.getElementById('last-updated-status');
+      if (!statusEl) return;
+      statusEl.textContent = `Last updated: ${lastUpdatedTime}`;
     }
 
     // --- Holdings ---
     function renderHoldings(holdings, summary) {
       holdingsList.querySelectorAll('.holding-row').forEach((el) => el.remove());
+      holdingsList.querySelectorAll('.holding-skeleton').forEach((el) => el.remove());
 
       if (!holdings || holdings.length === 0) {
         holdingsEmpty.classList.remove('hidden');
@@ -45,40 +167,85 @@
 
       totalValueEl.textContent = fmtMoney(summary.totalValue);
       const gainPositive = summary.totalGain >= 0;
-      totalGainEl.textContent = `${gainPositive ? '+' : ''}${fmtMoney(summary.totalGain)} (${gainPositive ? '+' : ''}${summary.totalGainPercent}%)`;
+      totalGainEl.textContent = `${gainPositive ? '+' : ''}${fmtMoney(summary.totalGain)} (${gainPositive ? '+' : ''}${summary.totalGainPercent.toFixed(2)}%)`;
       totalGainEl.className = 'text-label-sm ' + (gainPositive ? 'text-green-600' : 'text-red-500');
 
       holdings.forEach((h) => {
         const gainPositive = h.gain >= 0;
         const row = document.createElement('div');
-        row.className = 'holding-row flex flex-wrap justify-between items-center p-sm border border-outline-variant/20 rounded-xl gap-sm';
+        row.className = 'holding-row flex flex-wrap justify-between items-center p-sm border border-outline-variant/20 rounded-xl gap-sm hover:bg-surface-container/30 transition-colors duration-150';
+        
+        const currentPriceStr = h.currentPrice !== null ? fmtMoney(h.currentPrice) : 'N/A';
+        const gainPercentStr = h.gainPercent !== null ? `${gainPositive ? '+' : ''}${h.gainPercent.toFixed(2)}%` : 'N/A';
+
         row.innerHTML = `
           <div class="flex items-center gap-sm">
             <div class="w-10 h-10 bg-primary-container/20 rounded-lg flex items-center justify-center font-bold text-primary">${h.symbol.slice(0, 2)}</div>
             <div>
               <p class="font-bold text-label-md dark:text-inverse-on-surface">${h.symbol}</p>
-              <p class="text-label-sm text-on-surface-variant">${h.quantity} shares @ ${fmtMoney(h.avgCost)}</p>
+              <p class="text-label-sm text-on-surface-variant">${h.quantity} shares @ ${fmtMoney(h.avgCost)} <span class="text-[11px] opacity-75 font-semibold text-primary/75 dark:text-inverse-primary/75 ml-2">(Current: ${currentPriceStr})</span></p>
             </div>
           </div>
           <div class="text-right">
             <p class="font-bold text-label-md dark:text-inverse-on-surface">${fmtMoney(h.marketValue)}</p>
-            <p class="text-label-sm ${gainPositive ? 'text-green-600' : 'text-red-500'}">${gainPositive ? '+' : ''}${fmtMoney(h.gain)} (${gainPositive ? '+' : ''}${h.gainPercent}%)</p>
+            <p class="text-label-sm ${gainPositive ? 'text-green-600' : 'text-red-500'}">${gainPositive ? '+' : ''}${fmtMoney(h.gain)} (${gainPercentStr})</p>
           </div>
-          <button class="delete-holding-btn text-error text-label-sm font-bold hover:underline" data-id="${h.id}">Remove</button>
+          <div class="flex items-center gap-xs">
+            <button class="edit-holding-btn text-primary dark:text-inverse-primary text-label-sm font-bold hover:underline" data-id="${h.id}" aria-label="Edit holding ${h.symbol}">Edit</button>
+            <span class="text-on-surface-variant/40 dark:text-outline-variant/40 select-none">|</span>
+            <button class="delete-holding-btn text-error text-label-sm font-bold hover:underline" data-id="${h.id}" aria-label="Remove holding ${h.symbol}">Remove</button>
+          </div>
         `;
         holdingsList.appendChild(row);
       });
-
-      holdingsList.querySelectorAll('.delete-holding-btn').forEach((btn) => {
-        btn.addEventListener('click', () => deleteHolding(btn.getAttribute('data-id')));
-      });
+      
+      applyCardHoverEffects();
     }
+
+    // Single unified Event Delegation listener on holdingsList (Registered once)
+    holdingsList.addEventListener('click', (event) => {
+      const editBtn = event.target.closest('.edit-holding-btn');
+      const deleteBtn = event.target.closest('.delete-holding-btn');
+
+      if (editBtn) {
+        event.stopPropagation();
+        openEditHolding(editBtn.getAttribute('data-id'));
+        return;
+      }
+
+      if (deleteBtn) {
+        event.stopPropagation();
+        const id = deleteBtn.getAttribute('data-id');
+        let symbolText = 'this stock';
+        if (lastPortfolioData && lastPortfolioData.holdings) {
+          const found = lastPortfolioData.holdings.find(h => h.id == id);
+          if (found) symbolText = found.symbol;
+        }
+        if (confirm(`Remove ${symbolText} from your holdings?`)) {
+          deleteHolding(id);
+        }
+      }
+    });
 
     async function loadHoldings() {
       try {
         const res = await fetch(PORTFOLIO_URL, { headers: authHeaders() });
+        if (res.status === 401) {
+          window.TradePilotAuth.logout();
+          return;
+        }
         const data = await res.json();
         if (res.ok) {
+          lastPortfolioData = data;
+          lastUpdatedTime = new Date().toLocaleTimeString();
+
+          // Update Sector count badge on card header
+          const sectorBadge = document.getElementById('portfolio-sector-badge');
+          if (sectorBadge) {
+            const count = data.sectorExposure ? data.sectorExposure.length : 0;
+            sectorBadge.textContent = `${count} Sector${count === 1 ? '' : 's'}`;
+          }
+
           renderHoldings(data.holdings, data.summary);
           renderSectorExposure(data.sectorExposure);
           
@@ -90,19 +257,40 @@
           if (totalHoldingsEl) totalHoldingsEl.textContent = `${data.holdings.length} Position${data.holdings.length === 1 ? '' : 's'}`;
           if (totalSectorsEl) totalSectorsEl.textContent = `${data.sectorExposure.length} Sector${data.sectorExposure.length === 1 ? '' : 's'}`;
           if (totalInvestedEl) totalInvestedEl.textContent = fmtMoney(data.summary.totalCost);
+
+          // Update summary header
+          const mainTotalValueEl = document.getElementById('total-value');
+          const mainTotalReturnEl = document.getElementById('total-return');
           
-          // Trigger news reload for portfolio
-          loadPortfolioNews();
+          if (mainTotalValueEl) mainTotalValueEl.textContent = fmtMoney(data.summary.totalValue);
+          if (mainTotalReturnEl) {
+            const gainPositive = data.summary.totalGain >= 0;
+            mainTotalReturnEl.textContent = `${gainPositive ? '+' : ''}${fmtMoney(data.summary.totalGain)} (${gainPositive ? '+' : ''}${data.summary.totalGainPercent.toFixed(2)}%)`;
+            mainTotalReturnEl.className = 'text-md font-semibold ' + (gainPositive ? 'text-green-600' : 'text-red-500');
+          }
+
+          // Auto-sync open details modal if visible
+          const detailsModal = document.getElementById('portfolio-details-modal');
+          if (detailsModal && !detailsModal.classList.contains('hidden')) {
+            renderDetailsContent(data);
+          }
+          
+          updateLastUpdatedStatus();
+        } else {
+          showPortfolioError(data.error || 'Failed to load portfolio.');
         }
       } catch (err) {
         console.error('Could not load holdings', err);
+        showPortfolioError('Network error. Failed to load portfolio.');
       }
     }
 
     async function deleteHolding(id) {
       try {
         await fetch(`${PORTFOLIO_URL}/${id}`, { method: 'DELETE', headers: authHeaders() });
-        loadHoldings();
+        lastPortfolioData = null; // Invalidate cached modal details
+        safeLoadHoldings();
+        safeLoadNews(); // refresh news
       } catch (err) {
         console.error('Could not delete holding', err);
       }
@@ -111,8 +299,8 @@
     async function saveHolding() {
       formError.classList.add('hidden');
       const symbol = symbolInput.value.trim().toUpperCase();
-      if (!symbol || !legitSymbols.some(s => s.symbol === symbol)) {
-        formError.textContent = 'Please select a supported stock symbol (e.g. AAPL, TSLA, NVDA).';
+      if (!symbol || !/^[A-Z0-9.\-]{1,15}$/.test(symbol)) {
+        formError.textContent = 'Please select or enter a valid stock symbol.';
         formError.classList.remove('hidden');
         return;
       }
@@ -143,9 +331,11 @@
         quantityInput.value = '';
         avgCostInput.value = '';
         form.classList.add('hidden');
-        loadHoldings();
+        lastPortfolioData = null; // Invalidate cached modal details
+        safeLoadHoldings();
+        safeLoadNews(); // refresh news
       } catch (err) {
-        formError.textContent = 'Could not reach the server. Make sure it is running (npm start).';
+        formError.textContent = 'Could not reach the server. Make sure it is running.';
         formError.classList.remove('hidden');
       } finally {
         saveBtn.disabled = false;
@@ -156,14 +346,22 @@
     addBtn.addEventListener('click', () => form.classList.toggle('hidden'));
     saveBtn.addEventListener('click', saveHolding);
 
-    // --- Watchlist (read-only display here; adding happens from Explore) ---
+    // --- Watchlist ---
     async function loadWatchlist() {
       try {
         const res = await fetch(WATCHLIST_URL, { headers: authHeaders() });
+        if (res.status === 401) {
+          window.TradePilotAuth.logout();
+          return;
+        }
         const data = await res.json();
-        if (!res.ok) return;
+        if (!res.ok) {
+          showWatchlistError(data.error || 'Failed to load watchlist.');
+          return;
+        }
 
         watchlistContainer.querySelectorAll('.watchlist-row').forEach((el) => el.remove());
+        watchlistContainer.querySelectorAll('.watchlist-skeleton').forEach((el) => el.remove());
 
         if (!data.watchlist || data.watchlist.length === 0) {
           watchlistEmpty.classList.remove('hidden');
@@ -172,19 +370,27 @@
         watchlistEmpty.classList.add('hidden');
 
         data.watchlist.forEach((item) => {
-          const changePositive = item.quote.changePercent >= 0;
+          const price = item.quote ? item.quote.price : null;
+          const changePercent = item.quote ? item.quote.changePercent : null;
+          const changePositive = changePercent >= 0;
+          
           const row = document.createElement('div');
-          row.className = 'watchlist-row flex justify-between items-center p-sm border border-outline-variant/20 rounded-xl hover:bg-surface-container transition-colors group';
+          row.className = 'watchlist-row flex justify-between items-center p-sm border border-outline-variant/20 rounded-xl hover:bg-surface-container/30 transition-colors group';
+          
+          const priceStr = price !== null ? fmtMoney(price) : 'N/A';
+          const changeStr = changePercent !== null ? `${changePositive ? '+' : ''}${changePercent.toFixed(2)}%` : 'N/A';
+          const changeClass = changePercent !== null ? (changePositive ? 'text-green-600' : 'text-red-500') : 'text-on-surface-variant';
+
           row.innerHTML = `
             <div class="flex items-center gap-sm">
               <div class="w-10 h-10 bg-primary-container/20 rounded-lg flex items-center justify-center font-bold text-primary">${item.symbol.slice(0, 2)}</div>
               <div>
                 <p class="text-label-md font-bold dark:text-inverse-on-surface">${item.symbol}</p>
-                <p class="text-[10px] text-on-surface-variant">${fmtMoney(item.quote.price)}</p>
+                <p class="text-[10px] text-on-surface-variant">${priceStr}</p>
               </div>
             </div>
             <div class="flex items-center gap-xs">
-              <span class="text-label-sm font-bold ${changePositive ? 'text-green-600' : 'text-red-500'}">${changePositive ? '+' : ''}${item.quote.changePercent}%</span>
+              <span class="text-label-sm font-bold ${changeClass}">${changeStr}</span>
               <button class="remove-watchlist-btn material-symbols-outlined text-[16px] text-on-surface-variant hover:text-error opacity-0 group-hover:opacity-100 transition-opacity" data-id="${item.id}">close</button>
             </div>
           `;
@@ -192,19 +398,22 @@
         });
 
         watchlistContainer.querySelectorAll('.remove-watchlist-btn').forEach((btn) => {
-          btn.addEventListener('click', async () => {
-            await fetch(`${WATCHLIST_URL}/${btn.getAttribute('data-id')}`, { method: 'DELETE', headers: authHeaders() });
-            loadWatchlist();
+          btn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            try {
+              await fetch(`${WATCHLIST_URL}/${btn.getAttribute('data-id')}`, { method: 'DELETE', headers: authHeaders() });
+              safeLoadWatchlist();
+              safeLoadNews(); // refresh news
+            } catch (err) {
+              console.error('Failed to remove watchlist item', err);
+            }
           });
         });
 
-
-        loadWatchlistNews();
-
-
-        loadWatchlistNews();
+        applyCardHoverEffects();
       } catch (err) {
         console.error('Could not load watchlist', err);
+        showWatchlistError('Network error. Failed to load watchlist.');
       }
     }
 
@@ -231,8 +440,8 @@
       saveWatchlistBtn.addEventListener('click', async () => {
         watchlistError.classList.add('hidden');
         const symbol = watchlistSymbolInput.value.trim().toUpperCase();
-        if (!symbol || !legitSymbols.some(s => s.symbol === symbol)) {
-          watchlistError.textContent = 'Please select a supported stock symbol (e.g. AAPL, TSLA, NVDA).';
+        if (!symbol || !/^[A-Z0-9.\-]{1,15}$/.test(symbol)) {
+          watchlistError.textContent = 'Please select or enter a valid stock symbol.';
           watchlistError.classList.remove('hidden');
           return;
         }
@@ -252,7 +461,8 @@
           }
           watchlistSymbolInput.value = '';
           addWatchlistForm.classList.add('hidden');
-          loadWatchlist();
+          safeLoadWatchlist();
+          safeLoadNews(); // refresh news
         } catch (err) {
           watchlistError.textContent = err.message || 'Could not add to watchlist.';
           watchlistError.classList.remove('hidden');
@@ -330,9 +540,9 @@
           sectors.push(cb.value);
         });
         
-        const saveBtn = document.getElementById('save-profile-btn-modal');
-        saveBtn.disabled = true;
-        saveBtn.textContent = 'Saving...';
+        const saveBtnModal = document.getElementById('save-profile-btn-modal');
+        saveBtnModal.disabled = true;
+        saveBtnModal.textContent = 'Saving...';
         
         try {
           const res = await fetch('/api/onboarding', {
@@ -360,6 +570,8 @@
           if (localUser) {
             localUser.onboardingCompleted = true;
             localStorage.setItem('tradepilot_user', JSON.stringify(localUser));
+            const nameEl = document.getElementById('dashboard-user-name');
+            if (nameEl) nameEl.textContent = localUser.name || localUser.email.split('@')[0];
           }
           
           setTimeout(() => {
@@ -369,8 +581,8 @@
           profileEditError.textContent = err.message || 'Could not save profile changes.';
           profileEditError.classList.remove('hidden');
         } finally {
-          saveBtn.disabled = false;
-          saveBtn.textContent = 'Save Changes';
+          saveBtnModal.disabled = false;
+          saveBtnModal.textContent = 'Save Changes';
         }
       });
     }
@@ -382,39 +594,44 @@
       container.innerHTML = '';
       
       if (!exposure || exposure.length === 0) {
-        container.innerHTML = `<p id="sector-empty-state" class="text-label-md text-on-surface-variant dark:text-outline-variant self-center text-center">Add holdings below to see your sector exposure breakdown.</p>`;
+        container.className = "h-64 w-full flex items-center justify-center border border-dashed border-outline-variant/30 rounded-xl bg-surface-container-lowest/50 dark:bg-surface-container/50";
+        container.innerHTML = `<p id="sector-empty-state" class="text-label-md text-on-surface-variant dark:text-outline-variant text-center">Add holdings below to see your sector exposure breakdown.</p>`;
         return;
       }
       
-      // Sort exposure descending by percentage
-      exposure.sort((a, b) => b.percentage - a.percentage);
+      container.className = "w-full space-y-4 py-4 px-2 flex flex-col justify-start min-h-[16rem] custom-scrollbar overflow-y-auto";
       
-      exposure.forEach((item, idx) => {
-        const bar = document.createElement('div');
-        const bgClass = idx === 0 ? 'bg-primary dark:bg-primary-fixed-dim' : 'bg-surface-container-high dark:bg-outline-variant';
-        const hoverClass = idx === 0 ? 'hover:opacity-85' : 'hover:bg-primary-container/20';
-        
-        bar.className = `flex-1 max-w-[64px] w-full ${bgClass} ${hoverClass} rounded-t-xl transition-all cursor-pointer group relative`;
-        const hPercent = Math.max(12, Math.round(item.percentage)); // ensure at least 12% for visual bar appearance
-        bar.style.height = `${hPercent}%`;
-        
-        bar.innerHTML = `
-          <div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-on-surface text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">${item.sector}: ${item.percentage}%</div>
-          <div class="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] font-bold text-on-surface-variant dark:text-outline-variant truncate w-full text-center">${item.sector.slice(0, 10)}</div>
+      exposure.sort((a, b) => b.percentage - a.percentage);
+      exposure.forEach((item) => {
+        const sectorRow = document.createElement('div');
+        sectorRow.className = 'w-full space-y-1.5';
+        const marketValueStr = fmtMoney(item.value);
+        sectorRow.innerHTML = `
+          <div class="flex justify-between items-center text-label-sm font-medium">
+            <span class="text-on-surface dark:text-inverse-on-surface truncate pr-2">${item.sector}</span>
+            <span class="text-on-surface-variant dark:text-outline-variant shrink-0">${marketValueStr} (${item.percentage.toFixed(1)}%)</span>
+          </div>
+          <div class="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
+            <div class="bg-primary dark:bg-primary-fixed-dim h-full rounded-full transition-all duration-500 ease-out" style="width: ${item.percentage}%"></div>
+          </div>
         `;
-        container.appendChild(bar);
+        container.appendChild(sectorRow);
       });
+      applyCardHoverEffects();
     }
 
-    // --- Narrative Intelligence News ---
-    const portfolioNewsList = document.getElementById('portfolio-news-list');
-    const watchlistNewsList = document.getElementById('watchlist-news-list');
-    
-    function renderNews(listElement, newsItems, emptyText) {
+    // --- News lists rendering ---
+    function renderNews(listElement, newsItems, emptyText, emptyTextEl) {
       if (!listElement) return;
       listElement.innerHTML = '';
+      if (emptyTextEl) emptyTextEl.classList.add('hidden');
+
       if (!newsItems || newsItems.length === 0) {
-        listElement.innerHTML = `<p class="col-span-12 text-label-sm text-on-surface-variant dark:text-outline-variant">${emptyText}</p>`;
+        if (emptyTextEl) {
+          emptyTextEl.classList.remove('hidden');
+        } else {
+          listElement.innerHTML = `<p class="text-label-sm text-on-surface-variant dark:text-outline-variant">${emptyText}</p>`;
+        }
         return;
       }
       
@@ -422,127 +639,114 @@
         const card = document.createElement('a');
         card.href = item.url || `https://finance.yahoo.com/quote/${item.symbol.trim().toUpperCase()}/news`;
         card.target = '_blank';
-        card.className = 'glass-card p-sm flex gap-md items-center group cursor-pointer hover:shadow-md transition-all bg-white dark:bg-surface-container border border-outline-variant/30 rounded-xl';
+        card.rel = 'noopener noreferrer';
+        card.className = 'glass-card p-sm flex gap-md items-center group cursor-pointer hover:shadow-md transition-all bg-white dark:bg-surface-container border border-outline-variant/30 rounded-xl hover-lift';
         
         card.innerHTML = `
           <div class="w-12 h-12 rounded-xl bg-primary-container/20 flex items-center justify-center font-bold text-primary dark:text-primary-fixed-dim shrink-0">
             ${item.symbol}
           </div>
-          <div class="flex-1 min-w-0">
+          <div class="flex-grow min-w-0">
             <div class="flex gap-2 mb-1 items-center">
                <span class="bg-primary/10 text-primary dark:text-primary-fixed-dim text-[10px] px-2 py-0.5 rounded-full font-bold uppercase">${item.symbol}</span>
-               <span class="text-[10px] text-on-surface-variant dark:text-outline-variant">${new Date(item.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+               <span class="text-[10px] text-on-surface-variant dark:text-outline-variant">${item.createdAt ? new Date(item.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'Today'}</span>
             </div>
             <h4 class="text-label-sm font-bold group-hover:text-primary dark:group-hover:text-primary-fixed-dim transition-colors truncate dark:text-inverse-on-surface">${item.title}</h4>
-            <p class="text-[11px] text-on-surface-variant dark:text-outline-variant line-clamp-2 mt-0.5">${item.description}</p>
+            <p class="text-[11px] text-on-surface-variant dark:text-outline-variant line-clamp-2 mt-0.5">${item.description || ''}</p>
           </div>
         `;
         listElement.appendChild(card);
       });
+      applyCardHoverEffects();
     }
 
     async function loadPortfolioNews() {
       if (!portfolioNewsList) return;
+      const emptyTextEl = document.getElementById('portfolio-news-empty');
       try {
         const res = await fetch('/api/portfolio/news', { headers: authHeaders() });
         const data = await res.json();
         if (res.ok) {
-          renderNews(portfolioNewsList, data.news, 'Add holdings below to see news linked to your portfolio.');
+          renderNews(portfolioNewsList, data.news, 'Add holdings below to see news linked to your portfolio.', emptyTextEl);
+        } else {
+          portfolioNewsList.innerHTML = '<p class="text-label-sm text-error">Failed to load portfolio news.</p>';
         }
       } catch (err) {
         console.error('Could not load portfolio news', err);
+        portfolioNewsList.innerHTML = '<p class="text-label-sm text-error">Network error. Failed to load news.</p>';
       }
     }
 
     async function loadWatchlistNews() {
       if (!watchlistNewsList) return;
+      const emptyTextEl = document.getElementById('watchlist-news-empty');
       try {
         const res = await fetch('/api/watchlist/news', { headers: authHeaders() });
         const data = await res.json();
         if (res.ok) {
-          renderNews(watchlistNewsList, data.news, 'Add symbols to your watchlist to see watchlist news.');
+          renderNews(watchlistNewsList, data.news, 'Add symbols to your watchlist to see watchlist news.', emptyTextEl);
+        } else {
+          watchlistNewsList.innerHTML = '<p class="text-label-sm text-error">Failed to load watchlist news.</p>';
         }
       } catch (err) {
         console.error('Could not load watchlist news', err);
+        watchlistNewsList.innerHTML = '<p class="text-label-sm text-error">Network error. Failed to load news.</p>';
       }
     }
 
-    // Tab interaction
-    const tabPortfolioBtn = document.getElementById('tab-portfolio-news');
-    const tabWatchlistBtn = document.getElementById('tab-watchlist-news');
-
-    if (tabPortfolioBtn && tabWatchlistBtn) {
-      tabPortfolioBtn.addEventListener('click', () => {
-        // Toggle tab styles
-        tabPortfolioBtn.className = 'px-4 py-1.5 bg-primary dark:bg-primary-fixed-dim text-white dark:text-primary rounded-lg font-bold text-label-sm transition-all shadow-sm';
-        tabWatchlistBtn.className = 'px-4 py-1.5 text-on-surface-variant hover:text-primary dark:text-outline-variant dark:hover:text-inverse-primary rounded-lg font-bold text-label-sm transition-all';
-        
-        // Show/hide lists
-        portfolioNewsList.classList.remove('hidden');
-        watchlistNewsList.classList.add('hidden');
-      });
-
-      tabWatchlistBtn.addEventListener('click', () => {
-        // Toggle tab styles
-        tabWatchlistBtn.className = 'px-4 py-1.5 bg-primary dark:bg-primary-fixed-dim text-white dark:text-primary rounded-lg font-bold text-label-sm transition-all shadow-sm';
-        tabPortfolioBtn.className = 'px-4 py-1.5 text-on-surface-variant hover:text-primary dark:text-outline-variant dark:hover:text-inverse-primary rounded-lg font-bold text-label-sm transition-all';
-        
-        // Show/hide lists
-        watchlistNewsList.classList.remove('hidden');
-        portfolioNewsList.classList.add('hidden');
-      });
-    }
-
-
-    // --- Autocomplete logic ---
-    let legitSymbols = [];
-    async function fetchLegitSymbols() {
-      try {
-        const res = await fetch('/api/market/symbols', { headers: authHeaders() });
-        const data = await res.json();
-        if (res.ok && data.symbols) {
-          legitSymbols = data.symbols;
-          setupAutocomplete(watchlistSymbolInput, document.getElementById('watchlist-suggestions'), legitSymbols);
-          setupAutocomplete(symbolInput, document.getElementById('holding-suggestions'), legitSymbols);
-        }
-      } catch (err) {
-        console.error('Failed to load legit symbols', err);
-      }
-    }
-
-    function setupAutocomplete(input, suggestionsContainer, symbols) {
+    // --- Autocomplete ---
+    function setupAutocomplete(input, suggestionsContainer) {
       if (!input || !suggestionsContainer) return;
       
+      const DEFAULT_SUGGESTIONS = [
+        { symbol: 'AAPL', name: 'Apple Inc.', exchange: 'NASDAQ' },
+        { symbol: 'MSFT', name: 'Microsoft Corporation', exchange: 'NASDAQ' },
+        { symbol: 'NVDA', name: 'NVIDIA Corporation', exchange: 'NASDAQ' },
+        { symbol: 'TSLA', name: 'Tesla, Inc.', exchange: 'NASDAQ' },
+        { symbol: 'AMZN', name: 'Amazon.com, Inc.', exchange: 'NASDAQ' },
+        { symbol: 'META', name: 'Meta Platforms, Inc.', exchange: 'NASDAQ' },
+        { symbol: 'GOOGL', name: 'Alphabet Inc.', exchange: 'NASDAQ' },
+        { symbol: 'NFLX', name: 'Netflix, Inc.', exchange: 'NASDAQ' }
+      ];
+
       let activeIndex = -1;
       let filtered = [];
+      let debounceTimeout = null;
 
-      function showSuggestions() {
-        const query = input.value.trim().toUpperCase();
+      async function showSuggestions() {
+        const query = input.value.trim();
         suggestionsContainer.innerHTML = '';
         activeIndex = -1;
         
+        let symbols = [];
         if (!query) {
+          symbols = DEFAULT_SUGGESTIONS;
+        } else {
+          try {
+            const url = `/api/market/search?q=${encodeURIComponent(query)}`;
+            const res = await fetch(url, { headers: authHeaders() });
+            const data = await res.json();
+            if (res.ok && data.symbols && data.symbols.length > 0) {
+              symbols = data.symbols;
+            }
+          } catch (err) {
+            console.error('[Autocomplete] Fetch error:', err);
+          }
+        }
+
+        if (symbols.length === 0) {
           suggestionsContainer.classList.add('hidden');
           return;
         }
 
-        filtered = symbols.filter(s => 
-          s.symbol.startsWith(query) || 
-          s.name.toUpperCase().includes(query)
-        );
-
-        if (filtered.length === 0) {
-          suggestionsContainer.classList.add('hidden');
-          return;
-        }
-
+        filtered = symbols;
         suggestionsContainer.classList.remove('hidden');
         filtered.forEach((item, idx) => {
           const itemEl = document.createElement('div');
           itemEl.className = 'w-full px-3 py-2.5 cursor-pointer text-label-sm border-b border-outline-variant/10 last:border-b-0 flex justify-between items-center transition-colors dark:text-inverse-on-surface hover:bg-primary/10 dark:hover:bg-primary-container/45';
           itemEl.innerHTML = `
             <span class="font-bold shrink-0">${item.symbol}</span>
-            <span class="text-[11px] text-on-surface-variant dark:text-outline-variant truncate ml-4 text-right">${item.name}</span>
+            <span class="text-[11px] text-on-surface-variant dark:text-outline-variant truncate ml-4 text-right">${item.name} (${item.exchange || ''})</span>
           `;
           
           itemEl.addEventListener('mousedown', (e) => {
@@ -554,10 +758,22 @@
         });
       }
 
-      function selectItem(symbol) {
+      async function selectItem(symbol) {
         input.value = symbol;
         suggestionsContainer.classList.add('hidden');
         input.focus();
+
+        if (input === symbolInput) {
+          try {
+            const res = await fetch(`/api/market/quote?symbol=${encodeURIComponent(symbol)}`, { headers: authHeaders() });
+            const data = await res.json();
+            if (res.ok && data.quote && typeof data.quote.price === 'number') {
+              avgCostInput.value = data.quote.price.toFixed(2);
+            }
+          } catch (err) {
+            console.error('Failed to fetch quote for autofill:', err);
+          }
+        }
       }
 
       function highlightItem() {
@@ -581,12 +797,17 @@
 
       input.addEventListener('input', () => {
         clearError();
-        showSuggestions();
+        clearTimeout(debounceTimeout);
+        debounceTimeout = setTimeout(() => {
+          showSuggestions();
+        }, 300);
       });
+
       input.addEventListener('focus', () => {
         clearError();
         showSuggestions();
       });
+
       input.addEventListener('blur', () => {
         setTimeout(() => {
           suggestionsContainer.classList.add('hidden');
@@ -616,8 +837,739 @@
       });
     }
 
-    loadHoldings();
-    loadWatchlist();
-    fetchLegitSymbols();
+    // --- Market Headlines Ticker ---
+    async function loadMarketHeadlines() {
+      const ticker = document.getElementById('market-headlines-ticker');
+      if (!ticker) return;
+      
+      try {
+        const response = await fetch(MARKET_HEADLINES_URL, { headers: authHeaders() });
+        if (!response.ok) {
+          throw new Error(`Market headlines request failed: ${response.status}`);
+        }
+        const data = await response.json();
+        renderMarketHeadlines(data.news || []);
+      } catch (error) {
+        console.error('Failed to load market headlines:', error);
+        renderMarketHeadlinesError();
+      }
+    }
+
+    function renderMarketHeadlines(news) {
+      const ticker = document.getElementById('market-headlines-ticker');
+      if (!ticker) return;
+      ticker.innerHTML = '';
+
+      if (news.length === 0) {
+        ticker.innerHTML = '<span class="text-on-surface-variant dark:text-outline-variant font-medium select-none">No recent market headlines available.</span>';
+        return;
+      }
+
+      const uniqueNews = [];
+      const titles = new Set();
+      news.forEach(item => {
+        const cleanTitle = (item.title || '').trim();
+        if (cleanTitle && !titles.has(cleanTitle)) {
+          titles.add(cleanTitle);
+          uniqueNews.push(item);
+        }
+      });
+
+      uniqueNews.sort((a, b) => {
+        if (a.publishedAt && b.publishedAt) {
+          return new Date(b.publishedAt) - new Date(a.publishedAt);
+        }
+        return 0;
+      });
+
+      const itemsToDisplay = uniqueNews.slice(0, 12);
+      const linksContainer = document.createElement('div');
+      linksContainer.className = 'flex items-center gap-12';
+
+      itemsToDisplay.forEach((item, index) => {
+        const link = document.createElement('a');
+        link.href = item.url || '#';
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        link.className = 'hover:underline text-on-surface dark:text-inverse-on-surface font-semibold flex items-center gap-2 shrink-0';
+        
+        if (index > 0) {
+          const dot = document.createElement('span');
+          dot.textContent = '•';
+          dot.className = 'text-on-surface-variant dark:text-outline-variant select-none mx-1';
+          linksContainer.appendChild(dot);
+        }
+
+        const dotIndicator = document.createElement('span');
+        dotIndicator.className = 'w-1.5 h-1.5 rounded-full bg-primary dark:bg-primary-fixed-dim shrink-0';
+        link.appendChild(dotIndicator);
+
+        const textNode = document.createElement('span');
+        textNode.textContent = item.title;
+        link.appendChild(textNode);
+
+        linksContainer.appendChild(link);
+      });
+
+      const cloneContainer = linksContainer.cloneNode(true);
+      const gapDot = document.createElement('span');
+      gapDot.textContent = '•';
+      gapDot.className = 'text-on-surface-variant dark:text-outline-variant select-none mx-2 shrink-0';
+
+      ticker.appendChild(linksContainer);
+      ticker.appendChild(gapDot);
+      ticker.appendChild(cloneContainer);
+    }
+
+    function renderMarketHeadlinesError() {
+      const ticker = document.getElementById('market-headlines-ticker');
+      if (!ticker) return;
+      ticker.innerHTML = '';
+
+      const container = document.createElement('div');
+      container.className = 'flex items-center gap-3 w-full justify-between';
+
+      const errorText = document.createElement('span');
+      errorText.textContent = 'Market headlines temporarily unavailable';
+      errorText.className = 'text-error font-medium';
+
+      const retryBtn = document.createElement('button');
+      retryBtn.textContent = 'Retry';
+      retryBtn.className = 'px-3 py-1 bg-error text-white font-bold rounded-lg text-xs hover:opacity-90 transition-all';
+      retryBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        refreshMarketHeadlines();
+      });
+
+      container.appendChild(errorText);
+      container.appendChild(retryBtn);
+      ticker.appendChild(container);
+    }
+
+    let marketNewsRequestInFlight = false;
+
+    async function refreshMarketHeadlines() {
+      if (marketNewsRequestInFlight) return;
+      marketNewsRequestInFlight = true;
+
+      const ticker = document.getElementById('market-headlines-ticker');
+      if (ticker && !ticker.querySelector('.hover\\:underline')) {
+        ticker.innerHTML = '<span id="market-headlines-loading">Loading latest market headlines...</span>';
+      }
+
+      try {
+        await loadMarketHeadlines();
+      } finally {
+        marketNewsRequestInFlight = false;
+      }
+    }
+
+    // --- Safe fetching entrypoints ---
+    async function safeLoadHoldings() {
+      if (isFetchingPortfolio) return;
+      isFetchingPortfolio = true;
+      try {
+        await loadHoldings();
+      } finally {
+        isFetchingPortfolio = false;
+      }
+    }
+
+    async function safeLoadWatchlist() {
+      if (isFetchingWatchlist) return;
+      isFetchingWatchlist = true;
+      try {
+        await loadWatchlist();
+      } finally {
+        isFetchingWatchlist = false;
+      }
+    }
+
+    async function safeLoadNews() {
+      if (isFetchingNews) return;
+      isFetchingNews = true;
+      try {
+        showNewsSkeleton(portfolioNewsList);
+        showNewsSkeleton(watchlistNewsList);
+        await Promise.all([loadPortfolioNews(), loadWatchlistNews()]);
+      } finally {
+        isFetchingNews = false;
+      }
+    }
+
+    // --- Polling Timers ---
+    let refreshTimer = null;
+    let marketNewsRefreshTimer = null;
+
+    function startPolling() {
+      stopPolling();
+      refreshTimer = setInterval(() => {
+        if (document.visibilityState === 'visible') {
+          safeLoadHoldings();
+          safeLoadWatchlist();
+        }
+      }, 30000);
+
+      marketNewsRefreshTimer = setInterval(() => {
+        if (document.visibilityState === 'visible') {
+          safeLoadNews();
+          refreshMarketHeadlines();
+        }
+      }, NEWS_REFRESH_MS);
+    }
+
+    function stopPolling() {
+      if (refreshTimer) {
+        clearInterval(refreshTimer);
+        refreshTimer = null;
+      }
+      if (marketNewsRefreshTimer) {
+        clearInterval(marketNewsRefreshTimer);
+        marketNewsRefreshTimer = null;
+      }
+    }
+
+    // Visibility Listener
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        updateGreeting();
+        safeLoadHoldings();
+        safeLoadWatchlist();
+        safeLoadNews();
+        refreshMarketHeadlines();
+        startPolling();
+      } else {
+        stopPolling();
+      }
+    });
+
+    // --- Layout Actions ---
+    const header = document.querySelector('header');
+    if (header) {
+      window.addEventListener('scroll', () => {
+        if (window.scrollY > 20) {
+          header.classList.add('shadow-md');
+        } else {
+          header.classList.remove('shadow-md');
+        }
+      });
+    }
+
+    const applyCardHoverEffects = () => {
+      const cards = document.querySelectorAll('.bg-white, .bg-primary, .hover-lift');
+      cards.forEach(card => {
+        if (!card.hasHoverListener) {
+          card.hasHoverListener = true;
+          card.addEventListener('mouseenter', () => {
+            if (!card.classList.contains('hover-lift')) {
+              card.style.transform = 'translateY(-2px)';
+              card.style.transition = 'transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)';
+            }
+          });
+          card.addEventListener('mouseleave', () => {
+            if (!card.classList.contains('hover-lift')) {
+              card.style.transform = 'translateY(0)';
+            }
+          });
+        }
+      });
+    };
+
+    // --- Holdings/Watchlist Tab Switching ---
+    const tabHoldings = document.getElementById('tab-holdings');
+    const tabWatchlist = document.getElementById('tab-watchlist');
+    const paneHoldings = document.getElementById('pane-holdings');
+    const paneWatchlist = document.getElementById('pane-watchlist');
+
+    if (tabHoldings && tabWatchlist) {
+      tabHoldings.addEventListener('click', () => {
+        tabHoldings.className = 'flex-1 py-4 text-center font-bold text-label-md border-b-2 border-primary dark:border-primary-fixed-dim text-primary dark:text-inverse-primary transition-all';
+        tabWatchlist.className = 'flex-1 py-4 text-center font-bold text-label-md border-b-2 border-transparent text-on-surface-variant dark:text-outline-variant hover:text-primary dark:hover:text-inverse-primary transition-all';
+        paneHoldings.classList.remove('hidden');
+        paneWatchlist.classList.add('hidden');
+      });
+
+      tabWatchlist.addEventListener('click', () => {
+        tabWatchlist.className = 'flex-1 py-4 text-center font-bold text-label-md border-b-2 border-primary dark:border-primary-fixed-dim text-primary dark:text-inverse-primary transition-all';
+        tabHoldings.className = 'flex-1 py-4 text-center font-bold text-label-md border-b-2 border-transparent text-on-surface-variant dark:text-outline-variant hover:text-primary dark:hover:text-inverse-primary transition-all';
+        paneWatchlist.classList.remove('hidden');
+        paneHoldings.classList.add('hidden');
+      });
+    }
+
+    // --- Theme Toggle ---
+    const themeToggle = document.getElementById('theme-toggle');
+    const html = document.documentElement;
+    if (themeToggle) {
+      const isDark = localStorage.getItem('theme') === 'dark' || html.classList.contains('dark');
+      if (isDark) {
+        html.classList.add('dark');
+        themeToggle.innerText = 'light_mode';
+      } else {
+        html.classList.remove('dark');
+        themeToggle.innerText = 'dark_mode';
+      }
+      themeToggle.addEventListener('click', () => {
+        html.classList.toggle('dark');
+        const nowDark = html.classList.contains('dark');
+        localStorage.setItem('theme', nowDark ? 'dark' : 'light');
+        themeToggle.innerText = nowDark ? 'light_mode' : 'dark_mode';
+        window.dispatchEvent(new Event('theme-changed'));
+      });
+    }
+
+    // --- Portfolio Details Modal Elements ---
+    const viewDetailsBtn = document.getElementById('view-portfolio-details-btn');
+    const detailsModal = document.getElementById('portfolio-details-modal');
+    const closeDetailsBtn = document.getElementById('close-portfolio-details-btn');
+    const retryDetailsBtn = document.getElementById('retry-portfolio-details-btn');
+    
+    const detailsLoading = document.getElementById('portfolio-details-loading');
+    const detailsError = document.getElementById('portfolio-details-error');
+    const detailsEmpty = document.getElementById('portfolio-details-empty');
+    const detailsContent = document.getElementById('portfolio-details-content');
+
+    function openDetailsModal() {
+      if (!detailsModal) return;
+      document.body.classList.add('overflow-hidden');
+      detailsModal.classList.remove('hidden');
+      closeDetailsBtn.focus();
+      
+      setTimeout(() => {
+        const inner = detailsModal.querySelector('div');
+        if (inner) {
+          inner.classList.remove('opacity-0', 'scale-95');
+          inner.classList.add('opacity-100', 'scale-100');
+        }
+      }, 10);
+
+      loadAndRenderDetails();
+    }
+
+    function closeDetailsModal() {
+      if (!detailsModal) return;
+      const inner = detailsModal.querySelector('div');
+      if (inner) {
+        inner.classList.remove('opacity-100', 'scale-100');
+        inner.classList.add('opacity-0', 'scale-95');
+      }
+      setTimeout(() => {
+        detailsModal.classList.add('hidden');
+        document.body.classList.remove('overflow-hidden');
+      }, 300);
+    }
+
+    if (viewDetailsBtn) {
+      viewDetailsBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        openDetailsModal();
+      });
+    }
+
+    if (closeDetailsBtn) {
+      closeDetailsBtn.addEventListener('click', closeDetailsModal);
+    }
+
+    if (detailsModal) {
+      detailsModal.addEventListener('click', (e) => {
+        const inner = detailsModal.querySelector('div');
+        if (inner && !inner.contains(e.target)) {
+          closeDetailsModal();
+        }
+      });
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        if (detailsModal && !detailsModal.classList.contains('hidden')) {
+          closeDetailsModal();
+        }
+        if (editHoldingModal && !editHoldingModal.classList.contains('hidden')) {
+          closeEditHoldingModal();
+        }
+      }
+    });
+
+    async function loadAndRenderDetails() {
+      detailsLoading.classList.add('hidden');
+      detailsError.classList.add('hidden');
+      detailsEmpty.classList.add('hidden');
+      detailsContent.classList.add('hidden');
+
+      if (lastPortfolioData) {
+        renderDetailsContent(lastPortfolioData);
+      } else {
+        detailsLoading.classList.remove('hidden');
+        try {
+          const res = await fetch(PORTFOLIO_URL, { headers: authHeaders() });
+          const data = await res.json();
+          detailsLoading.classList.add('hidden');
+          if (res.ok) {
+            lastPortfolioData = data;
+            lastUpdatedTime = new Date().toLocaleTimeString();
+            renderDetailsContent(data);
+          } else {
+            detailsError.classList.remove('hidden');
+            document.getElementById('portfolio-details-error-msg').textContent = data.error || 'Failed to load portfolio details.';
+          }
+        } catch (err) {
+          console.error(err);
+          detailsLoading.classList.add('hidden');
+          detailsError.classList.remove('hidden');
+          document.getElementById('portfolio-details-error-msg').textContent = 'Network error. Failed to load portfolio details.';
+        }
+      }
+    }
+
+    if (retryDetailsBtn) {
+      retryDetailsBtn.addEventListener('click', () => {
+        lastPortfolioData = null; // force reload
+        loadAndRenderDetails();
+      });
+    }
+
+    function renderDetailsContent(data) {
+      if (!data.holdings || data.holdings.length === 0) {
+        detailsEmpty.classList.remove('hidden');
+        return;
+      }
+      detailsContent.classList.remove('hidden');
+
+      // 1. Summary
+      document.getElementById('details-total-value').textContent = fmtMoney(data.summary.totalValue);
+      document.getElementById('details-invested-capital').textContent = fmtMoney(data.summary.totalCost);
+      
+      const gainEl = document.getElementById('details-total-gain');
+      const gainPctEl = document.getElementById('details-total-return-pct');
+      const gainPositive = data.summary.totalGain >= 0;
+      
+      gainEl.textContent = `${gainPositive ? '+' : ''}${fmtMoney(data.summary.totalGain)}`;
+      gainEl.className = 'text-title-md font-bold ' + (gainPositive ? 'text-green-600' : 'text-red-500');
+      
+      gainPctEl.textContent = `${gainPositive ? '+' : ''}${data.summary.totalGainPercent.toFixed(2)}%`;
+      gainPctEl.className = 'text-title-md font-bold ' + (gainPositive ? 'text-green-600' : 'text-red-500');
+
+      document.getElementById('details-holdings-count').textContent = `${data.holdings.length} Position${data.holdings.length === 1 ? '' : 's'}`;
+      document.getElementById('details-sectors-count').textContent = `${data.sectorExposure.length} Sector${data.sectorExposure.length === 1 ? '' : 's'}`;
+
+      // 2. Sector Allocation
+      const sectorContainer = document.getElementById('details-sector-exposure');
+      sectorContainer.innerHTML = '';
+      
+      const sortedSectors = [...data.sectorExposure].sort((a, b) => b.percentage - a.percentage);
+      sortedSectors.forEach((item, idx) => {
+        const sectorDiv = document.createElement('div');
+        sectorDiv.className = 'border border-outline-variant/20 rounded-xl p-xs space-y-1 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/35 transition-colors group';
+        
+        sectorDiv.innerHTML = `
+          <div class="flex justify-between items-center text-label-sm font-medium px-1">
+            <div class="flex items-center gap-1">
+              <span class="material-symbols-outlined text-[16px] text-on-surface-variant group-hover:text-primary transition-transform duration-200" id="chevron-sec-${idx}">chevron_right</span>
+              <span class="text-on-surface dark:text-inverse-on-surface">${item.sector}</span>
+            </div>
+            <span class="text-on-surface-variant dark:text-outline-variant">${fmtMoney(item.value)} (${item.percentage.toFixed(1)}%)</span>
+          </div>
+          <div class="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden mx-1">
+            <div class="bg-primary dark:bg-primary-fixed-dim h-full rounded-full transition-all duration-500 ease-out" style="width: ${item.percentage}%"></div>
+          </div>
+        `;
+        
+        const constituentsDiv = document.createElement('div');
+        constituentsDiv.className = 'hidden pl-6 pr-2 py-2 space-y-1.5 bg-surface-container-low/30 dark:bg-surface-container-high/10 rounded-lg mt-2 text-xs border-t border-outline-variant/10';
+        
+        const sectorHoldings = data.holdings.filter(h => h.sector === item.sector);
+        sectorHoldings.forEach(sh => {
+          const shGainPositive = sh.gain >= 0;
+          const shWeight = data.summary.totalValue > 0 ? (sh.marketValue / data.summary.totalValue) * 100 : 0;
+          
+          const itemRow = document.createElement('div');
+          itemRow.className = 'flex justify-between items-center text-[11px] text-on-surface-variant dark:text-outline-variant';
+          itemRow.innerHTML = `
+            <span>
+              <span class="font-bold text-on-surface dark:text-inverse-on-surface">${sh.symbol}</span> 
+              <span class="opacity-85">(${sh.companyName || sh.symbol})</span>
+            </span>
+            <div class="text-right">
+              <span class="font-semibold text-on-surface dark:text-inverse-on-surface">${fmtMoney(sh.marketValue)}</span>
+              <span class="ml-2 font-bold ${shGainPositive ? 'text-green-600' : 'text-red-500'}">
+                (${shGainPositive ? '+' : ''}${sh.gainPercent !== null ? sh.gainPercent.toFixed(2) : '0.00'}%)
+              </span>
+              <span class="ml-2 opacity-70">(${shWeight.toFixed(1)}% weight)</span>
+            </div>
+          `;
+          constituentsDiv.appendChild(itemRow);
+        });
+        
+        sectorDiv.appendChild(constituentsDiv);
+        
+        sectorDiv.addEventListener('click', (e) => {
+          if (constituentsDiv.contains(e.target)) return;
+          const isHidden = constituentsDiv.classList.contains('hidden');
+          const chevron = sectorDiv.querySelector(`#chevron-sec-${idx}`);
+          if (isHidden) {
+            constituentsDiv.classList.remove('hidden');
+            if (chevron) chevron.style.transform = 'rotate(90deg)';
+          } else {
+            constituentsDiv.classList.add('hidden');
+            if (chevron) chevron.style.transform = 'rotate(0deg)';
+          }
+        });
+
+        sectorContainer.appendChild(sectorDiv);
+      });
+
+      // 3. Insights
+      let largestSector = 'None';
+      if (sortedSectors.length > 0) {
+        largestSector = `${sortedSectors[0].sector} (${sortedSectors[0].percentage.toFixed(1)}%)`;
+      }
+      document.getElementById('insight-largest-sector').textContent = largestSector;
+
+      const sortedHoldingsByValue = [...data.holdings].sort((a, b) => b.marketValue - a.marketValue);
+      let largestPosition = 'None';
+      if (sortedHoldingsByValue.length > 0) {
+        largestPosition = `${sortedHoldingsByValue[0].symbol} (${fmtMoney(sortedHoldingsByValue[0].marketValue)})`;
+      }
+      document.getElementById('insight-largest-position').textContent = largestPosition;
+
+      const sortedHoldingsByPerf = [...data.holdings].sort((a, b) => (b.gainPercent || 0) - (a.gainPercent || 0));
+      let bestPerformer = 'None';
+      let worstPerformer = 'None';
+      if (sortedHoldingsByPerf.length > 0) {
+        const best = sortedHoldingsByPerf[0];
+        bestPerformer = `${best.symbol} (${best.gainPercent >= 0 ? '+' : ''}${best.gainPercent ? best.gainPercent.toFixed(2) : '0.00'}%)`;
+        
+        const worst = sortedHoldingsByPerf[sortedHoldingsByPerf.length - 1];
+        worstPerformer = `${worst.symbol} (${worst.gainPercent >= 0 ? '+' : ''}${worst.gainPercent ? worst.gainPercent.toFixed(2) : '0.00'}%)`;
+      }
+      
+      const bestEl = document.getElementById('insight-best-performer');
+      bestEl.textContent = bestPerformer;
+      if (sortedHoldingsByPerf.length > 0) {
+        bestEl.className = 'font-bold ' + (sortedHoldingsByPerf[0].gainPercent >= 0 ? 'text-green-600' : 'text-red-500');
+      }
+
+      const worstEl = document.getElementById('insight-worst-performer');
+      worstEl.textContent = worstPerformer;
+      if (sortedHoldingsByPerf.length > 0) {
+        worstEl.className = 'font-bold ' + (sortedHoldingsByPerf[sortedHoldingsByPerf.length - 1].gainPercent >= 0 ? 'text-green-600' : 'text-red-500');
+      }
+
+      const sectorCount = data.sectorExposure.length;
+      let divStatus = 'None';
+      if (sectorCount === 1) {
+        divStatus = 'Highly Concentrated (1 Sector)';
+      } else if (sectorCount === 2 || sectorCount === 3) {
+        divStatus = `Moderately Diversified (${sectorCount} Sectors)`;
+      } else if (sectorCount >= 4) {
+        divStatus = `Well Diversified (${sectorCount} Sectors)`;
+      }
+      document.getElementById('insight-diversification').textContent = divStatus;
+
+      // 4. Holdings Table (Desktop)
+      const tableBody = document.getElementById('details-holdings-table-body');
+      tableBody.innerHTML = '';
+      
+      data.holdings.forEach(h => {
+        const shGainPositive = h.gain >= 0;
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50 dark:hover:bg-slate-800/10 transition-colors';
+        
+        const currentPriceStr = h.currentPrice !== null ? fmtMoney(h.currentPrice) : 'N/A';
+        const gainPercentStr = h.gainPercent !== null ? `${shGainPositive ? '+' : ''}${h.gainPercent.toFixed(2)}%` : 'N/A';
+        const gainClass = h.gainPercent !== null ? (shGainPositive ? 'text-green-600' : 'text-red-500') : '';
+
+        tr.innerHTML = `
+          <td class="p-sm font-bold text-on-surface dark:text-inverse-on-surface">${h.symbol}</td>
+          <td class="p-sm text-on-surface-variant dark:text-outline-variant truncate max-w-[150px]" title="${h.companyName || h.symbol}">${h.companyName || h.symbol}</td>
+          <td class="p-sm text-xs text-on-surface-variant dark:text-outline-variant">${h.sector}</td>
+          <td class="p-sm text-right text-on-surface dark:text-inverse-on-surface">${h.quantity}</td>
+          <td class="p-sm text-right text-on-surface-variant dark:text-outline-variant">${fmtMoney(h.avgCost)}</td>
+          <td class="p-sm text-right text-on-surface-variant dark:text-outline-variant">${currentPriceStr}</td>
+          <td class="p-sm text-right font-semibold text-on-surface dark:text-inverse-on-surface">${fmtMoney(h.marketValue)}</td>
+          <td class="p-sm text-right font-bold ${gainClass}">${shGainPositive ? '+' : ''}${fmtMoney(h.gain)}</td>
+          <td class="p-sm text-right font-bold ${gainClass}">${gainPercentStr}</td>
+        `;
+        tableBody.appendChild(tr);
+      });
+
+      // 5. Holdings Mobile Cards
+      const cardsContainer = document.getElementById('details-holdings-mobile-cards');
+      cardsContainer.innerHTML = '';
+      
+      data.holdings.forEach(h => {
+        const shGainPositive = h.gain >= 0;
+        const card = document.createElement('div');
+        card.className = 'p-sm border border-outline-variant/20 rounded-xl bg-white dark:bg-surface-container-low space-y-2';
+        
+        const currentPriceStr = h.currentPrice !== null ? fmtMoney(h.currentPrice) : 'N/A';
+        const gainPercentStr = h.gainPercent !== null ? `${shGainPositive ? '+' : ''}${h.gainPercent.toFixed(2)}%` : 'N/A';
+        const gainClass = h.gainPercent !== null ? (shGainPositive ? 'text-green-600' : 'text-red-500') : 'text-on-surface-variant';
+
+        card.innerHTML = `
+          <div class="flex justify-between items-center border-b border-outline-variant/10 pb-1.5">
+            <div>
+              <span class="font-bold text-label-md text-on-surface dark:text-inverse-on-surface">${h.symbol}</span>
+              <span class="text-[10px] text-on-surface-variant dark:text-outline-variant ml-2">${h.companyName || h.symbol}</span>
+            </div>
+            <span class="text-xs bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded text-on-surface-variant dark:text-outline-variant">${h.sector}</span>
+          </div>
+          <div class="grid grid-cols-2 gap-y-1 text-xs">
+            <div class="text-on-surface-variant dark:text-outline-variant">Qty: <span class="text-on-surface dark:text-inverse-on-surface font-semibold">${h.quantity}</span></div>
+            <div class="text-on-surface-variant dark:text-outline-variant text-right">Avg Cost: <span class="text-on-surface dark:text-inverse-on-surface font-semibold">${fmtMoney(h.avgCost)}</span></div>
+            <div class="text-on-surface-variant dark:text-outline-variant">Current: <span class="text-on-surface dark:text-inverse-on-surface font-semibold">${currentPriceStr}</span></div>
+            <div class="text-on-surface-variant dark:text-outline-variant text-right">Value: <span class="text-on-surface dark:text-inverse-on-surface font-bold">${fmtMoney(h.marketValue)}</span></div>
+          </div>
+          <div class="flex justify-between items-center text-xs pt-1 border-t border-outline-variant/10">
+            <span class="text-on-surface-variant dark:text-outline-variant">Total Gain/Loss:</span>
+            <span class="font-bold ${gainClass}">${shGainPositive ? '+' : ''}${fmtMoney(h.gain)} (${gainPercentStr})</span>
+          </div>
+        `;
+        cardsContainer.appendChild(card);
+      });
+
+      // 6. Data freshness
+      document.getElementById('details-data-freshness').textContent = `Market data updated: ${lastUpdatedTime}`;
+    }
+
+    // --- Edit Holding Modal Logic ---
+    const editHoldingModal = document.getElementById('edit-holding-modal');
+    const closeEditHoldingBtn = document.getElementById('close-edit-holding-btn');
+    const cancelEditHoldingBtn = document.getElementById('cancel-edit-holding-btn');
+    const editHoldingForm = document.getElementById('edit-holding-form');
+    const editHoldingError = document.getElementById('edit-holding-error');
+
+    function openEditHolding(holdingId) {
+      if (!editHoldingModal) return;
+      editingHoldingId = holdingId;
+
+      // Find the holding details in lastPortfolioData
+      if (!lastPortfolioData || !lastPortfolioData.holdings) return;
+      const holding = lastPortfolioData.holdings.find(h => h.id == holdingId);
+      if (!holding) return;
+
+      // Prefill fields
+      document.getElementById('edit-holding-symbol').value = holding.symbol;
+      document.getElementById('edit-holding-quantity').value = holding.quantity;
+      document.getElementById('edit-holding-avg-cost').value = holding.avgCost;
+      document.getElementById('edit-holding-current-price').textContent = holding.currentPrice !== null ? fmtMoney(holding.currentPrice) : 'N/A';
+
+      // Reset error view
+      editHoldingError.classList.add('hidden');
+
+      // Lock body scroll and open modal
+      document.body.classList.add('overflow-hidden');
+      editHoldingModal.classList.remove('hidden');
+      closeEditHoldingBtn.focus();
+
+      setTimeout(() => {
+        const inner = editHoldingModal.querySelector('div');
+        if (inner) {
+          inner.classList.remove('opacity-0', 'scale-95');
+          inner.classList.add('opacity-100', 'scale-100');
+        }
+      }, 10);
+    }
+
+    function closeEditHoldingModal() {
+      if (!editHoldingModal) return;
+      const inner = editHoldingModal.querySelector('div');
+      if (inner) {
+        inner.classList.remove('opacity-100', 'scale-100');
+        inner.classList.add('opacity-0', 'scale-95');
+      }
+      setTimeout(() => {
+        editHoldingModal.classList.add('hidden');
+        document.body.classList.remove('overflow-hidden');
+        editHoldingError.classList.add('hidden');
+      }, 300);
+    }
+
+    if (closeEditHoldingBtn) {
+      closeEditHoldingBtn.addEventListener('click', closeEditHoldingModal);
+    }
+    if (cancelEditHoldingBtn) {
+      cancelEditHoldingBtn.addEventListener('click', closeEditHoldingModal);
+    }
+    if (editHoldingModal) {
+      editHoldingModal.addEventListener('click', (e) => {
+        const inner = editHoldingModal.querySelector('div');
+        if (inner && !inner.contains(e.target)) {
+          closeEditHoldingModal();
+        }
+      });
+    }
+
+    if (editHoldingForm) {
+      editHoldingForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        editHoldingError.classList.add('hidden');
+
+        const qtyInput = document.getElementById('edit-holding-quantity');
+        const avgCostInput = document.getElementById('edit-holding-avg-cost');
+        const saveBtn = document.getElementById('save-edit-holding-btn');
+
+        const quantity = Number(qtyInput.value);
+        const avgCost = Number(avgCostInput.value);
+
+        if (isNaN(quantity) || quantity <= 0) {
+          editHoldingError.textContent = 'Quantity must be greater than 0.';
+          editHoldingError.classList.remove('hidden');
+          return;
+        }
+
+        if (isNaN(avgCost) || avgCost < 0) {
+          editHoldingError.textContent = 'Average buy price must be a valid positive number.';
+          editHoldingError.classList.remove('hidden');
+          return;
+        }
+
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Saving...';
+
+        try {
+          const res = await fetch(`${PORTFOLIO_URL}/${editingHoldingId}`, {
+            method: 'PATCH',
+            headers: authHeaders({ 'Content-Type': 'application/json' }),
+            body: JSON.stringify({ quantity, avgCost })
+          });
+
+          const data = await res.json();
+          if (!res.ok) {
+            editHoldingError.textContent = data.error || 'Could not update holding.';
+            editHoldingError.classList.remove('hidden');
+            return;
+          }
+
+          // Close modal and refresh UI values
+          closeEditHoldingModal();
+          lastPortfolioData = null; // Invalidate cached details
+          safeLoadHoldings();
+          safeLoadNews(); // refresh news
+        } catch (err) {
+          editHoldingError.textContent = 'Could not reach the server. Make sure it is running.';
+          editHoldingError.classList.remove('hidden');
+        } finally {
+          saveBtn.disabled = false;
+          saveBtn.textContent = 'Save Changes';
+        }
+      });
+    }
+
+    // --- Setup and initial fetch ---
+    setupAutocomplete(watchlistSymbolInput, document.getElementById('watchlist-suggestions'));
+    setupAutocomplete(symbolInput, document.getElementById('holding-suggestions'));
+    
+    // Initial fetches
+    safeLoadHoldings();
+    safeLoadWatchlist();
+    safeLoadNews();
+    refreshMarketHeadlines();
+    startPolling();
+
+    window.addEventListener('unload', () => {
+      stopPolling();
+    });
   });
 })();

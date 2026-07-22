@@ -55,6 +55,32 @@
         .hover-lift:hover {
             transform: translateY(-4px);
         }
+        @keyframes marketTickerScroll {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+        .market-ticker-viewport {
+            overflow: hidden;
+            white-space: nowrap;
+            position: relative;
+            width: 100%;
+        }
+        .market-ticker-track {
+            display: flex;
+            width: max-content;
+            animation: marketTickerScroll 60s linear infinite;
+        }
+        .market-ticker-viewport:hover .market-ticker-track {
+            animation-play-state: paused;
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .market-ticker-track {
+                animation: none;
+                overflow-x: auto;
+                white-space: nowrap;
+                width: auto;
+            }
+        }
     </style>
 <script id="tailwind-config">
         tailwind.config = {
@@ -228,361 +254,196 @@
 </aside>
 <!-- Main Content Area -->
 <main class="pt-24 pb-xl px-gutter max-w-container-max mx-auto min-h-screen">
-<!-- Urgent Action Center -->
-<section class="mb-lg">
-<h2 class="text-label-sm font-bold uppercase tracking-widest text-error mb-sm flex items-center gap-2">
-<span class="w-2 h-2 rounded-full bg-error pulse-indicator"></span>
-            Urgent Action Center
-        </h2>
-<div class="grid grid-cols-1 md:grid-cols-2 gap-md">
-<div class="bg-surface-container-lowest dark:bg-surface-container border border-outline-variant/30 p-md rounded-[20px] flex justify-between items-center shadow-sm hover-lift">
-<div class="flex gap-md items-center">
-<div class="bg-error/10 text-error px-4 py-2 rounded-xl flex flex-col items-center">
-<span class="text-label-sm font-bold uppercase">Sell</span>
-<span class="text-title-md font-bold">TSLA</span>
-</div>
-<div>
-<div class="flex items-center gap-2 mb-1">
-<span class="bg-error text-white text-[10px] px-2 py-0.5 rounded-full font-bold uppercase">Urgent</span>
-<span class="text-label-sm font-bold">Portfolio Risk</span>
-</div>
-<p class="text-label-sm text-on-surface-variant dark:text-outline-variant">Multiple bearish crosses on daily charts.</p>
-</div>
-</div>
-<div class="flex flex-col gap-2">
-<button class="bg-primary dark:bg-primary-fixed-dim text-white dark:text-primary text-label-sm font-bold px-4 py-2 rounded-xl">Execute</button>
-<button class="border border-outline-variant text-label-sm font-bold px-4 py-2 rounded-xl">Ignore</button>
-</div>
-</div>
-<div class="bg-surface-container-lowest dark:bg-surface-container border border-outline-variant/30 p-md rounded-[20px] flex justify-between items-center shadow-sm hover-lift">
-<div class="flex gap-md items-center">
-<div class="bg-primary-container dark:bg-primary-fixed-dim/20 text-primary dark:text-primary-fixed-dim px-4 py-2 rounded-xl flex flex-col items-center">
-<span class="text-label-sm font-bold uppercase">Buy</span>
-<span class="text-title-md font-bold">XOM</span>
-</div>
-<div>
-<div class="flex items-center gap-2 mb-1">
-<span class="bg-primary text-white dark:bg-primary-fixed-dim dark:text-primary text-[10px] px-2 py-0.5 rounded-full font-bold uppercase">Signal</span>
-<span class="text-label-sm font-bold">Macro Hedge</span>
-</div>
-<p class="text-label-sm text-on-surface-variant dark:text-outline-variant">Energy narrative strengthening post-FOMC.</p>
-</div>
-</div>
-<div class="flex flex-col gap-2">
-<button class="bg-primary dark:bg-primary-fixed-dim text-white dark:text-primary text-label-sm font-bold px-4 py-2 rounded-xl">Execute</button>
-<button class="border border-outline-variant text-label-sm font-bold px-4 py-2 rounded-xl">Review</button>
-</div>
-</div>
-</div>
+<!-- Breaking News Ticker -->
+<section class="mb-6 bg-white dark:bg-inverse-surface border border-outline-variant/30 rounded-xl px-4 py-3 flex items-center gap-3 overflow-hidden shadow-sm">
+  <span class="bg-primary text-white dark:bg-primary-fixed-dim dark:text-primary font-bold text-xs uppercase px-2.5 py-1 rounded flex items-center gap-1 shrink-0">
+    <span class="material-symbols-outlined text-[14px]">campaign</span> Market Headlines
+  </span>
+  <div class="market-ticker-viewport flex-1 h-6">
+    <div id="market-headlines-ticker" class="market-ticker-track flex items-center gap-12 text-sm text-on-surface-variant dark:text-outline-variant font-medium">
+      <span id="market-headlines-loading">
+        Loading latest market headlines...
+      </span>
+    </div>
+  </div>
 </section>
+
 <!-- Header & Welcome -->
 <div class="mb-lg flex justify-between items-center flex-wrap gap-md">
   <div>
-    <h1 class="font-headline-lg text-headline-lg text-on-surface dark:text-inverse-on-surface tracking-tight mb-base">Morning, <span id="dashboard-user-name">Trader</span></h1>
-    <p class="text-on-surface-variant dark:text-outline-variant text-body-md max-w-2xl">
-      Your research portfolio grew by 12% in depth this week. Total Value: $<span class="font-bold" id="total-value">245,670</span>.
-    </p>
+    <h1 class="font-headline-lg text-headline-lg text-on-surface dark:text-inverse-on-surface tracking-tight mb-base"><span id="dashboard-greeting">Good morning</span>, <span id="dashboard-user-name">Trader</span></h1>
+    <div id="portfolio-summary-details" class="text-on-surface-variant dark:text-outline-variant text-body-md mt-2 flex flex-wrap items-center gap-x-6 gap-y-2">
+      <span class="text-lg font-medium">Portfolio Value: <span class="font-bold text-on-surface dark:text-inverse-on-surface" id="total-value">$0.00</span></span>
+      <span class="text-md font-semibold" id="total-return">+$0.00 (+0.00%) total return</span>
+      <span class="text-xs text-outline/80 dark:text-outline-variant/80 border-l border-outline-variant/30 pl-4" id="last-updated-status">Last updated: --:--:--</span>
+    </div>
   </div>
   <button id="open-profile-edit-btn" class="px-4 py-2 border border-outline-variant/40 rounded-xl text-label-md font-bold hover:bg-surface-container-low dark:hover:bg-surface-container-high transition-all flex items-center gap-1 dark:text-inverse-on-surface">
     <span class="material-symbols-outlined text-[18px]">edit</span> Edit Profile
   </button>
 </div>
-<div class="bento-grid">
-<!-- Portfolio Overview Card (Research Focus) -->
-<div class="col-span-12 bg-white dark:bg-surface-container border border-outline-variant/30 rounded-[20px] p-lg shadow-sm">
-<div class="flex justify-between items-start mb-lg">
-<div>
-<h2 class="text-title-md font-title-md dark:text-inverse-on-surface mb-xs">Research Portfolio</h2>
-<p class="text-label-sm text-on-surface-variant dark:text-outline-variant">Asset distribution by sector exposure</p>
-</div>
-<div class="flex gap-xs">
-<span class="bg-primary-container dark:bg-primary text-on-primary-container dark:text-on-primary px-3 py-1 rounded-full text-label-sm">High Confidence</span>
-</div>
-</div>
-<!-- Research Chart Area (Dynamic Sector Exposure) -->
-<div id="sector-exposure-chart-container" class="h-64 w-full flex items-end justify-center gap-md mb-lg border border-dashed border-outline-variant/30 rounded-xl bg-surface-container-lowest/50 dark:bg-surface-container/50 px-sm pt-sm pb-8 relative">
-  <p id="sector-empty-state" class="text-label-md text-on-surface-variant dark:text-outline-variant self-center text-center">Add holdings below to see your sector exposure breakdown.</p>
-</div>
-<div class="grid grid-cols-2 sm:grid-cols-4 gap-md">
-<div>
-<p class="text-label-sm text-on-surface-variant dark:text-outline-variant mb-base">Total Holdings</p>
-<p id="total-holdings-count" class="font-bold text-title-md dark:text-inverse-on-surface">0 Positions</p>
-</div>
-<div>
-<p class="text-label-sm text-on-surface-variant dark:text-outline-variant mb-base">Sector Count</p>
-<p id="total-sectors-count" class="font-bold text-title-md dark:text-inverse-on-surface">0 Sectors</p>
-</div>
-<div>
-<p class="text-label-sm text-on-surface-variant dark:text-outline-variant mb-base">Invested Capital</p>
-<p id="total-invested-capital" class="font-bold text-title-md text-primary dark:text-primary-fixed-dim">$0.00</p>
-</div>
-<div class="flex items-end">
-<button class="text-primary dark:text-primary-fixed-dim font-bold text-label-md underline">View Details</button>
-</div>
-</div>
-</div>
-<!-- Saved Stocks & Narratives -->
-<div class="col-span-12 md:col-span-6 space-y-md">
-<div class="bg-white dark:bg-surface-container border border-outline-variant/30 rounded-[20px] p-md shadow-sm">
-<div class="flex justify-between items-center mb-md">
-<h3 class="font-bold text-label-md dark:text-inverse-on-surface">Your Watchlist</h3>
-<button id="add-watchlist-btn" class="text-primary dark:text-primary-fixed-dim text-label-sm font-bold flex items-center gap-base hover:underline">
-  <span class="material-symbols-outlined text-[16px]">add</span> Add Stock
-</button>
-</div>
-<div id="add-watchlist-form" class="hidden mb-md p-sm bg-surface-container-low dark:bg-surface-container-high rounded-xl flex gap-xs items-center max-w-sm">
-  <div class="relative flex-grow">
-    <input id="watchlist-symbol" class="w-full bg-white dark:bg-surface-container border border-outline-variant/50 rounded-lg px-3 py-1.5 text-label-sm uppercase focus:outline-none dark:text-inverse-on-surface" placeholder="e.g. AAPL" type="text" autocomplete="off"/>
-    <div id="watchlist-suggestions" class="absolute left-0 w-64 mt-1 bg-white dark:bg-surface-container-high dark:text-inverse-on-surface border border-outline-variant/30 rounded-xl shadow-xl max-h-48 overflow-y-auto hidden z-[99]"></div>
-  </div>
-  <button id="save-watchlist-btn" class="px-4 py-1.5 bg-primary text-white rounded-lg font-bold text-label-sm hover:opacity-90 transition-all">Add</button>
-</div>
-<div id="watchlist-form-error" class="hidden text-label-sm text-error mb-xs"></div>
-<div id="dashboard-watchlist" class="grid grid-cols-1 sm:grid-cols-2 gap-sm">
-<p id="watchlist-empty-state" class="text-label-sm text-on-surface-variant hidden">
-No stocks saved yet — click "Add Stock" or visit Explore.
-</p>
-</div>
-</div>
-</div>
-<!-- Your Holdings (real, live data) -->
-<div class="col-span-12 md:col-span-6 bg-white dark:bg-surface-container border border-outline-variant/30 rounded-[20px] p-lg shadow-sm">
-<div class="flex justify-between items-center mb-md flex-wrap gap-sm">
-<div>
-<h2 class="text-title-md font-title-md dark:text-inverse-on-surface">Your Holdings</h2>
-<p class="text-label-sm text-on-surface-variant dark:text-outline-variant">Prices simulated for demo purposes</p>
-</div>
-<div class="flex items-center gap-md">
-<div id="holdings-summary" class="text-right hidden">
-<p class="text-title-md font-bold dark:text-inverse-on-surface" id="holdings-total-value">$0.00</p>
-<p class="text-label-sm" id="holdings-total-gain">+$0.00 (0%)</p>
-</div>
-<button id="add-holding-btn" class="px-4 py-2 bg-primary text-white rounded-xl text-label-md font-bold hover:opacity-90 transition-all flex items-center gap-1">
-<span class="material-symbols-outlined text-[18px]">add</span> Add Holding
-</button>
-</div>
-</div>
-<div id="add-holding-form" class="hidden mb-md p-md bg-surface-container-low dark:bg-surface-container-high rounded-xl grid grid-cols-1 sm:grid-cols-4 gap-sm items-end">
-<div class="relative">
-<label class="text-label-sm font-bold text-on-surface-variant block mb-1">Symbol</label>
-<input id="holding-symbol" class="w-full bg-white dark:bg-surface-container border border-outline-variant/50 rounded-lg px-3 py-2 text-body-md uppercase" placeholder="e.g. AAPL" type="text" autocomplete="off"/>
-<div id="holding-suggestions" class="absolute left-0 w-64 mt-1 bg-white dark:bg-surface-container-high dark:text-inverse-on-surface border border-outline-variant/30 rounded-xl shadow-xl max-h-48 overflow-y-auto hidden z-[99]"></div>
-</div>
-<div>
-<label class="text-label-sm font-bold text-on-surface-variant block mb-1">Quantity</label>
-<input id="holding-quantity" class="w-full bg-white dark:bg-surface-container border border-outline-variant/50 rounded-lg px-3 py-2 text-body-md" placeholder="e.g. 10" type="number" step="0.0001"/>
-</div>
-<div>
-<label class="text-label-sm font-bold text-on-surface-variant block mb-1">Avg. Cost / Share</label>
-<input id="holding-avg-cost" class="w-full bg-white dark:bg-surface-container border border-outline-variant/50 rounded-lg px-3 py-2 text-body-md" placeholder="e.g. 150.00" type="number" step="0.01"/>
-</div>
-<button id="save-holding-btn" class="py-2 bg-primary text-white rounded-lg font-bold hover:opacity-90">Save</button>
-</div>
-<div id="holding-form-error" class="hidden text-label-sm text-error mb-sm"></div>
-<div id="holdings-list" class="space-y-sm">
-<p id="holdings-empty-state" class="text-label-md text-on-surface-variant p-md bg-surface-container-low dark:bg-surface-container-high rounded-xl hidden">
-You don't have any holdings yet — click "Add Holding" to track your first position.
-</p>
-</div>
-</div>
-<!-- Learning Streak & Weekly Goals -->
-<div class="col-span-12 md:col-span-4 bg-primary dark:bg-inverse-surface text-white rounded-[20px] p-lg flex flex-col justify-between overflow-hidden relative">
-  <div class="relative z-10">
-    <h3 class="text-label-sm font-black uppercase tracking-widest opacity-80 mb-sm">Learning Progress</h3>
-    <p class="text-display-lg font-display-lg leading-none mb-xs">12 <span class="text-title-md font-bold">Days</span></p>
-    <p class="text-label-md opacity-90">Current streak. Keep it up!</p>
-  </div>
-  <div class="relative z-10 mt-lg">
-    <div class="flex justify-between items-end mb-xs">
-      <p class="text-label-md font-bold">Weekly Goal</p>
-      <p class="text-label-sm">4 / 5 Reports</p>
-    </div>
-    <div class="w-full bg-white/20 h-2 rounded-full overflow-hidden">
-      <div class="bg-white h-full w-[80%] rounded-full"></div>
-    </div>
-  </div>
-  <div class="absolute -bottom-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-3xl"></div>
-</div>
 
-<!-- Quick Action Plans -->
-<div class="col-span-12 bg-white dark:bg-surface-container border border-outline-variant/30 rounded-[20px] p-lg shadow-sm">
-  <h3 class="text-title-md font-title-md mb-lg dark:text-inverse-on-surface">Quick Action Plans</h3>
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-lg">
-    <div class="space-y-md">
-      <h4 class="text-label-md font-bold text-primary dark:text-primary-fixed-dim flex items-center gap-2">
-        <span class="material-symbols-outlined text-[20px]">account_balance_wallet</span>
-        Investor Actions
-      </h4>
-      <div class="grid grid-cols-2 gap-sm">
-        <button class="flex items-center gap-sm p-sm bg-surface-container-low dark:bg-surface-container-high rounded-xl hover-lift">
-          <span class="material-symbols-outlined text-primary dark:text-primary-fixed-dim">security</span>
-          <span class="text-label-sm font-bold">Hedge</span>
-        </button>
-        <button class="flex items-center gap-sm p-sm bg-surface-container-low dark:bg-surface-container-high rounded-xl hover-lift">
-          <span class="material-symbols-outlined text-primary dark:text-primary-fixed-dim">moving</span>
-          <span class="text-label-sm font-bold">Extract</span>
-        </button>
-        <button class="flex items-center gap-sm p-sm bg-surface-container-low dark:bg-surface-container-high rounded-xl hover-lift">
-          <span class="material-symbols-outlined text-primary dark:text-primary-fixed-dim">balance</span>
-          <span class="text-label-sm font-bold">Rebalance</span>
-        </button>
-        <button class="flex items-center gap-sm p-sm bg-surface-container-low dark:bg-surface-container-high rounded-xl hover-lift">
-          <span class="material-symbols-outlined text-primary dark:text-primary-fixed-dim">receipt_long</span>
-          <span class="text-label-sm font-bold">Tax Optimization</span>
-        </button>
+<!-- Row 1 Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter mb-lg">
+  <!-- Research Portfolio Card (col-span-7) -->
+  <div class="col-span-12 lg:col-span-7 bg-white dark:bg-surface-container border border-outline-variant/30 rounded-[20px] p-lg shadow-sm flex flex-col justify-between">
+    <div class="flex justify-between items-start mb-lg">
+      <div>
+        <h2 class="text-title-md font-title-md dark:text-inverse-on-surface mb-xs">Research Portfolio</h2>
+        <p class="text-label-sm text-on-surface-variant dark:text-outline-variant">Asset distribution by sector exposure</p>
+      </div>
+      <div class="flex gap-xs">
+        <span id="portfolio-sector-badge" class="bg-primary-container dark:bg-primary text-on-primary-container dark:text-on-primary px-3 py-1 rounded-full text-label-sm">0 Sectors</span>
       </div>
     </div>
-    <div class="space-y-md">
-      <h4 class="text-label-md font-bold text-primary dark:text-primary-fixed-dim flex items-center gap-2">
-        <span class="material-symbols-outlined text-[20px]">school</span>
-        Learner Modules
-      </h4>
-      <div class="space-y-sm">
-        <div class="flex items-center justify-between p-sm border border-outline-variant/20 rounded-xl hover:bg-surface-container-low dark:hover:bg-surface-container-high transition-colors cursor-pointer group">
-          <div class="flex items-center gap-md">
-            <div class="w-10 h-10 rounded-lg bg-primary/5 flex items-center justify-center">
-              <span class="material-symbols-outlined text-primary dark:text-primary-fixed-dim text-[20px]">analytics</span>
-            </div>
-            <div>
-              <p class="text-label-sm font-bold">Market-Linked: Yield Curves</p>
-              <p class="text-[10px] text-on-surface-variant">Influenced by your recent NVDA research</p>
-            </div>
-          </div>
-          <span class="material-symbols-outlined text-on-surface-variant group-hover:translate-x-1 transition-transform">chevron_right</span>
-        </div>
-        <div class="flex items-center justify-between p-sm border border-outline-variant/20 rounded-xl hover:bg-surface-container-low dark:hover:bg-surface-container-high transition-colors cursor-pointer group">
-          <div class="flex items-center gap-md">
-            <div class="w-10 h-10 rounded-lg bg-primary/5 flex items-center justify-center">
-              <span class="material-symbols-outlined text-primary dark:text-primary-fixed-dim text-[20px]">biotech</span>
-            </div>
-            <div>
-              <p class="text-label-sm font-bold">Nano-Bio Convergence</p>
-              <p class="text-[10px] text-on-surface-variant">Recommended based on Sector Rotation</p>
-            </div>
-          </div>
-          <span class="material-symbols-outlined text-on-surface-variant group-hover:translate-x-1 transition-transform">chevron_right</span>
-        </div>
+    
+    <!-- Research Chart Area (Dynamic Sector Exposure) -->
+    <div id="sector-exposure-chart-container" class="h-64 w-full flex items-end justify-center gap-md mb-lg border border-dashed border-outline-variant/30 rounded-xl bg-surface-container-lowest/50 dark:bg-surface-container/50 px-sm pt-sm pb-8 relative">
+      <p id="sector-empty-state" class="text-label-md text-on-surface-variant dark:text-outline-variant self-center text-center">Add holdings below to see your sector exposure breakdown.</p>
+    </div>
+    
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-md">
+      <div>
+        <p class="text-label-sm text-on-surface-variant dark:text-outline-variant mb-base">Total Holdings</p>
+        <p id="total-holdings-count" class="font-bold text-title-md dark:text-inverse-on-surface">0 Positions</p>
       </div>
-    </div>
-  </div>
-</div>
-
-<!-- Upcoming Impact Calendar -->
-<div class="col-span-12 md:col-span-7 bg-white dark:bg-surface-container border border-outline-variant/30 rounded-[20px] p-lg shadow-sm">
-  <div class="flex justify-between items-center mb-lg">
-    <h3 class="text-title-md font-title-md dark:text-inverse-on-surface">Upcoming Impact Calendar</h3>
-    <button class="text-label-sm font-bold text-primary dark:text-primary-fixed-dim">View Calendar</button>
-  </div>
-  <div class="space-y-md">
-    <div class="flex gap-md p-md rounded-xl bg-surface-container-low dark:bg-surface-container-high hover-lift border border-transparent hover:border-outline-variant/20">
-      <div class="w-14 h-14 rounded-2xl bg-white dark:bg-surface-container flex flex-col items-center justify-center border border-outline-variant/10 shadow-sm shrink-0">
-        <span class="text-label-sm font-bold text-primary dark:text-primary-fixed-dim">OCT</span>
-        <span class="text-title-md font-bold">24</span>
+      <div>
+        <p class="text-label-sm text-on-surface-variant dark:text-outline-variant mb-base">Sector Count</p>
+        <p id="total-sectors-count" class="font-bold text-title-md dark:text-inverse-on-surface">0 Sectors</p>
       </div>
-      <div class="flex-1">
-        <div class="flex items-center gap-2 mb-1">
-          <span class="bg-primary-container dark:bg-primary-fixed-dim/20 text-primary dark:text-primary-fixed-dim text-[10px] px-2 py-0.5 rounded font-bold">EARNINGS</span>
-          <span class="text-label-sm font-bold dark:text-inverse-on-surface">Microsoft (MSFT) Q3 Results</span>
-        </div>
-        <p class="text-label-sm text-on-surface-variant dark:text-outline-variant">Critical for your AI Infrastructure narrative exposure.</p>
+      <div>
+        <p class="text-label-sm text-on-surface-variant dark:text-outline-variant mb-base">Invested Capital</p>
+        <p id="total-invested-capital" class="font-bold text-title-md text-primary dark:text-primary-fixed-dim">$0.00</p>
       </div>
-    </div>
-    <div class="flex gap-md p-md rounded-xl bg-surface-container-low dark:bg-surface-container-high hover-lift border border-transparent hover:border-outline-variant/20">
-      <div class="w-14 h-14 rounded-2xl bg-white dark:bg-surface-container flex flex-col items-center justify-center border border-outline-variant/10 shadow-sm shrink-0">
-        <span class="text-label-sm font-bold text-primary dark:text-primary-fixed-dim">OCT</span>
-        <span class="text-title-md font-bold">28</span>
+      <div class="flex items-end">
+        <button id="view-portfolio-details-btn" class="text-primary dark:text-primary-fixed-dim font-bold text-label-md underline">View Details</button>
       </div>
-      <div class="flex-1">
-        <div class="flex items-center gap-2 mb-1">
-          <span class="bg-secondary-container dark:bg-secondary-fixed/20 text-secondary dark:text-secondary-fixed text-[10px] px-2 py-0.5 rounded font-bold">MACRO</span>
-          <span class="text-label-sm font-bold dark:text-inverse-on-surface">Personal Consumption Expenditures (PCE)</span>
-        </div>
-        <p class="text-label-sm text-on-surface-variant dark:text-outline-variant">Fed's preferred inflation gauge; watch for bond yield reaction.</p>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Knowledge Pulse -->
-<div class="col-span-12 md:col-span-5 bg-white dark:bg-surface-container border border-outline-variant/30 rounded-[20px] p-lg shadow-sm">
-  <h3 class="text-title-md font-title-md mb-lg dark:text-inverse-on-surface">Knowledge Pulse</h3>
-  <div class="p-md bg-primary/5 dark:bg-primary-fixed-dim/5 rounded-2xl mb-md">
-    <p class="text-label-md font-bold text-primary dark:text-primary-fixed-dim mb-xs">Today's Summary</p>
-    <p class="text-label-sm text-on-surface-variant dark:text-outline-variant leading-relaxed">
-      Market focus has shifted from inflation to growth resilience. Your top-performing narrative, <span class="font-bold text-on-surface dark:text-inverse-on-surface">"AI Efficiency"</span>, is decoupling from macro headwinds.
-    </p>
-  </div>
-  <div class="space-y-sm">
-    <div class="flex items-center justify-between text-label-sm">
-      <span class="text-on-surface-variant dark:text-outline-variant">Research Density</span>
-      <span class="font-bold dark:text-inverse-on-surface">High</span>
-    </div>
-    <div class="w-full bg-surface-container h-1.5 rounded-full">
-      <div class="bg-primary dark:bg-primary-fixed-dim h-full w-[85%] rounded-full"></div>
-    </div>
-    <div class="flex items-center justify-between text-label-sm">
-      <span class="text-on-surface-variant dark:text-outline-variant">Concept Mastery</span>
-      <span class="font-bold dark:text-inverse-on-surface">72%</span>
-    </div>
-    <div class="w-full bg-surface-container h-1.5 rounded-full">
-      <div class="bg-primary dark:bg-primary-fixed-dim h-full w-[72%] rounded-full"></div>
-    </div>
-  </div>
-  <button class="w-full mt-lg py-3 border border-outline-variant/30 rounded-xl text-label-sm font-bold hover:bg-surface-container-low transition-colors dark:text-inverse-on-surface">Generate Weekly Pulse Report</button>
-</div>
-
-<!-- Priority Alerts & Activity -->
-<div class="col-span-12 bg-white dark:bg-surface-container border border-outline-variant/30 rounded-[20px] overflow-hidden shadow-sm flex flex-col">
-<div class="p-md border-b border-outline-variant/30 flex justify-between items-center">
-<h3 class="font-bold text-label-md dark:text-inverse-on-surface">Priority Alerts</h3>
-<a class="text-primary dark:text-primary-fixed-dim font-bold text-label-sm hover:underline" href="#">See all activity</a>
-</div>
-<div class="flex-1 divide-y divide-outline-variant/20">
-<div class="p-md flex gap-md hover:bg-surface-container-low dark:hover:bg-surface-container-high transition-colors group cursor-pointer">
-<div class="w-10 h-10 rounded-full bg-error-container/20 flex items-center justify-center shrink-0">
-<span class="material-symbols-outlined text-error" style="font-variation-settings: 'FILL' 1;">warning</span>
-</div>
-<div>
-<p class="text-label-md font-bold mb-xs dark:text-inverse-on-surface">Volatility Spike: Semiconductor ETF</p>
-<p class="text-label-sm text-on-surface-variant dark:text-outline-variant">Unexpected supply chain disruption in Taiwan. Your portfolio exposure is 14%.</p>
-<p class="text-[10px] text-on-surface-variant/60 mt-xs uppercase font-bold">2 Hours ago • Urgent</p>
-</div>
-<span class="material-symbols-outlined ml-auto text-on-surface-variant opacity-0 group-hover:opacity-100 transition-opacity">chevron_right</span>
-</div>
-<div class="p-md flex gap-md hover:bg-surface-container-low dark:hover:bg-surface-container-high transition-colors group cursor-pointer">
-<div class="w-10 h-10 rounded-full bg-primary-container/20 flex items-center justify-center shrink-0">
-<span class="material-symbols-outlined text-primary dark:text-primary-fixed-dim" style="font-variation-settings: 'FILL' 1;">lightbulb</span>
-</div>
-<div>
-<p class="text-label-md font-bold mb-xs dark:text-inverse-on-surface">Research Synthesis Complete</p>
-<p class="text-label-sm text-on-surface-variant dark:text-outline-variant">TradePilot finished analyzing 1,200 pages on Hydrogen economy.</p>
-<p class="text-[10px] text-on-surface-variant/60 mt-xs uppercase font-bold">6 Hours ago • Information</p>
-</div>
-<span class="material-symbols-outlined ml-auto text-on-surface-variant opacity-0 group-hover:opacity-100 transition-opacity">chevron_right</span>
-</div>
-</div>
-<!-- Narrative Intelligence (News Section) -->
-<div class="col-span-12 bg-white dark:bg-surface-container border border-outline-variant/30 rounded-[20px] p-lg shadow-sm">
-  <div class="flex justify-between items-center mb-lg border-b border-outline-variant/20 pb-sm flex-wrap gap-sm">
-    <div>
-      <h2 class="text-title-md font-title-md dark:text-inverse-on-surface">Narrative Intelligence</h2>
-      <p class="text-label-sm text-on-surface-variant dark:text-outline-variant">Latest news linked to your holdings and watchlist</p>
-    </div>
-    <div class="flex gap-xs border border-outline-variant/30 rounded-xl p-1 bg-surface-container-low dark:bg-surface-container-high">
-      <button id="tab-portfolio-news" class="px-4 py-1.5 bg-primary dark:bg-primary-fixed-dim text-white dark:text-primary rounded-lg font-bold text-label-sm transition-all shadow-sm">Portfolio News</button>
-      <button id="tab-watchlist-news" class="px-4 py-1.5 text-on-surface-variant hover:text-primary dark:text-outline-variant dark:hover:text-inverse-primary rounded-lg font-bold text-label-sm transition-all">Watchlist News</button>
     </div>
   </div>
   
-  <div id="portfolio-news-list" class="grid grid-cols-1 md:grid-cols-2 gap-md">
-    <p id="portfolio-news-empty" class="col-span-12 text-label-sm text-on-surface-variant dark:text-outline-variant">Add holdings below to see news linked to your portfolio.</p>
+  <!-- Combined Holdings & Watchlist Component with Tab Switcher (col-span-5) -->
+  <div class="col-span-12 lg:col-span-5 bg-white dark:bg-surface-container border border-outline-variant/30 rounded-[20px] shadow-sm flex flex-col min-h-[480px] overflow-hidden">
+    <!-- Tab Headers -->
+    <div class="flex border-b border-outline-variant/20 bg-surface-container-lowest dark:bg-surface-container-high/30">
+      <button id="tab-holdings" class="flex-1 py-4 text-center font-bold text-label-md border-b-2 border-primary dark:border-primary-fixed-dim text-primary dark:text-inverse-primary transition-all">
+        Holdings
+      </button>
+      <button id="tab-watchlist" class="flex-1 py-4 text-center font-bold text-label-md border-b-2 border-transparent text-on-surface-variant dark:text-outline-variant hover:text-primary dark:hover:text-inverse-primary transition-all">
+        Watchlist
+      </button>
+    </div>
+    
+    <!-- Tab Panes Container -->
+    <div class="p-lg flex-1 flex flex-col min-h-0 overflow-y-auto custom-scrollbar">
+      <!-- Holdings Tab Pane -->
+      <div id="pane-holdings" class="space-y-md flex-1 flex flex-col justify-between">
+        <div>
+          <div class="flex justify-between items-center mb-md flex-wrap gap-sm">
+            <div>
+              <h2 class="text-title-md font-title-md dark:text-inverse-on-surface">Your Holdings</h2>
+              <p class="text-label-sm text-on-surface-variant dark:text-outline-variant">Real-time Yahoo Finance valuation</p>
+            </div>
+            <button id="add-holding-btn" class="px-4 py-2 bg-primary text-white dark:bg-primary-fixed-dim dark:text-primary rounded-xl text-label-sm font-bold hover:opacity-90 transition-all flex items-center gap-1">
+              <span class="material-symbols-outlined text-[16px]">add</span> Add Holding
+            </button>
+          </div>
+          
+          <!-- Add Holding Form -->
+          <div id="add-holding-form" class="hidden mb-md p-md bg-surface-container-low dark:bg-surface-container-high rounded-xl space-y-sm">
+            <div class="relative">
+              <label class="text-label-sm font-bold text-on-surface-variant block mb-1">Symbol</label>
+              <input id="holding-symbol" class="w-full bg-white dark:bg-surface-container border border-outline-variant/50 rounded-lg px-3 py-2 text-body-md uppercase dark:text-inverse-on-surface focus:outline-none" placeholder="e.g. AAPL" type="text" autocomplete="off"/>
+              <div id="holding-suggestions" class="absolute left-0 top-full w-full mt-1 bg-white dark:bg-surface-container-high dark:text-inverse-on-surface border border-outline-variant/30 rounded-xl shadow-xl max-h-48 overflow-y-auto hidden z-[999]"></div>
+            </div>
+            <div>
+              <label class="text-label-sm font-bold text-on-surface-variant block mb-1">Quantity</label>
+              <input id="holding-quantity" class="w-full bg-white dark:bg-surface-container border border-outline-variant/50 rounded-lg px-3 py-2 text-body-md dark:text-inverse-on-surface focus:outline-none" placeholder="e.g. 10" type="number" step="0.0001"/>
+            </div>
+            <div>
+              <label class="text-label-sm font-bold text-on-surface-variant block mb-1">Avg. Cost / Share</label>
+              <input id="holding-avg-cost" class="w-full bg-white dark:bg-surface-container border border-outline-variant/50 rounded-lg px-3 py-2 text-body-md dark:text-inverse-on-surface focus:outline-none" placeholder="e.g. 150.00" type="number" step="0.01"/>
+            </div>
+            <button id="save-holding-btn" class="w-full py-2 bg-primary dark:bg-primary-fixed-dim text-white dark:text-primary rounded-lg font-bold hover:opacity-90 transition-all">Save</button>
+          </div>
+          <div id="holding-form-error" class="hidden text-label-sm text-error mb-sm"></div>
+          
+          <!-- Holdings List -->
+          <div id="holdings-list" class="space-y-sm overflow-y-auto max-h-[320px] custom-scrollbar pr-1">
+            <p id="holdings-empty-state" class="text-label-md text-on-surface-variant p-md bg-surface-container-low dark:bg-surface-container-high rounded-xl hidden">
+              You don't have any holdings yet — click "Add Holding" to track your first position.
+            </p>
+          </div>
+        </div>
+        
+        <div id="holdings-summary" class="mt-lg p-md border-t border-outline-variant/20 flex justify-between items-center bg-surface-container-low dark:bg-surface-container-high/40 rounded-xl hidden">
+          <div>
+            <p class="text-label-sm text-on-surface-variant">Holdings Valuation</p>
+            <p class="text-title-md font-bold dark:text-inverse-on-surface" id="holdings-total-value">$0.00</p>
+          </div>
+          <p class="text-label-sm font-bold" id="holdings-total-gain">+$0.00 (0%)</p>
+        </div>
+      </div>
+      
+      <!-- Watchlist Tab Pane -->
+      <div id="pane-watchlist" class="space-y-md flex-1 hidden">
+        <div class="flex justify-between items-center mb-md">
+          <h3 class="font-bold text-title-md dark:text-inverse-on-surface">Your Watchlist</h3>
+          <button id="add-watchlist-btn" class="text-primary dark:text-primary-fixed-dim text-label-sm font-bold flex items-center gap-base hover:underline">
+            <span class="material-symbols-outlined text-[16px]">add</span> Add Stock
+          </button>
+        </div>
+        
+        <!-- Add Watchlist Form -->
+        <div id="add-watchlist-form" class="hidden mb-md p-sm bg-surface-container-low dark:bg-surface-container-high rounded-xl flex gap-xs items-center">
+          <div class="relative flex-grow">
+            <input id="watchlist-symbol" class="w-full bg-white dark:bg-surface-container border border-outline-variant/50 rounded-lg px-3 py-1.5 text-label-sm uppercase focus:outline-none dark:text-inverse-on-surface" placeholder="e.g. AAPL" type="text" autocomplete="off"/>
+            <div id="watchlist-suggestions" class="absolute left-0 top-full w-full mt-1 bg-white dark:bg-surface-container-high dark:text-inverse-on-surface border border-outline-variant/30 rounded-xl shadow-xl max-h-48 overflow-y-auto hidden z-[999]"></div>
+          </div>
+          <button id="save-watchlist-btn" class="px-4 py-1.5 bg-primary dark:bg-primary-fixed-dim text-white dark:text-primary rounded-lg font-bold text-label-sm hover:opacity-90 transition-all">Add</button>
+        </div>
+        <div id="watchlist-form-error" class="hidden text-label-sm text-error mb-xs"></div>
+        
+        <!-- Watchlist List -->
+        <div id="dashboard-watchlist" class="space-y-sm overflow-y-auto max-h-[320px] custom-scrollbar pr-1">
+          <p id="watchlist-empty-state" class="text-label-sm text-on-surface-variant hidden">
+            No stocks saved yet — click "Add Stock" or visit Explore.
+          </p>
+        </div>
+      </div>
+    </div>
   </div>
-  <div id="watchlist-news-list" class="grid grid-cols-1 md:grid-cols-2 gap-md hidden">
-    <p id="watchlist-news-empty" class="col-span-12 text-label-sm text-on-surface-variant dark:text-outline-variant">Add symbols to your watchlist to see watchlist news.</p>
+</div>
+
+<!-- Row 2 Grid: News (Side-by-side columns) -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-gutter">
+  <!-- Portfolio News (Left) -->
+  <div class="bg-white dark:bg-surface-container border border-outline-variant/30 rounded-[20px] p-lg shadow-sm flex flex-col min-h-[350px]">
+    <div class="flex justify-between items-center mb-md border-b border-outline-variant/20 pb-sm">
+      <div>
+        <h2 class="text-title-md font-title-md dark:text-inverse-on-surface">Portfolio News</h2>
+        <p class="text-label-sm text-on-surface-variant dark:text-outline-variant">Latest news linked to your holdings</p>
+      </div>
+    </div>
+    <div id="portfolio-news-list" class="space-y-md overflow-y-auto max-h-[400px] custom-scrollbar pr-1">
+      <p id="portfolio-news-empty" class="text-label-sm text-on-surface-variant dark:text-outline-variant">Add holdings to see news linked to your portfolio.</p>
+    </div>
+  </div>
+
+  <!-- WATCHLIST News (Right) -->
+  <div class="bg-white dark:bg-surface-container border border-outline-variant/30 rounded-[20px] p-lg shadow-sm flex flex-col min-h-[350px]">
+    <div class="flex justify-between items-center mb-md border-b border-outline-variant/20 pb-sm">
+      <div>
+        <h2 class="text-title-md font-title-md dark:text-inverse-on-surface">Watchlist News</h2>
+        <p class="text-label-sm text-on-surface-variant dark:text-outline-variant">Latest news linked to your watchlist</p>
+      </div>
+    </div>
+    <div id="watchlist-news-list" class="space-y-md overflow-y-auto max-h-[400px] custom-scrollbar pr-1">
+      <p id="watchlist-news-empty" class="text-label-sm text-on-surface-variant dark:text-outline-variant">Add symbols to your watchlist to see news.</p>
+    </div>
   </div>
 </div>
-</div>
-</div>
+
+<!-- Unused legacy sections removed -->
 </main>
 <!-- Edit Profile Modal -->
 <div id="edit-profile-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center hidden">
@@ -670,6 +531,188 @@ You don't have any holdings yet — click "Add Holding" to track your first posi
   </div>
 </div>
 
+<!-- Portfolio Details Modal/Drawer -->
+<div id="portfolio-details-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center hidden" aria-modal="true" role="dialog">
+  <div class="bg-white dark:bg-surface-container w-full max-w-5xl border border-outline-variant/20 rounded-xl shadow-2xl p-md sm:p-xl m-sm max-h-[90vh] overflow-y-auto relative transition-all duration-300 transform scale-95 opacity-0">
+    <!-- Close Button -->
+    <button id="close-portfolio-details-btn" class="material-symbols-outlined absolute top-4 right-4 text-on-surface-variant dark:text-outline-variant p-2 hover:bg-surface-container-low dark:hover:bg-surface-container-high rounded-full transition-all" aria-label="Close modal">close</button>
+    
+    <div class="mb-lg pb-sm border-b border-outline-variant/20">
+      <h2 class="text-headline-lg font-bold text-primary dark:text-inverse-primary">Portfolio Analytics</h2>
+      <p class="text-label-sm text-on-surface-variant dark:text-outline-variant">Detailed breakdown of your holdings and performance</p>
+    </div>
+
+    <!-- Error / Loading / Content Panes -->
+    <div id="portfolio-details-loading" class="hidden py-12 flex flex-col items-center justify-center gap-md">
+      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      <p class="text-label-md text-on-surface-variant dark:text-outline-variant">Fetching live analytics data...</p>
+    </div>
+
+    <div id="portfolio-details-error" class="hidden bg-error-container text-on-error-container text-label-md font-label-md rounded-xl px-4 py-3 mb-md flex justify-between items-center">
+      <span id="portfolio-details-error-msg">Failed to load portfolio details.</span>
+      <button id="retry-portfolio-details-btn" class="px-4 py-1.5 bg-error text-white font-bold rounded-lg text-xs hover:opacity-90 transition-all">Retry</button>
+    </div>
+
+    <div id="portfolio-details-empty" class="hidden py-12 text-center text-on-surface-variant dark:text-outline-variant space-y-md">
+      <span class="material-symbols-outlined text-[48px] text-outline/50">folder_open</span>
+      <p class="text-body-lg">Your portfolio is empty. Add your first holding to unlock portfolio analytics.</p>
+    </div>
+
+    <div id="portfolio-details-content" class="space-y-lg">
+      <!-- Portfolio Summary Grid -->
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-md p-md bg-surface-container-low dark:bg-surface-container-high/40 rounded-xl">
+        <div>
+          <p class="text-label-sm text-on-surface-variant dark:text-outline-variant">Total Value</p>
+          <p id="details-total-value" class="text-title-md font-bold text-on-surface dark:text-inverse-on-surface">$0.00</p>
+        </div>
+        <div>
+          <p class="text-label-sm text-on-surface-variant dark:text-outline-variant">Invested Capital</p>
+          <p id="details-invested-capital" class="text-title-md font-bold text-on-surface dark:text-inverse-on-surface">$0.00</p>
+        </div>
+        <div>
+          <p class="text-label-sm text-on-surface-variant dark:text-outline-variant">Total Gain/Loss</p>
+          <p id="details-total-gain" class="text-title-md font-bold">$0.00</p>
+        </div>
+        <div>
+          <p class="text-label-sm text-on-surface-variant dark:text-outline-variant">Total Return %</p>
+          <p id="details-total-return-pct" class="text-title-md font-bold">0.00%</p>
+        </div>
+        <div>
+          <p class="text-label-sm text-on-surface-variant dark:text-outline-variant">Holdings</p>
+          <p id="details-holdings-count" class="text-title-md font-bold text-on-surface dark:text-inverse-on-surface">0 Positions</p>
+        </div>
+        <div>
+          <p class="text-label-sm text-on-surface-variant dark:text-outline-variant">Sectors</p>
+          <p id="details-sectors-count" class="text-title-md font-bold text-on-surface dark:text-inverse-on-surface">0 Sectors</p>
+        </div>
+      </div>
+
+      <!-- Main Row (Sectors & Insights) -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
+        <!-- Left: Sector Allocation -->
+        <div class="lg:col-span-7 space-y-sm">
+          <h3 class="text-label-md font-bold text-on-surface dark:text-inverse-on-surface uppercase tracking-wider">Sector Allocation</h3>
+          <p class="text-label-sm text-on-surface-variant dark:text-outline-variant mb-2">Click a sector to view its constituent holdings</p>
+          <div id="details-sector-exposure" class="space-y-sm">
+            <!-- Sector progress bars go here -->
+          </div>
+        </div>
+
+        <!-- Right: Portfolio Insights -->
+        <div class="lg:col-span-5 bg-surface-container-low dark:bg-surface-container-high/20 p-md rounded-xl border border-outline-variant/30 flex flex-col justify-between">
+          <h3 class="text-label-md font-bold text-on-surface dark:text-inverse-on-surface uppercase tracking-wider mb-sm">Portfolio Insights</h3>
+          <div class="space-y-sm">
+            <div class="flex justify-between items-center py-2 border-b border-outline-variant/10 text-label-sm">
+              <span class="text-on-surface-variant dark:text-outline-variant">Largest Sector Exposure</span>
+              <span id="insight-largest-sector" class="font-bold text-on-surface dark:text-inverse-on-surface">None</span>
+            </div>
+            <div class="flex justify-between items-center py-2 border-b border-outline-variant/10 text-label-sm">
+              <span class="text-on-surface-variant dark:text-outline-variant">Largest Individual Position</span>
+              <span id="insight-largest-position" class="font-bold text-on-surface dark:text-inverse-on-surface">None</span>
+            </div>
+            <div class="flex justify-between items-center py-2 border-b border-outline-variant/10 text-label-sm">
+              <span class="text-on-surface-variant dark:text-outline-variant">Best-Performing Position</span>
+              <span id="insight-best-performer" class="font-bold text-green-600">None</span>
+            </div>
+            <div class="flex justify-between items-center py-2 border-b border-outline-variant/10 text-label-sm">
+              <span class="text-on-surface-variant dark:text-outline-variant">Worst-Performing Position</span>
+              <span id="insight-worst-performer" class="font-bold text-red-500">None</span>
+            </div>
+            <div class="flex justify-between items-center py-2 text-label-sm">
+              <span class="text-on-surface-variant dark:text-outline-variant">Diversification Status</span>
+              <span id="insight-diversification" class="font-bold text-on-surface dark:text-inverse-on-surface">None</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Holdings Table -->
+      <div class="space-y-sm">
+        <h3 class="text-label-md font-bold text-on-surface dark:text-inverse-on-surface uppercase tracking-wider">All Holdings</h3>
+        <div class="overflow-x-auto rounded-xl border border-outline-variant/30 hidden md:block">
+          <table class="w-full text-left text-label-sm">
+            <thead class="bg-surface-container-low dark:bg-surface-container-high/40 text-on-surface-variant dark:text-outline-variant border-b border-outline-variant/30">
+              <tr>
+                <th class="p-sm">Symbol</th>
+                <th class="p-sm">Company</th>
+                <th class="p-sm">Sector</th>
+                <th class="p-sm text-right">Quantity</th>
+                <th class="p-sm text-right">Avg Cost</th>
+                <th class="p-sm text-right">Current Price</th>
+                <th class="p-sm text-right">Market Value</th>
+                <th class="p-sm text-right">Gain/Loss</th>
+                <th class="p-sm text-right">Gain/Loss %</th>
+              </tr>
+            </thead>
+            <tbody id="details-holdings-table-body" class="divide-y divide-outline-variant/10 bg-white dark:bg-surface-container-low">
+              <!-- Holdings rows go here -->
+            </tbody>
+          </table>
+        </div>
+        <!-- Compact cards for mobile display -->
+        <div id="details-holdings-mobile-cards" class="block md:hidden space-y-sm">
+          <!-- Stacked cards for mobile go here -->
+        </div>
+      </div>
+
+      <!-- Footer & Freshness -->
+      <div class="text-right text-[11px] text-on-surface-variant dark:text-outline-variant mt-md border-t border-outline-variant/10 pt-sm">
+        <span id="details-data-freshness">Market data updated: --:--:--</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Holding Modal -->
+<div id="edit-holding-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center hidden" aria-modal="true" role="dialog">
+  <div class="bg-white dark:bg-surface-container w-full max-w-md border border-outline-variant/20 rounded-xl shadow-2xl p-md sm:p-xl m-sm max-h-[90vh] overflow-y-auto relative transition-all duration-300 transform scale-95 opacity-0">
+    <!-- Close Button -->
+    <button id="close-edit-holding-btn" class="material-symbols-outlined absolute top-4 right-4 text-on-surface-variant dark:text-outline-variant p-2 hover:bg-surface-container-low dark:hover:bg-surface-container-high rounded-full transition-all" aria-label="Close modal">close</button>
+    
+    <div class="mb-lg pb-sm border-b border-outline-variant/20">
+      <h2 class="text-headline-lg font-bold text-primary dark:text-inverse-primary">Edit Holding</h2>
+      <p class="text-label-sm text-on-surface-variant dark:text-outline-variant">Update your holding quantity or purchase cost basis</p>
+    </div>
+
+    <div id="edit-holding-error" class="hidden bg-error-container text-on-error-container text-label-md font-label-md rounded-xl px-4 py-3 mb-md">
+      Quantity must be greater than 0.
+    </div>
+
+    <form id="edit-holding-form" class="space-y-lg" onsubmit="return false;">
+      <!-- Symbol (Read-Only) -->
+      <div>
+        <label class="block text-label-md font-bold mb-xs dark:text-inverse-on-surface">Stock Symbol</label>
+        <input id="edit-holding-symbol" type="text" readonly class="w-full border border-outline-variant/40 rounded-xl px-4 py-3 text-body-md bg-slate-100 dark:bg-slate-800 focus:outline-none dark:text-inverse-on-surface font-semibold cursor-not-allowed"/>
+        <p class="text-[11px] text-on-surface-variant dark:text-outline-variant mt-1">Symbol cannot be changed. Remove and add a new holding to shift symbols.</p>
+      </div>
+
+      <!-- Informational Latest Price -->
+      <div class="p-xs bg-surface-container-low dark:bg-surface-container-high/40 rounded-lg text-xs flex justify-between items-center text-on-surface-variant dark:text-outline-variant">
+        <span>Current Market Price:</span>
+        <span id="edit-holding-current-price" class="font-bold text-on-surface dark:text-inverse-on-surface">$0.00</span>
+      </div>
+
+      <!-- Quantity -->
+      <div>
+        <label class="block text-label-md font-bold mb-xs dark:text-inverse-on-surface">Quantity</label>
+        <input id="edit-holding-quantity" type="number" step="any" min="0.0001" placeholder="e.g. 5 or 2.5" required class="w-full border border-outline-variant/40 rounded-xl px-4 py-3 text-body-md bg-white dark:bg-surface-container focus:ring-2 focus:ring-primary focus:outline-none dark:text-inverse-on-surface"/>
+      </div>
+
+      <!-- Average Buy Price -->
+      <div>
+        <label class="block text-label-md font-bold mb-xs dark:text-inverse-on-surface">Average Buy Price ($)</label>
+        <input id="edit-holding-avg-cost" type="number" step="any" min="0" placeholder="e.g. 150.00" required class="w-full border border-outline-variant/40 rounded-xl px-4 py-3 text-body-md bg-white dark:bg-surface-container focus:ring-2 focus:ring-primary focus:outline-none dark:text-inverse-on-surface"/>
+      </div>
+
+      <!-- Form Actions -->
+      <div class="flex justify-end gap-sm pt-md border-t border-outline-variant/20">
+        <button type="button" id="cancel-edit-holding-btn" class="px-6 py-2.5 border border-outline-variant/40 rounded-xl font-bold hover:bg-surface-container-low dark:hover:bg-surface-container-high transition-all text-label-md dark:text-inverse-on-surface">Cancel</button>
+        <button type="submit" id="save-edit-holding-btn" class="px-8 py-2.5 bg-primary dark:bg-primary-fixed-dim text-white dark:text-primary rounded-xl font-bold hover:opacity-90 transition-all text-label-md">Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <!-- Footer -->
 <footer class="w-full py-xl bg-surface-container-low dark:bg-inverse-surface border-t border-outline-variant/20 mt-xl">
 <div class="flex flex-col items-center gap-md px-gutter max-w-container-max mx-auto text-center">
@@ -683,64 +726,8 @@ You don't have any holdings yet — click "Add Holding" to track your first posi
 <p class="text-label-sm text-on-surface-variant dark:text-outline-variant opacity-70">© 2024 TradePilot. Empowering effortless mastery through AI intelligence.</p>
 </div>
 </footer>
-<script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const header = document.querySelector('header');
-        const themeToggle = document.getElementById('theme-toggle');
-        const html = document.documentElement;
-
-        // Dark Mode Toggle
-        themeToggle.addEventListener('click', () => {
-            html.classList.toggle('dark');
-            const isDark = html.classList.contains('dark');
-            themeToggle.innerText = isDark ? 'light_mode' : 'dark_mode';
-        });
-
-        window.addEventListener('scroll', () => {
-            if (window.scrollY > 20) {
-                header.classList.add('shadow-md');
-            } else {
-                header.classList.remove('shadow-md');
-            }
-        });
-
-        // Count-up animation for Total Value
-        const totalValueEl = document.getElementById('total-value');
-        const targetValue = 245670;
-        let currentValue = 240000;
-        const duration = 2000; // 2 seconds
-        const stepTime = 20;
-        const steps = duration / stepTime;
-        const increment = (targetValue - currentValue) / steps;
-
-        const counter = setInterval(() => {
-            currentValue += increment;
-            if (currentValue >= targetValue) {
-                totalValueEl.innerText = targetValue.toLocaleString();
-                clearInterval(counter);
-            } else {
-                totalValueEl.innerText = Math.floor(currentValue).toLocaleString();
-            }
-        }, stepTime);
-
-        // Smooth Hover Scale for Cards
-        const cards = document.querySelectorAll('.bg-white, .bg-primary, .hover-lift');
-        cards.forEach(card => {
-            card.addEventListener('mouseenter', () => {
-                if (!card.classList.contains('hover-lift')) {
-                    card.style.transform = 'translateY(-2px)';
-                    card.style.transition = 'transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)';
-                }
-            });
-            card.addEventListener('mouseleave', () => {
-                if (!card.classList.contains('hover-lift')) {
-                    card.style.transform = 'translateY(0)';
-                }
-            });
-        });
-    });
-</script>
+<!-- Inline script removed. All layout & interaction bindings moved to assets/dashboard.js -->
 <script src="assets/auth-guard.js"></script>
-<script src="assets/dashboard.js"></script>
+<script src="assets/dashboard.js?v=4"></script>
 <script src="assets/mentor-chat.js"></script>
 </body></html>
