@@ -2,6 +2,9 @@
   const MARKET_URL = '/api/market/quote';
   const WATCHLIST_URL = '/api/watchlist';
   const CHART_URL = '/api/market/chart';
+  const SEARCH_URL = '/api/market/search';
+  const SECTORS_URL = '/api/market/sectors';
+  const SECTOR_STOCKS_URL = '/api/market/sector-stocks';
 
   document.addEventListener('DOMContentLoaded', function () {
     const searchInput = document.getElementById('market-search-input');
@@ -79,6 +82,215 @@ let lastChartPositive = null;
       const errorEl = document.getElementById('search-error-msg');
       if (errorEl) errorEl.style.display = 'none';
     }
+
+    // ---------- Sector Picker + Beginner-friendly Search Suggestions ----------
+
+    const sectorChipRow = document.getElementById('sector-chip-row');
+    const suggestionsBox = document.getElementById('search-suggestions');
+    let selectedSector = null;
+    const sectorStocksCache = {};
+    let searchDebounceTimer = null;
+
+    function hideSuggestions() {
+      if (!suggestionsBox) return;
+      suggestionsBox.classList.add('hidden');
+      suggestionsBox.innerHTML = '';
+    }
+
+    function suggestionRow(symbol, name, subtitle) {
+      const row = document.createElement('button');
+      row.type = 'button';
+      row.className = 'w-full text-left px-5 py-3 flex items-center justify-between gap-md hover:bg-surface-container-low transition-colors border-b border-outline-variant/10 last:border-b-0';
+
+      const left = document.createElement('div');
+      const nameEl = document.createElement('p');
+      nameEl.className = 'text-label-md font-bold text-on-surface';
+      nameEl.textContent = `${name} (${symbol})`;
+      left.appendChild(nameEl);
+      if (subtitle) {
+        const subEl = document.createElement('p');
+        subEl.className = 'text-[11px] text-on-surface-variant';
+        subEl.textContent = subtitle;
+        left.appendChild(subEl);
+      }
+
+      const goIcon = document.createElement('span');
+      goIcon.className = 'material-symbols-outlined text-on-surface-variant text-base shrink-0';
+      goIcon.textContent = 'north_east';
+
+      row.appendChild(left);
+      row.appendChild(goIcon);
+
+      row.addEventListener('click', () => {
+        searchInput.value = `${name} (${symbol})`;
+        hideSuggestions();
+        clearSearchError();
+        searchSymbol(symbol);
+      });
+
+      return row;
+    }
+
+    function renderSuggestions(items, emptyMessage) {
+      if (!suggestionsBox) return;
+      suggestionsBox.innerHTML = '';
+
+      if (!items || items.length === 0) {
+        const empty = document.createElement('p');
+        empty.className = 'px-5 py-4 text-label-sm text-on-surface-variant';
+        empty.textContent = emptyMessage || 'No matches found.';
+        suggestionsBox.appendChild(empty);
+      } else {
+        items.forEach((item) => {
+          suggestionsBox.appendChild(suggestionRow(item.symbol, item.name, item.subtitle));
+        });
+      }
+
+      suggestionsBox.classList.remove('hidden');
+    }
+
+    async function fetchSectorStocks(sector) {
+      if (sectorStocksCache[sector]) return sectorStocksCache[sector];
+      try {
+        const res = await fetch(`${SECTOR_STOCKS_URL}?sector=${encodeURIComponent(sector)}`, {
+          headers: authHeaders()
+        });
+        const data = await res.json();
+        if (!res.ok) return [];
+        sectorStocksCache[sector] = data.stocks || [];
+        return sectorStocksCache[sector];
+      } catch (err) {
+        return [];
+      }
+    }
+
+    // With a sector chosen and nothing typed yet, suggest 10 stocks from that sector —
+    // this is the beginner-friendly "browse by sector" entry point into search.
+    async function showSectorSuggestions() {
+      if (!selectedSector) {
+        hideSuggestions();
+        return;
+      }
+      const stocks = await fetchSectorStocks(selectedSector);
+      renderSuggestions(
+        stocks.map((s) => ({ symbol: s.symbol, name: s.name, subtitle: selectedSector })),
+        `No stocks available for ${selectedSector} right now.`
+      );
+    }
+
+    // As the user types, match on ticker OR full company name (e.g. "nvidia" -> NVDA),
+    // so a beginner never needs to already know the symbol. Uses the shared
+    // /api/market/search endpoint (returns { symbols: [{symbol, name, exchange, type}] }).
+    async function showSearchSuggestions(query) {
+      try {
+        const res = await fetch(`${SEARCH_URL}?q=${encodeURIComponent(query)}`, {
+          headers: authHeaders()
+        });
+        const data = await res.json();
+        const results = res.ok && Array.isArray(data.symbols) ? data.symbols : [];
+        renderSuggestions(
+          results.map((r) => ({ symbol: r.symbol, name: r.name, subtitle: r.exchange || null })),
+          `No companies matched "${query}". Try a different name or symbol.`
+        );
+      } catch (err) {
+        renderSuggestions([], 'Could not load suggestions right now.');
+      }
+    }
+
+    if (searchInput) {
+      searchInput.addEventListener('input', () => {
+        clearTimeout(searchDebounceTimer);
+        const query = searchInput.value.trim();
+        if (!query) {
+          showSectorSuggestions();
+          return;
+        }
+        searchDebounceTimer = setTimeout(() => showSearchSuggestions(query), 250);
+      });
+
+      searchInput.addEventListener('focus', () => {
+        const query = searchInput.value.trim();
+        if (query) {
+          showSearchSuggestions(query);
+        } else {
+          showSectorSuggestions();
+        }
+      });
+
+      document.addEventListener('click', (e) => {
+        if (!suggestionsBox) return;
+        if (e.target === searchInput || suggestionsBox.contains(e.target)) return;
+        hideSuggestions();
+      });
+    }
+
+    // Resolve whatever the user typed — a ticker OR a plain company name — to a
+    // real symbol before searching, so "nvidia" correctly finds NVDA.
+    async function resolveSymbol(query) {
+      const trimmed = query.trim();
+      try {
+        const res = await fetch(`${SEARCH_URL}?q=${encodeURIComponent(trimmed)}`, {
+          headers: authHeaders()
+        });
+        const data = await res.json();
+        if (res.ok && Array.isArray(data.symbols) && data.symbols.length > 0) {
+          const exact = data.symbols.find((r) => r.symbol.toUpperCase() === trimmed.toUpperCase());
+          return (exact || data.symbols[0]).symbol;
+        }
+      } catch (err) {
+        // fall through to raw value below
+      }
+      return trimmed.toUpperCase();
+    }
+
+    async function loadSectorChips() {
+      if (!sectorChipRow) return;
+      try {
+        const res = await fetch(SECTORS_URL, { headers: authHeaders() });
+        const data = await res.json();
+        const sectors = res.ok && Array.isArray(data.sectors) ? data.sectors : [];
+
+        sectorChipRow.innerHTML = '';
+        if (sectors.length === 0) {
+          sectorChipRow.remove();
+          return;
+        }
+
+        const label = document.createElement('span');
+        label.className = 'text-label-md text-on-surface-variant self-center mr-1';
+        label.textContent = 'Browse by sector:';
+        sectorChipRow.appendChild(label);
+
+        sectors.forEach((sector) => {
+          const chip = document.createElement('button');
+          chip.type = 'button';
+          chip.dataset.sector = sector;
+          chip.textContent = sector;
+          chip.className = 'px-5 py-2 rounded-full text-label-md font-bold bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors';
+
+          chip.addEventListener('click', () => {
+            const isActive = selectedSector === sector;
+            selectedSector = isActive ? null : sector;
+
+            sectorChipRow.querySelectorAll('button[data-sector]').forEach((b) => {
+              b.className = b.dataset.sector === selectedSector
+                ? 'px-5 py-2 rounded-full text-label-md font-bold bg-primary text-white transition-colors'
+                : 'px-5 py-2 rounded-full text-label-md font-bold bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors';
+            });
+
+            searchInput.value = '';
+            searchInput.focus();
+            showSectorSuggestions();
+          });
+
+          sectorChipRow.appendChild(chip);
+        });
+      } catch (err) {
+        sectorChipRow.remove();
+      }
+    }
+
+    loadSectorChips();
 
     // ---------- Component 2: Chart + RSI ----------
 
@@ -627,7 +839,7 @@ if (fullscreenBtn) {
 
     function applyQuote(symbol, quote) {
       currentSymbol = symbol;
-      stockName.textContent = symbol;
+      stockName.textContent = quote.companyName ? `${quote.companyName} (${symbol})` : symbol;
       stockPrice.textContent = `$${quote.price.toFixed(2)}`;
       const positive = quote.changePercent >= 0;
       stockChange.className = (positive ? 'text-green-600' : 'text-red-500') + ' font-semibold flex items-center gap-1';
@@ -688,8 +900,13 @@ if (fullscreenBtn) {
       }
     }
 
-    searchInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') searchSymbol(searchInput.value);
+    searchInput.addEventListener('keydown', async (e) => {
+      if (e.key !== 'Enter') return;
+      const raw = searchInput.value;
+      if (!raw || !raw.trim()) return;
+      hideSuggestions();
+      const resolved = await resolveSymbol(raw);
+      searchSymbol(resolved);
     });
 
     if (watchlistBtn) {
