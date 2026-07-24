@@ -221,7 +221,7 @@ Respond ONLY with valid JSON (no markdown fences, no preamble), matching exactly
   "companyNews": "1-2 simple sentences: summarize one real, specific news headline from the news data given, naming the source, in plain language a beginner would understand",
   "watchlistEvents": "1-3 simple sentences: something notable today specifically about the user's watchlist symbols, grounded in the real quote/news data. If they have none, gently note that and suggest adding some.",
   "portfolioRelevance": "1-3 simple sentences: how today's real price movement connects to the user's actual holdings and gain/loss, in plain language. If they have none, gently note that and suggest tracking a position on the Dashboard.",
-  "plainLanguageExplanation": "1 short sentence defining one relevant finance term simply, format: \\"'Term' means ...\\""
+  "plainLanguageExplanation": "1 short sentence defining one relevant finance term in plain language. Start with the term in single quotes, then say what it means simply — for example: the word Sector means a group of companies in the same industry."
 }`;
 
     const userPrompt = `Live quotes — user's watchlist: ${watchlistContext}
@@ -229,28 +229,41 @@ Live quotes — user's portfolio holdings: ${portfolioContext}
 Real recent news by symbol: ${newsContext}
 Generate today's personalized market narrative for this user using only the facts above.`;
 
-    const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${GROQ_API_KEY}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt }
-        ],
-        temperature: 0.4,
-        max_tokens: 600,
-        response_format: { type: 'json_object' }
-      })
-    });
+    async function callGroqForNarrative() {
+      const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${GROQ_API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: 'llama-3.3-70b-versatile',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt }
+          ],
+          temperature: 0.4,
+          max_tokens: 600,
+          response_format: { type: 'json_object' }
+        })
+      });
+      return res;
+    }
+
+    // Groq's JSON-mode generation occasionally produces malformed JSON (the model
+    // trails off with a stray character or two) — retry once before giving up,
+    // since this is usually a one-off generation hiccup, not a real failure.
+    let groqResponse = await callGroqForNarrative();
+    if (!groqResponse.ok) {
+      const firstErrText = await groqResponse.text();
+      console.warn('Groq narrative first attempt failed, retrying once:', firstErrText);
+      groqResponse = await callGroqForNarrative();
+    }
 
     if (!groqResponse.ok) {
       const errText = await groqResponse.text();
-      console.error('Groq narrative error:', errText);
-      return res.status(502).json({ error: 'Failed to generate narrative.' });
+      console.error('Groq narrative error (after retry):', errText);
+      return res.status(502).json({ error: 'Failed to generate narrative. Please try again in a moment.' });
     }
 
     const data = await groqResponse.json();

@@ -13,6 +13,31 @@
         theme: {
           extend: {
             "colors": {
+                    "dark-bg": "#0B0F19",
+                    "dark-surface": "#0f131d",
+                    "dark-surface-container-lowest": "#0a0e18",
+                    "dark-surface-container-low": "#171b26",
+                    "dark-surface-container": "#1c1f2a",
+                    "dark-surface-container-high": "#262a35",
+                    "dark-surface-container-highest": "#313540",
+                    "dark-on-surface": "#dfe2f1",
+                    "dark-on-surface-variant": "#c7c4d7",
+                    "dark-outline": "#908fa0",
+                    "dark-outline-variant": "#464554",
+                    "dark-primary": "#c0c1ff",
+                    "dark-on-primary": "#1000a9",
+                    "dark-primary-container": "#8083ff",
+                    "dark-on-primary-container": "#e1e0ff",
+                    "dark-secondary": "#4cd7f6",
+                    "dark-on-secondary": "#003640",
+                    "dark-secondary-container": "#03b5d3",
+                    "dark-tertiary": "#ffb95f",
+                    "dark-tertiary-container": "#ca8100",
+                    "dark-error": "#ffb4ab",
+                    "dark-error-container": "#93000a",
+                    "dark-on-error-container": "#ffdad6",
+                    "dark-positive": "#3B82F6",
+                    "dark-negative": "#EF4444",
                     "surface-dim": "#dcd9db",
                     "on-surface": "#1b1b1d",
                     "surface-variant": "#e4e2e4",
@@ -112,71 +137,71 @@
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #e4e2e4; border-radius: 10px; }
     </style>
 </head>
-<body data-auth="required" class="bg-background text-on-surface min-h-screen">
+<body data-auth="required" class="bg-background dark:bg-dark-bg text-on-surface min-h-screen transition-colors duration-300 dark:text-dark-on-surface">
 <!-- TopNavBar -->
-<nav class="fixed top-0 w-full bg-white/70 backdrop-blur-md border-b border-outline-variant/30 shadow-sm z-50">
+<nav class="fixed top-0 w-full bg-white/70 backdrop-blur-md border-b border-outline-variant/30 shadow-sm z-50 dark:bg-dark-surface/80">
 <div class="flex justify-between items-center h-16 px-gutter max-w-container-max mx-auto">
 <div class="flex items-center gap-xs">
-<span class="text-title-md font-title-md font-bold text-primary tracking-tight">TradePilot</span>
+<span class="text-title-md font-title-md font-bold text-primary tracking-tight dark:text-dark-primary">TradePilot</span>
 </div>
 <div class="hidden md:flex items-center gap-lg">
-<a class="text-label-md font-label-md text-on-surface-variant hover:text-primary transition-colors" href="/dashboard">Dashboard</a>
-<a class="text-label-md font-label-md text-primary border-b-2 border-primary pb-1" href="/today">Market Pulse</a>
-<a class="text-label-md font-label-md text-on-surface-variant hover:text-primary transition-colors" href="/explore">Explore</a>
-<a class="text-label-md font-label-md text-on-surface-variant hover:text-primary transition-colors" href="/alerts">Radar Alerts</a>
-<a class="text-label-md font-label-md text-on-surface-variant hover:text-primary transition-colors" href="/learn">Learn</a>
+<a class="text-label-md font-label-md text-on-surface-variant hover:text-primary transition-colors dark:text-dark-on-surface-variant" href="/dashboard">Dashboard</a>
+<a class="text-label-md font-label-md text-primary border-b-2 border-primary pb-1 dark:text-dark-primary" href="/today">Market Pulse</a>
+<a class="text-label-md font-label-md text-on-surface-variant hover:text-primary transition-colors dark:text-dark-on-surface-variant" href="/explore">Explore</a>
+<a class="text-label-md font-label-md text-on-surface-variant hover:text-primary transition-colors dark:text-dark-on-surface-variant" href="/alerts">Radar Alerts</a>
+<a class="text-label-md font-label-md text-on-surface-variant hover:text-primary transition-colors dark:text-dark-on-surface-variant" href="/learn">Learn</a>
 </div>
 <div class="flex items-center gap-md">
-<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors p-2 rounded-full hover:bg-surface-container" title="Toggle Dark Mode">dark_mode</button>
-<button class="material-symbols-outlined text-on-surface-variant hover:bg-surface-container-low rounded-full p-2 transition-all" id="ai-toggle" title="Toggle AI Mentor">psychology</button>
-<a id="nav-account-btn" href="/signin" class="material-symbols-outlined material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors p-2 hover:bg-surface-container rounded-full transition-all cursor-pointer">account_circle</a>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors p-2 rounded-full hover:bg-surface-container dark:text-dark-on-surface-variant" id="dark-mode-icon-toggle" title="Toggle Dark Mode">dark_mode</button>
+<button class="material-symbols-outlined text-on-surface-variant hover:bg-surface-container-low rounded-full p-2 transition-all dark:text-dark-on-surface-variant" id="ai-toggle" title="Toggle AI Mentor">psychology</button>
+<a id="nav-account-btn" href="/signin" class="material-symbols-outlined material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors p-2 hover:bg-surface-container rounded-full transition-all cursor-pointer dark:text-dark-on-surface-variant">account_circle</a>
 </div>
 </div>
 </nav>
 <!-- SideNavBar (AI Mentor) -->
-<aside id="ai-sidebar" class="fixed right-0 top-16 h-[calc(100vh-64px)] w-80 bg-surface dark:bg-inverse-surface border-l border-outline-variant/30 shadow-2xl z-50 flex flex-col p-sm transition-transform duration-300 ease-in-out translate-x-full">
+<aside id="ai-sidebar" class="fixed right-0 top-16 h-[calc(100vh-64px)] w-80 bg-surface dark:bg-dark-surface border-l border-outline-variant/30 shadow-2xl z-50 flex flex-col p-sm transition-transform duration-300 ease-in-out translate-x-full">
 <div class="p-md flex flex-col items-center text-center">
 <div class="w-20 h-20 rounded-full primary-gradient flex items-center justify-center mb-sm shadow-lg overflow-hidden relative">
 <span class="material-symbols-outlined text-white text-display-lg relative z-10" style="font-variation-settings: 'FILL' 1;">psychology</span>
 </div>
 <h3 class="text-headline-sm font-headline-sm font-semibold">AI Mentor</h3>
-<p class="text-label-md font-label-md text-on-surface-variant mt-base">Ask me anything about the markets</p>
-<button class="mt-md bg-secondary-container text-on-secondary-container font-label-md text-label-md px-md py-sm rounded-xl hover:bg-secondary-fixed transition-colors w-full">
+<p class="text-label-md font-label-md text-on-surface-variant mt-base dark:text-dark-on-surface-variant">Ask me anything about the markets</p>
+<button class="mt-md bg-secondary-container text-on-secondary-container font-label-md text-label-md px-md py-sm rounded-xl hover:bg-secondary-fixed transition-colors w-full dark:bg-dark-secondary-container/20">
                 Explain Like I'm 18
             </button>
 </div>
 <nav class="flex-1 mt-md">
-<a class="bg-primary-container text-on-primary-container rounded-xl mx-2 my-1 px-4 py-3 flex items-center gap-3 transition-all" href="#">
+<a class="bg-primary-container text-on-primary-container rounded-xl mx-2 my-1 px-4 py-3 flex items-center gap-3 transition-all dark:bg-dark-primary-container/20 dark:text-dark-on-surface" href="#">
 <span class="material-symbols-outlined">psychology</span>
 <span class="font-label-md">AI Mentor</span>
 </a>
-<a class="text-on-surface-variant hover:bg-surface-variant/50 rounded-xl mx-2 my-1 px-4 py-3 flex items-center gap-3 transition-colors" href="#">
+<a class="text-on-surface-variant hover:bg-surface-variant/50 rounded-xl mx-2 my-1 px-4 py-3 flex items-center gap-3 transition-colors dark:text-dark-on-surface-variant" href="#">
 <span class="material-symbols-outlined">school</span>
 <span class="font-label-md">Knowledge Hub</span>
 </a>
-<a class="text-on-surface-variant hover:bg-surface-variant/50 rounded-xl mx-2 my-1 px-4 py-3 flex items-center gap-3 transition-colors" href="#">
+<a class="text-on-surface-variant hover:bg-surface-variant/50 rounded-xl mx-2 my-1 px-4 py-3 flex items-center gap-3 transition-colors dark:text-dark-on-surface-variant" href="#">
 <span class="material-symbols-outlined">insights</span>
 <span class="font-label-md">Market Mood</span>
 </a>
-<a class="text-on-surface-variant hover:bg-surface-variant/50 rounded-xl mx-2 my-1 px-4 py-3 flex items-center gap-3 transition-colors" href="#">
+<a class="text-on-surface-variant hover:bg-surface-variant/50 rounded-xl mx-2 my-1 px-4 py-3 flex items-center gap-3 transition-colors dark:text-dark-on-surface-variant" href="#">
 <span class="material-symbols-outlined">ads_click</span>
 <span class="font-label-md">Daily Goals</span>
 </a>
 </nav>
 <div class="flex-1 flex flex-col min-h-0 mt-md px-2">
-<p class="text-label-sm font-bold text-on-surface-variant uppercase tracking-wider mb-xs">Chat</p>
+<p class="text-label-sm font-bold text-on-surface-variant uppercase tracking-wider mb-xs dark:text-dark-on-surface-variant">Chat</p>
 <div id="global-ai-chat-log" class="flex-1 overflow-y-auto space-y-2 mb-sm"></div>
 <div class="relative">
-<input id="global-ai-chat-input" class="w-full bg-white border border-outline-variant/30 rounded-xl pr-10 text-xs py-3 px-3 focus:ring-primary focus:outline-none" placeholder="Ask AI Mentor..." type="text"/>
-<button id="global-ai-chat-send" class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-primary">arrow_forward</button>
+<input id="global-ai-chat-input" class="w-full bg-white border border-outline-variant/30 rounded-xl pr-10 text-xs py-3 px-3 focus:ring-primary focus:outline-none dark:bg-dark-surface-container" placeholder="Ask AI Mentor..." type="text"/>
+<button id="global-ai-chat-send" class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-primary dark:text-dark-primary">arrow_forward</button>
 </div>
 </div>
 <div class="mt-auto border-t border-outline-variant/20 pt-sm">
-<a class="text-on-surface-variant hover:bg-surface-variant/50 rounded-xl mx-2 my-1 px-4 py-3 flex items-center gap-3 transition-colors" href="/settings">
+<a class="text-on-surface-variant hover:bg-surface-variant/50 rounded-xl mx-2 my-1 px-4 py-3 flex items-center gap-3 transition-colors dark:text-dark-on-surface-variant" href="/settings">
 <span class="material-symbols-outlined">settings</span>
 <span class="font-label-md">Settings</span>
 </a>
-<a class="text-on-surface-variant hover:bg-surface-variant/50 rounded-xl mx-2 my-1 px-4 py-3 flex items-center gap-3 transition-colors" href="#">
+<a class="text-on-surface-variant hover:bg-surface-variant/50 rounded-xl mx-2 my-1 px-4 py-3 flex items-center gap-3 transition-colors dark:text-dark-on-surface-variant" href="#">
 <span class="material-symbols-outlined">help</span>
 <span class="font-label-md">Help</span>
 </a>
@@ -188,8 +213,8 @@
 <div class="mb-lg">
 <div class="space-y-base">
 <span id="narrative-date-badge" class="text-label-sm font-label-sm text-on-tertiary-container uppercase tracking-widest bg-tertiary-fixed px-xs py-[2px] rounded">Loading…</span>
-<h1 class="font-headline-lg text-headline-lg md:text-display-lg md:font-display-lg text-primary">Market Pulse</h1>
-<p id="narrative-subtitle" class="text-body-lg font-body-lg text-on-surface-variant">Loading today's market overview…</p>
+<h1 class="font-headline-lg text-headline-lg md:text-display-lg md:font-display-lg text-primary dark:text-dark-primary">Market Pulse</h1>
+<p id="narrative-subtitle" class="text-body-lg font-body-lg text-on-surface-variant dark:text-dark-on-surface-variant">Loading today's market overview…</p>
 </div>
 </div>
 <!-- Bento Grid: Narrative Feed & Impact -->
@@ -202,44 +227,44 @@
 <span class="material-symbols-outlined text-[20px]">auto_awesome</span>
 <span class="text-label-md font-label-md">Full Summary</span>
 </button>
-<button id="download-summary-btn" class="flex-1 flex items-center justify-center gap-xs border border-outline-variant/50 text-on-surface-variant px-md py-sm rounded-xl hover:bg-surface-container transition-all">
+<button id="download-summary-btn" class="flex-1 flex items-center justify-center gap-xs border border-outline-variant/50 text-on-surface-variant px-md py-sm rounded-xl hover:bg-surface-container transition-all dark:text-dark-on-surface-variant">
 <span class="material-symbols-outlined text-[20px]">download</span>
 <span class="text-label-md font-label-md">Download Summary</span>
 </button>
 </div>
 <div id="narrative-error" class="hidden text-label-sm text-error"></div>
 <!-- Portfolio Relevance -->
-<div class="px-lg py-md bg-primary-container/10 rounded-[20px] border border-primary/20">
+<div class="px-lg py-md bg-primary-container/10 rounded-[20px] border border-primary/20 dark:bg-dark-primary-container/20">
 <h3 class="text-label-sm font-label-sm text-secondary uppercase tracking-widest mb-xs">Portfolio Relevance</h3>
-<p id="narrative-portfolio" class="text-body-md font-body-md text-on-surface">Loading portfolio relevance…</p>
+<p id="narrative-portfolio" class="text-body-md font-body-md text-on-surface dark:text-dark-on-surface">Loading portfolio relevance…</p>
 </div>
 <!-- Narrative Feed -->
-<div class="bg-white border border-outline-variant/30 rounded-[20px] p-lg shadow-sm flex flex-col">
+<div class="bg-white border border-outline-variant/30 rounded-[20px] p-lg shadow-sm flex flex-col dark:bg-dark-surface-container">
 <div class="flex items-center justify-between mb-lg">
 <h2 class="text-title-md font-title-md">Narrative Feed</h2>
 <div class="flex items-center gap-sm">
-<span id="narrative-feed-badge" class="px-xs py-1 rounded bg-surface-container text-label-sm border border-outline-variant/30">Live</span>
+<span id="narrative-feed-badge" class="px-xs py-1 rounded bg-surface-container text-label-sm border border-outline-variant/30 dark:bg-dark-surface-container">Live</span>
 <button id="refresh-feed-btn" class="p-1.5 rounded-lg hover:bg-surface-container-low transition-all" title="Refresh news">
-<span class="material-symbols-outlined text-[18px] text-on-surface-variant">refresh</span>
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant dark:text-dark-on-surface-variant">refresh</span>
 </button>
 </div>
 </div>
 <div id="narrative-feed-list" class="space-y-md">
-<p class="text-label-sm text-on-surface-variant">Loading recent news…</p>
+<p class="text-label-sm text-on-surface-variant dark:text-dark-on-surface-variant">Loading recent news…</p>
 </div>
-<button id="narrative-feed-more-btn" class="hidden mt-md w-full py-2.5 text-label-md font-label-md text-primary border border-primary/30 rounded-lg hover:bg-primary hover:text-white transition-all">See Past 24 Hours' News</button>
+<button id="narrative-feed-more-btn" class="hidden mt-md w-full py-2.5 text-label-md font-label-md text-primary border border-primary/30 rounded-lg hover:bg-primary hover:text-white transition-all dark:text-dark-primary">See Past 24 Hours' News</button>
 </div>
 <!-- Beginner Explainer -->
-<div class="px-lg py-md bg-surface-container-low rounded-[20px] border border-outline-variant/20">
+<div class="px-lg py-md bg-surface-container-low rounded-[20px] border border-outline-variant/20 dark:bg-dark-surface-container">
 <h3 class="text-label-sm font-label-sm text-secondary uppercase tracking-widest mb-xs">Beginner Explainer</h3>
 <div class="flex gap-md items-start">
 <span class="material-symbols-outlined text-on-tertiary-container mt-base">lightbulb</span>
-<p id="narrative-explainer" class="text-body-md font-body-md italic text-on-surface-variant">Loading…</p>
+<p id="narrative-explainer" class="text-body-md font-body-md italic text-on-surface-variant dark:text-dark-on-surface-variant">Loading…</p>
 </div>
 </div>
 </div>
 <!-- Direct Financial Impact Card -->
-<div class="lg:col-span-6 bg-white border border-outline-variant/30 rounded-[20px] p-lg shadow-sm flex flex-col">
+<div class="lg:col-span-6 bg-white border border-outline-variant/30 rounded-[20px] p-lg shadow-sm flex flex-col dark:bg-dark-surface-container">
 <div class="flex items-center justify-between mb-lg">
 <div class="flex items-center gap-sm">
 <div class="p-xs bg-red-100 rounded-lg text-red-600">
@@ -247,73 +272,73 @@
 </div>
 <h2 class="text-title-md font-title-md">Direct Financial Impact</h2>
 </div>
-<span id="dfi-live-badge" class="text-label-sm font-label-sm text-on-surface-variant">Loading…</span>
+<span id="dfi-live-badge" class="text-label-sm font-label-sm text-on-surface-variant dark:text-dark-on-surface-variant">Loading…</span>
 </div>
 <div id="dfi-content">
-<p class="text-body-md text-on-surface-variant">Loading your portfolio's real-time impact…</p>
+<p class="text-body-md text-on-surface-variant dark:text-dark-on-surface-variant">Loading your portfolio's real-time impact…</p>
 </div>
 </div>
 </div>
 <!-- Sector Momentum -->
 <div class="mb-xl">
-<div class="bg-white border border-outline-variant/30 rounded-[20px] p-lg shadow-sm">
+<div class="bg-white border border-outline-variant/30 rounded-[20px] p-lg shadow-sm dark:bg-dark-surface-container">
 <div class="flex items-center justify-between mb-lg">
 <h2 class="text-title-md font-title-md">Sector Momentum</h2>
-<button id="sector-momentum-info-btn" class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors rounded-full p-1 hover:bg-surface-container-low">info</button>
+<button id="sector-momentum-info-btn" class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors rounded-full p-1 hover:bg-surface-container-low dark:text-dark-on-surface-variant">info</button>
 </div>
 <div id="sector-momentum-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-sm">
-<div class="col-span-full flex items-center justify-center text-label-sm text-on-surface-variant py-lg">Loading live sector data…</div>
+<div class="col-span-full flex items-center justify-center text-label-sm text-on-surface-variant py-lg dark:text-dark-on-surface-variant">Loading live sector data…</div>
 </div>
 </div>
 </div>
 <!-- Sector Performance -->
 <div class="grid grid-cols-1 lg:grid-cols-12 gap-md mb-xl">
-<div class="lg:col-span-12 bg-white border border-outline-variant/30 rounded-[20px] p-lg shadow-sm">
+<div class="lg:col-span-12 bg-white border border-outline-variant/30 rounded-[20px] p-lg shadow-sm dark:bg-dark-surface-container">
 <h2 class="text-title-md font-title-md mb-lg">Sector Performance</h2>
 <div id="sector-performance-grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-md">
-<p class="text-label-sm text-on-surface-variant">Loading live sector data…</p>
+<p class="text-label-sm text-on-surface-variant dark:text-dark-on-surface-variant">Loading live sector data…</p>
 </div>
 </div>
 </div>
 <!-- Gainers / Losers -->
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-md mb-xl">
 <!-- Gainers -->
-<div class="bg-white border border-outline-variant/30 rounded-[20px] p-lg shadow-sm">
+<div class="bg-white border border-outline-variant/30 rounded-[20px] p-lg shadow-sm dark:bg-dark-surface-container">
 <div class="flex items-center gap-sm mb-lg justify-between">
 <div class="flex items-center gap-sm">
 <span class="material-symbols-outlined text-green-600">arrow_upward</span>
 <h2 class="text-title-md font-title-md">Top Gainers</h2>
 </div>
-<span id="gainers-scope-badge" class="text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant"></span>
+<span id="gainers-scope-badge" class="text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant dark:bg-dark-surface-container dark:text-dark-on-surface-variant"></span>
 </div>
 <div id="top-gainers-list" class="space-y-md">
-<p class="text-label-sm text-on-surface-variant">Loading…</p>
+<p class="text-label-sm text-on-surface-variant dark:text-dark-on-surface-variant">Loading…</p>
 </div>
 </div>
 <!-- Losers -->
-<div class="bg-white border border-outline-variant/30 rounded-[20px] p-lg shadow-sm">
+<div class="bg-white border border-outline-variant/30 rounded-[20px] p-lg shadow-sm dark:bg-dark-surface-container">
 <div class="flex items-center gap-sm mb-lg justify-between">
 <div class="flex items-center gap-sm">
 <span class="material-symbols-outlined text-red-600">arrow_downward</span>
 <h2 class="text-title-md font-title-md">Top Losers</h2>
 </div>
-<span id="losers-scope-badge" class="text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant"></span>
+<span id="losers-scope-badge" class="text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant dark:bg-dark-surface-container dark:text-dark-on-surface-variant"></span>
 </div>
 <div id="top-losers-list" class="space-y-md">
-<p class="text-label-sm text-on-surface-variant">Loading…</p>
+<p class="text-label-sm text-on-surface-variant dark:text-dark-on-surface-variant">Loading…</p>
 </div>
 </div>
 </div>
 <!-- Ask AI Follow-up -->
-<div class="bg-surface-container text-on-surface-variant border border-outline-variant/30 rounded-[20px] p-lg shadow-sm">
+<div class="bg-surface-container text-on-surface-variant border border-outline-variant/30 rounded-[20px] p-lg shadow-sm dark:bg-dark-surface-container dark:text-dark-on-surface-variant">
 <div class="flex items-center gap-sm mb-md">
 <span class="material-symbols-outlined">chat</span>
-<h2 class="text-title-md font-title-md text-on-surface">Ask AI Follow-up</h2>
+<h2 class="text-title-md font-title-md text-on-surface dark:text-dark-on-surface">Ask AI Follow-up</h2>
 </div>
 <p class="text-body-md font-body-md mb-lg">Need deeper clarity on a specific trend? Type your question below to explore further.</p>
 <div class="flex gap-sm">
-<div class="flex-1 bg-white rounded-xl border border-outline-variant/30 px-md py-sm flex items-center shadow-inner">
-<input id="followup-input" class="w-full bg-transparent border-none focus:ring-0 text-body-md text-on-surface" placeholder="e.g., 'How will PPI affect tech stocks next week?'" type="text"/>
+<div class="flex-1 bg-white rounded-xl border border-outline-variant/30 px-md py-sm flex items-center shadow-inner dark:bg-dark-surface-container">
+<input id="followup-input" class="w-full bg-transparent border-none focus:ring-0 text-body-md text-on-surface dark:text-dark-on-surface" placeholder="e.g., 'How will PPI affect tech stocks next week?'" type="text"/>
 </div>
 <button id="followup-ask-btn" class="primary-gradient text-white px-lg py-sm rounded-xl font-label-md hover:shadow-lg transition-all">Analyze</button>
 </div>
@@ -322,38 +347,32 @@
 <button class="followup-chip px-md py-1.5 rounded-full border border-outline-variant/30 text-label-sm hover:bg-white transition-colors">What is PPI exactly?</button>
 <button class="followup-chip px-md py-1.5 rounded-full border border-outline-variant/30 text-label-sm hover:bg-white transition-colors">Summarize impact on my portfolio</button>
 </div>
-<div id="followup-answer" class="hidden mt-lg p-md bg-white rounded-xl border border-outline-variant/30 text-body-md text-on-surface"></div>
+<div id="followup-answer" class="hidden mt-lg p-md bg-white rounded-xl border border-outline-variant/30 text-body-md text-on-surface dark:bg-dark-surface-container dark:text-dark-on-surface"></div>
 </div>
 </main>
 <!-- Footer -->
-<footer class="w-full py-xl bg-surface-container-low border-t border-outline-variant/20">
+<footer class="w-full py-xl bg-surface-container-low border-t border-outline-variant/20 dark:bg-dark-surface-container">
 <div class="flex flex-col items-center gap-md px-gutter max-w-container-max mx-auto text-center">
 <span class="text-label-md font-label-md font-black">TradePilot</span>
-<div class="flex flex-wrap justify-center gap-lg">
-<a class="text-on-surface-variant text-label-sm hover:text-primary transition-all hover:underline" href="#">Glossary</a>
-<a class="text-on-surface-variant text-label-sm hover:text-primary transition-all hover:underline" href="#">Research Methodology</a>
-<a class="text-on-surface-variant text-label-sm hover:text-primary transition-all hover:underline" href="#">Community Guidelines</a>
-<a class="text-on-surface-variant text-label-sm hover:text-primary transition-all hover:underline" href="#">Privacy Policy</a>
-</div>
-<p class="text-body-md font-body-md text-on-surface-variant max-w-xl">© 2024 TradePilot. Empowering effortless mastery through AI intelligence.</p>
+<p class="text-body-md font-body-md text-on-surface-variant max-w-xl dark:text-dark-on-surface-variant">© 2026 TradePilot. Empowering effortless mastery through AI intelligence.</p>
 </div>
 </footer>
 <!-- Full Summary Modal -->
 <!-- Modal: Info (Hidden by default) -->
 <div class="hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-md" id="insight-info-modal">
-<div class="bg-white w-full max-w-md rounded-[24px] shadow-2xl p-lg relative">
+<div class="bg-white w-full max-w-md rounded-[24px] shadow-2xl p-lg relative dark:bg-dark-surface-container">
 <button class="absolute top-md right-md p-2 hover:bg-surface-container rounded-full transition-colors" onclick="document.getElementById('insight-info-modal').classList.add('hidden')">
 <span class="material-symbols-outlined">close</span>
 </button>
 <div class="flex items-center gap-sm mb-md">
-<span class="material-symbols-outlined text-primary p-2 bg-primary-container/30 rounded-lg">info</span>
+<span class="material-symbols-outlined text-primary p-2 bg-primary-container/20 rounded-lg dark:text-dark-primary dark:bg-dark-primary-container/20">info</span>
 <h3 id="insight-info-modal-title" class="text-title-md font-title-md"></h3>
 </div>
-<p id="insight-info-modal-text" class="text-body-md text-on-surface-variant leading-relaxed"></p>
+<p id="insight-info-modal-text" class="text-body-md text-on-surface-variant leading-relaxed dark:text-dark-on-surface-variant"></p>
 </div>
 </div>
 <div id="full-summary-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-md">
-<div class="bg-white rounded-[20px] max-w-2xl w-full max-h-[85vh] overflow-y-auto p-lg relative">
+<div class="bg-white rounded-[20px] max-w-2xl w-full max-h-[85vh] overflow-y-auto p-lg relative dark:bg-dark-surface-container">
 <button id="full-summary-close-btn" class="absolute top-4 right-4 p-2 rounded-full hover:bg-surface-container-low">
 <span class="material-symbols-outlined">close</span>
 </button>
@@ -362,18 +381,18 @@
 <span id="narrative-source-badge" class="hidden text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full"></span>
 </div>
 <div class="flex items-center justify-between mb-lg">
-<p id="full-summary-date" class="text-label-sm text-on-surface-variant"></p>
-<button id="refresh-summary-btn" class="flex items-center gap-1 text-label-sm font-label-sm text-primary border border-primary/30 rounded-lg px-3 py-1.5 hover:bg-primary hover:text-white transition-all shrink-0">
+<p id="full-summary-date" class="text-label-sm text-on-surface-variant dark:text-dark-on-surface-variant"></p>
+<button id="refresh-summary-btn" class="flex items-center gap-1 text-label-sm font-label-sm text-primary border border-primary/30 rounded-lg px-3 py-1.5 hover:bg-primary hover:text-white transition-all shrink-0 dark:text-dark-primary">
 <span class="material-symbols-outlined text-[16px]">refresh</span>
 Refresh
 </button>
 </div>
-<div id="full-summary-body" class="space-y-md text-body-md text-on-surface leading-relaxed"></div>
+<div id="full-summary-body" class="space-y-md text-body-md text-on-surface leading-relaxed dark:text-dark-on-surface"></div>
 </div>
 </div>
 <!-- Past 24 Hours' News Modal -->
 <div id="news-feed-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-md">
-<div class="bg-white rounded-[20px] max-w-2xl w-full max-h-[85vh] overflow-y-auto p-lg relative">
+<div class="bg-white rounded-[20px] max-w-2xl w-full max-h-[85vh] overflow-y-auto p-lg relative dark:bg-dark-surface-container">
 <button id="news-feed-close-btn" class="absolute top-4 right-4 p-2 rounded-full hover:bg-surface-container-low">
 <span class="material-symbols-outlined">close</span>
 </button>

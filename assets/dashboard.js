@@ -56,12 +56,12 @@
           <div class="flex items-center gap-sm">
             <div class="w-10 h-10 bg-primary-container/20 rounded-lg flex items-center justify-center font-bold text-primary">${h.symbol.slice(0, 2)}</div>
             <div>
-              <p class="font-bold text-label-md dark:text-inverse-on-surface">${h.symbol}</p>
-              <p class="text-label-sm text-on-surface-variant">${h.quantity} shares @ ${fmtMoney(h.avgCost)}</p>
+              <p class="font-bold text-label-md dark:text-dark-on-surface">${h.symbol}</p>
+              <p class="text-label-sm text-on-surface-variant dark:text-dark-on-surface-variant">${h.quantity} shares @ ${fmtMoney(h.avgCost)}</p>
             </div>
           </div>
           <div class="text-right">
-            <p class="font-bold text-label-md dark:text-inverse-on-surface">${fmtMoney(h.marketValue)}</p>
+            <p class="font-bold text-label-md dark:text-dark-on-surface">${fmtMoney(h.marketValue)}</p>
             <p class="text-label-sm ${gainPositive ? 'text-green-600' : 'text-red-500'}">${gainPositive ? '+' : ''}${fmtMoney(h.gain)} (${gainPositive ? '+' : ''}${h.gainPercent}%)</p>
           </div>
           <button class="delete-holding-btn text-error text-label-sm font-bold hover:underline" data-id="${h.id}">Remove</button>
@@ -179,13 +179,13 @@
             <div class="flex items-center gap-sm">
               <div class="w-10 h-10 bg-primary-container/20 rounded-lg flex items-center justify-center font-bold text-primary">${item.symbol.slice(0, 2)}</div>
               <div>
-                <p class="text-label-md font-bold dark:text-inverse-on-surface">${item.symbol}</p>
-                <p class="text-[10px] text-on-surface-variant">${fmtMoney(item.quote.price)}</p>
+                <p class="text-label-md font-bold dark:text-dark-on-surface">${item.symbol}</p>
+                <p class="text-[10px] text-on-surface-variant dark:text-dark-on-surface-variant">${fmtMoney(item.quote.price)}</p>
               </div>
             </div>
             <div class="flex items-center gap-xs">
               <span class="text-label-sm font-bold ${changePositive ? 'text-green-600' : 'text-red-500'}">${changePositive ? '+' : ''}${item.quote.changePercent}%</span>
-              <button class="remove-watchlist-btn material-symbols-outlined text-[16px] text-on-surface-variant hover:text-error opacity-0 group-hover:opacity-100 transition-opacity" data-id="${item.id}">close</button>
+              <button class="remove-watchlist-btn material-symbols-outlined text-[16px] text-on-surface-variant dark:text-dark-on-surface-variant hover:text-error opacity-0 group-hover:opacity-100 transition-opacity" data-id="${item.id}">close</button>
             </div>
           `;
           watchlistContainer.appendChild(row);
@@ -382,7 +382,7 @@
       container.innerHTML = '';
       
       if (!exposure || exposure.length === 0) {
-        container.innerHTML = `<p id="sector-empty-state" class="text-label-md text-on-surface-variant dark:text-outline-variant self-center text-center">Add holdings below to see your sector exposure breakdown.</p>`;
+        container.innerHTML = `<p id="sector-empty-state" class="text-label-md text-on-surface-variant dark:text-dark-on-surface-variant self-center text-center">Add holdings below to see your sector exposure breakdown.</p>`;
         return;
       }
       
@@ -391,7 +391,7 @@
       
       exposure.forEach((item, idx) => {
         const bar = document.createElement('div');
-        const bgClass = idx === 0 ? 'bg-primary dark:bg-primary-fixed-dim' : 'bg-surface-container-high dark:bg-outline-variant';
+        const bgClass = idx === 0 ? 'bg-primary dark:bg-dark-primary' : 'bg-surface-container-high dark:bg-outline-variant';
         const hoverClass = idx === 0 ? 'hover:opacity-85' : 'hover:bg-primary-container/20';
         
         bar.className = `flex-1 max-w-[64px] w-full ${bgClass} ${hoverClass} rounded-t-xl transition-all cursor-pointer group relative`;
@@ -400,7 +400,7 @@
         
         bar.innerHTML = `
           <div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-on-surface text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">${item.sector}: ${item.percentage}%</div>
-          <div class="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] font-bold text-on-surface-variant dark:text-outline-variant truncate w-full text-center">${item.sector.slice(0, 10)}</div>
+          <div class="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] font-bold text-on-surface-variant dark:text-dark-on-surface-variant truncate w-full text-center">${item.sector.slice(0, 10)}</div>
         `;
         container.appendChild(bar);
       });
@@ -414,7 +414,7 @@
       if (!listElement) return;
       listElement.innerHTML = '';
       if (!newsItems || newsItems.length === 0) {
-        listElement.innerHTML = `<p class="col-span-12 text-label-sm text-on-surface-variant dark:text-outline-variant">${emptyText}</p>`;
+        listElement.innerHTML = `<p class="col-span-12 text-label-sm text-on-surface-variant dark:text-dark-on-surface-variant">${emptyText}</p>`;
         return;
       }
       
@@ -422,19 +422,19 @@
         const card = document.createElement('a');
         card.href = item.url || `https://finance.yahoo.com/quote/${item.symbol.trim().toUpperCase()}/news`;
         card.target = '_blank';
-        card.className = 'glass-card p-sm flex gap-md items-center group cursor-pointer hover:shadow-md transition-all bg-white dark:bg-surface-container border border-outline-variant/30 rounded-xl';
+        card.className = 'glass-card p-sm flex gap-md items-center group cursor-pointer hover:shadow-md transition-all bg-white dark:bg-dark-surface-container border border-outline-variant/30 rounded-xl';
         
         card.innerHTML = `
-          <div class="w-12 h-12 rounded-xl bg-primary-container/20 flex items-center justify-center font-bold text-primary dark:text-primary-fixed-dim shrink-0">
+          <div class="w-12 h-12 rounded-xl bg-primary-container/20 flex items-center justify-center font-bold text-primary dark:text-dark-primary shrink-0">
             ${item.symbol}
           </div>
           <div class="flex-1 min-w-0">
             <div class="flex gap-2 mb-1 items-center">
-               <span class="bg-primary/10 text-primary dark:text-primary-fixed-dim text-[10px] px-2 py-0.5 rounded-full font-bold uppercase">${item.symbol}</span>
-               <span class="text-[10px] text-on-surface-variant dark:text-outline-variant">${new Date(item.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+               <span class="bg-primary/10 text-primary dark:text-dark-primary text-[10px] px-2 py-0.5 rounded-full font-bold uppercase">${item.symbol}</span>
+               <span class="text-[10px] text-on-surface-variant dark:text-dark-on-surface-variant">${new Date(item.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
             </div>
-            <h4 class="text-label-sm font-bold group-hover:text-primary dark:group-hover:text-primary-fixed-dim transition-colors truncate dark:text-inverse-on-surface">${item.title}</h4>
-            <p class="text-[11px] text-on-surface-variant dark:text-outline-variant line-clamp-2 mt-0.5">${item.description}</p>
+            <h4 class="text-label-sm font-bold group-hover:text-primary dark:group-hover:text-primary-fixed-dim transition-colors truncate dark:text-dark-on-surface">${item.title}</h4>
+            <p class="text-[11px] text-on-surface-variant dark:text-dark-on-surface-variant line-clamp-2 mt-0.5">${item.description}</p>
           </div>
         `;
         listElement.appendChild(card);
@@ -474,8 +474,8 @@
     if (tabPortfolioBtn && tabWatchlistBtn) {
       tabPortfolioBtn.addEventListener('click', () => {
         // Toggle tab styles
-        tabPortfolioBtn.className = 'px-4 py-1.5 bg-primary dark:bg-primary-fixed-dim text-white dark:text-primary rounded-lg font-bold text-label-sm transition-all shadow-sm';
-        tabWatchlistBtn.className = 'px-4 py-1.5 text-on-surface-variant hover:text-primary dark:text-outline-variant dark:hover:text-inverse-primary rounded-lg font-bold text-label-sm transition-all';
+        tabPortfolioBtn.className = 'px-4 py-1.5 bg-primary dark:bg-dark-primary text-white dark:text-primary rounded-lg font-bold text-label-sm transition-all shadow-sm';
+        tabWatchlistBtn.className = 'px-4 py-1.5 text-on-surface-variant hover:text-primary dark:text-dark-on-surface-variant dark:hover:text-inverse-primary rounded-lg font-bold text-label-sm transition-all';
         
         // Show/hide lists
         portfolioNewsList.classList.remove('hidden');
@@ -484,8 +484,8 @@
 
       tabWatchlistBtn.addEventListener('click', () => {
         // Toggle tab styles
-        tabWatchlistBtn.className = 'px-4 py-1.5 bg-primary dark:bg-primary-fixed-dim text-white dark:text-primary rounded-lg font-bold text-label-sm transition-all shadow-sm';
-        tabPortfolioBtn.className = 'px-4 py-1.5 text-on-surface-variant hover:text-primary dark:text-outline-variant dark:hover:text-inverse-primary rounded-lg font-bold text-label-sm transition-all';
+        tabWatchlistBtn.className = 'px-4 py-1.5 bg-primary dark:bg-dark-primary text-white dark:text-primary rounded-lg font-bold text-label-sm transition-all shadow-sm';
+        tabPortfolioBtn.className = 'px-4 py-1.5 text-on-surface-variant hover:text-primary dark:text-dark-on-surface-variant dark:hover:text-inverse-primary rounded-lg font-bold text-label-sm transition-all';
         
         // Show/hide lists
         watchlistNewsList.classList.remove('hidden');
@@ -539,10 +539,10 @@
         suggestionsContainer.classList.remove('hidden');
         filtered.forEach((item, idx) => {
           const itemEl = document.createElement('div');
-          itemEl.className = 'w-full px-3 py-2.5 cursor-pointer text-label-sm border-b border-outline-variant/10 last:border-b-0 flex justify-between items-center transition-colors dark:text-inverse-on-surface hover:bg-primary/10 dark:hover:bg-primary-container/45';
+          itemEl.className = 'w-full px-3 py-2.5 cursor-pointer text-label-sm border-b border-outline-variant/10 last:border-b-0 flex justify-between items-center transition-colors dark:text-dark-on-surface hover:bg-primary/10 dark:hover:bg-primary-container/45';
           itemEl.innerHTML = `
             <span class="font-bold shrink-0">${item.symbol}</span>
-            <span class="text-[11px] text-on-surface-variant dark:text-outline-variant truncate ml-4 text-right">${item.name}</span>
+            <span class="text-[11px] text-on-surface-variant dark:text-dark-on-surface-variant truncate ml-4 text-right">${item.name}</span>
           `;
           
           itemEl.addEventListener('mousedown', (e) => {
@@ -563,10 +563,10 @@
       function highlightItem() {
         Array.from(suggestionsContainer.children).forEach((child, idx) => {
           if (idx === activeIndex) {
-            child.classList.add('bg-primary/20', 'dark:bg-primary-container/60');
+            child.classList.add('bg-primary/20', 'dark:bg-dark-primary-container/60');
             child.scrollIntoView({ block: 'nearest' });
           } else {
-            child.classList.remove('bg-primary/20', 'dark:bg-primary-container/60');
+            child.classList.remove('bg-primary/20', 'dark:bg-dark-primary-container/60');
           }
         });
       }

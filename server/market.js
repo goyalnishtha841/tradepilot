@@ -11,6 +11,41 @@ function isValidSymbol(symbol) {
   return typeof symbol === 'string' && /^[A-Za-z.\-]{1,15}$/.test(symbol.trim());
 }
 
+let showcaseCache = null;
+let showcaseCacheTime = 0;
+const SHOWCASE_CACHE_MS = 60 * 1000; // 1 minute — public page, keep Yahoo calls light
+
+// GET /api/market/showcase — public, no auth. Real live data for the homepage
+// hero visual (not personalized — nobody's logged in there). Fixed to NVDA so
+// it can be cached and doesn't accept arbitrary symbols from anonymous callers.
+router.get('/showcase', async (req, res) => {
+  try {
+    if (showcaseCache && Date.now() - showcaseCacheTime < SHOWCASE_CACHE_MS) {
+      return res.json(showcaseCache);
+    }
+    const [quote, chart] = await Promise.all([
+      getRealQuote('NVDA'),
+      getHistoricalData('NVDA', '1M')
+    ]);
+    const closes = (chart.points || chart.data || []).map((p) => p.close ?? p.price ?? p.y).filter((v) => typeof v === 'number');
+    const payload = {
+      symbol: 'NVDA',
+      name: 'NVIDIA Corporation',
+      price: quote.price,
+      changePercent: quote.changePercent,
+      sparkline: closes.length ? closes : null,
+      generatedAt: new Date().toISOString()
+    };
+    showcaseCache = payload;
+    showcaseCacheTime = Date.now();
+    res.json(payload);
+  } catch (err) {
+    console.error('Showcase quote error:', err.message, err.stack ? '\n' + err.stack : '');
+    if (showcaseCache) return res.json(showcaseCache); // serve stale cache over an error
+    res.status(502).json({ error: 'Live showcase data unavailable right now.' });
+  }
+});
+
 // GET /api/market/symbols
 // Used by the dashboard/watchlist autocomplete dropdown for suggestions as you type.
 router.get('/symbols', requireAuth, (req, res) => {

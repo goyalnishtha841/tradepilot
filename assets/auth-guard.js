@@ -116,4 +116,25 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     });
   }
+
+  // Dark mode: applied consistently on every page that includes this script,
+  // persisted the same way settings.html already does (localStorage key
+  // 'tradepilot_dark_mode', 'dark' class on <html>).
+  const darkModeEnabled = localStorage.getItem('tradepilot_dark_mode') === 'true';
+  document.documentElement.classList.toggle('dark', darkModeEnabled);
+
+  const darkModeIconToggle = document.getElementById('dark-mode-icon-toggle');
+  if (darkModeIconToggle) {
+    // Some pages put the icon text directly on the button, others nest it in a
+    // <span class="material-symbols-outlined"> — handle both without needing
+    // to restructure every page's markup.
+    const iconTarget = darkModeIconToggle.querySelector('.material-symbols-outlined') || darkModeIconToggle;
+    iconTarget.textContent = darkModeEnabled ? 'light_mode' : 'dark_mode';
+    darkModeIconToggle.addEventListener('click', function () {
+      const newState = localStorage.getItem('tradepilot_dark_mode') !== 'true';
+      localStorage.setItem('tradepilot_dark_mode', String(newState));
+      document.documentElement.classList.toggle('dark', newState);
+      iconTarget.textContent = newState ? 'light_mode' : 'dark_mode';
+    });
+  }
 });

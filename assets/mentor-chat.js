@@ -13,8 +13,8 @@
     function addBubble(text, sender) {
       const bubble = document.createElement('div');
       bubble.className = sender === 'user'
-        ? 'ml-6 bg-primary text-white text-xs p-3 rounded-xl'
-        : 'mr-6 bg-surface-container-low text-on-surface text-xs p-3 rounded-xl border border-outline-variant/20';
+        ? 'ml-6 bg-primary dark:bg-dark-primary text-white dark:text-primary text-xs p-3 rounded-xl'
+        : 'mr-6 bg-surface-container-low dark:bg-dark-surface-container text-on-surface dark:text-dark-on-surface text-xs p-3 rounded-xl border border-outline-variant/20';
       bubble.style.whiteSpace = 'pre-wrap';
       bubble.textContent = text;
       chatLog.appendChild(bubble);
