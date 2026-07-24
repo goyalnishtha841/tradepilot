@@ -423,8 +423,8 @@
         const depthPanel = document.getElementById('depth-panel');
         
         if (view === 'chart') {
-            chartBtn.className = "px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition-all bg-white dark:bg-surface-container shadow-sm text-on-surface dark:text-white";
-            depthBtn.className = "px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition-all text-on-surface-variant dark:text-outline-variant hover:bg-white/40 dark:hover:bg-surface-container-low/40";
+            chartBtn.className = "px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition-all bg-white dark:bg-dark-surface-container shadow-sm text-on-surface dark:text-white";
+            depthBtn.className = "px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition-all text-on-surface-variant dark:text-dark-on-surface-variant hover:bg-white/40 dark:hover:bg-surface-container-low/40";
             chartPanel.classList.remove('hidden');
             depthPanel.classList.add('hidden');
             
@@ -433,8 +433,8 @@
                 if (priceChart) priceChart.windowResizeHandler();
             }, 50);
         } else {
-            depthBtn.className = "px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition-all bg-white dark:bg-surface-container shadow-sm text-on-surface dark:text-white";
-            chartBtn.className = "px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition-all text-on-surface-variant dark:text-outline-variant hover:bg-white/40 dark:hover:bg-surface-container-low/40";
+            depthBtn.className = "px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition-all bg-white dark:bg-dark-surface-container shadow-sm text-on-surface dark:text-white";
+            chartBtn.className = "px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition-all text-on-surface-variant dark:text-dark-on-surface-variant hover:bg-white/40 dark:hover:bg-surface-container-low/40";
             chartPanel.classList.add('hidden');
             depthPanel.classList.remove('hidden');
             renderDepthLadder();
@@ -467,9 +467,9 @@
         types.forEach(t => {
             const btn = document.getElementById(`type-${t}`);
             if (t === type.toLowerCase()) {
-                btn.className = "flex-1 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all uppercase bg-white dark:bg-surface-container shadow-sm text-on-surface dark:text-white";
+                btn.className = "flex-1 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all uppercase bg-white dark:bg-dark-surface-container shadow-sm text-on-surface dark:text-white";
             } else {
-                btn.className = "flex-1 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all uppercase text-on-surface-variant dark:text-outline-variant hover:bg-white/40 dark:hover:bg-surface-container-low/40";
+                btn.className = "flex-1 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all uppercase text-on-surface-variant dark:text-dark-on-surface-variant hover:bg-white/40 dark:hover:bg-surface-container-low/40";
             }
         });
 
@@ -507,12 +507,12 @@
         const select = document.getElementById('select-gtd-min');
 
         if (tif === "GTC") {
-            gtc.className = "flex-1 py-2 text-xs font-semibold rounded-xl bg-white dark:bg-surface-container text-on-surface dark:text-white shadow-sm border border-outline-variant/10";
-            gtd.className = "flex-1 py-2 text-xs font-semibold rounded-xl bg-surface-container-low text-on-surface-variant dark:text-outline-variant";
+            gtc.className = "flex-1 py-2 text-xs font-semibold rounded-xl bg-white dark:bg-dark-surface-container text-on-surface dark:text-white shadow-sm border border-outline-variant/10";
+            gtd.className = "flex-1 py-2 text-xs font-semibold rounded-xl bg-surface-container-low text-on-surface-variant dark:text-dark-on-surface-variant";
             select.classList.add('hidden');
         } else {
-            gtd.className = "flex-1 py-2 text-xs font-semibold rounded-xl bg-white dark:bg-surface-container text-on-surface dark:text-white shadow-sm border border-outline-variant/10";
-            gtc.className = "flex-1 py-2 text-xs font-semibold rounded-xl bg-surface-container-low text-on-surface-variant dark:text-outline-variant";
+            gtd.className = "flex-1 py-2 text-xs font-semibold rounded-xl bg-white dark:bg-dark-surface-container text-on-surface dark:text-white shadow-sm border border-outline-variant/10";
+            gtc.className = "flex-1 py-2 text-xs font-semibold rounded-xl bg-surface-container-low text-on-surface-variant dark:text-dark-on-surface-variant";
             select.classList.remove('hidden');
         }
     }
@@ -553,7 +553,7 @@
                 btn.className = "flex-1 min-w-[64px] py-3 text-center border-b-2 border-primary dark:border-white text-primary dark:text-white font-bold";
                 panel.classList.remove('hidden');
             } else {
-                btn.className = "flex-1 min-w-[64px] py-3 text-center border-b-2 border-transparent text-on-surface-variant dark:text-outline-variant font-semibold hover:text-primary dark:hover:text-white transition-colors";
+                btn.className = "flex-1 min-w-[64px] py-3 text-center border-b-2 border-transparent text-on-surface-variant dark:text-dark-on-surface-variant font-semibold hover:text-primary dark:hover:text-white transition-colors";
                 panel.classList.add('hidden');
             }
         });
@@ -739,7 +739,7 @@
 
             const item = document.createElement('button');
             item.className = `w-full text-left p-sm border-b border-outline-variant/10 flex items-center justify-between transition-colors hover:bg-surface-container-low dark:hover:bg-surface-container-high/40 ${
-                isSelected ? 'bg-surface-container-low/80 dark:bg-surface-container border-l-4 border-l-[#e89a23] pl-2.5' : 'pl-3'
+                isSelected ? 'bg-surface-container-low/80 dark:bg-dark-surface-container border-l-4 border-l-[#e89a23] pl-2.5' : 'pl-3'
             }`;
             
             item.innerHTML = `
@@ -748,7 +748,7 @@
                         ${s.sym}
                         ${isHeld ? '<span class="w-1.5 h-1.5 rounded-full bg-[#e89a23]" title="Position Open"></span>' : ''}
                     </div>
-                    <div class="text-[9px] text-on-surface-variant dark:text-outline-variant truncate">${s.name}</div>
+                    <div class="text-[9px] text-on-surface-variant dark:text-dark-on-surface-variant truncate">${s.name}</div>
                 </div>
                 <div class="text-right tp-mono">
                     <div class="text-xs font-semibold dark:text-white">${fmtNum(p.ltp)}</div>
@@ -861,7 +861,7 @@
         const posPanel = document.getElementById('panel-positions');
         posPanel.innerHTML = "";
         if (posCount === 0) {
-            posPanel.innerHTML = `<div class="py-8 text-center text-xs text-on-surface-variant dark:text-outline-variant">No active positions. Execute a buy order to open.</div>`;
+            posPanel.innerHTML = `<div class="py-8 text-center text-xs text-on-surface-variant dark:text-dark-on-surface-variant">No active positions. Execute a buy order to open.</div>`;
         } else {
             Object.entries(state.positions).forEach(([sym, pos]) => {
                 const ltp = state.prices[sym]?.ltp ?? pos.averageEntryPrice;
@@ -869,11 +869,11 @@
                 const pnlPct = (pnl / (pos.averageEntryPrice * pos.quantity)) * 100;
                 
                 const card = document.createElement('div');
-                card.className = "p-md border border-outline-variant/20 rounded-xl flex justify-between items-center bg-surface-container-lowest dark:bg-surface-container-low shadow-sm";
+                card.className = "p-md border border-outline-variant/20 rounded-xl flex justify-between items-center bg-surface-container-lowest dark:bg-dark-surface-container shadow-sm";
                 card.innerHTML = `
                     <div>
                         <p class="font-bold text-xs tp-mono dark:text-white">${sym}</p>
-                        <p class="text-[10px] text-on-surface-variant dark:text-outline-variant mt-0.5">${pos.quantity} shares @ avg ${fmtNum(pos.averageEntryPrice)}</p>
+                        <p class="text-[10px] text-on-surface-variant dark:text-dark-on-surface-variant mt-0.5">${pos.quantity} shares @ avg ${fmtNum(pos.averageEntryPrice)}</p>
                     </div>
                     <div class="text-right tp-mono">
                         <p class="text-xs font-bold dark:text-white">${fmtUSD(pos.quantity * ltp)}</p>
@@ -890,22 +890,22 @@
         const ordPanel = document.getElementById('panel-orders');
         ordPanel.innerHTML = "";
         if (openOrders.length === 0) {
-            ordPanel.innerHTML = `<div class="py-8 text-center text-xs text-on-surface-variant dark:text-outline-variant">No active resting orders.</div>`;
+            ordPanel.innerHTML = `<div class="py-8 text-center text-xs text-on-surface-variant dark:text-dark-on-surface-variant">No active resting orders.</div>`;
         } else {
             openOrders.forEach((o) => {
                 const card = document.createElement('div');
-                card.className = "p-md border border-outline-variant/20 rounded-xl flex justify-between items-center bg-surface-container-lowest dark:bg-surface-container-low shadow-sm";
+                card.className = "p-md border border-outline-variant/20 rounded-xl flex justify-between items-center bg-surface-container-lowest dark:bg-dark-surface-container shadow-sm";
                 card.innerHTML = `
                     <div class="flex-1">
                         <div class="flex items-center gap-sm">
                             <span class="text-xs font-bold tp-mono dark:text-white">${o.symbol}</span>
-                            <span class="px-1.5 py-0.2 bg-surface-container dark:bg-surface-container-high rounded text-[8px] font-bold uppercase ${o.side === "BUY" ? 'text-green-600' : 'text-red-500'}">${o.side}</span>
+                            <span class="px-1.5 py-0.2 bg-surface-container dark:bg-dark-surface-container rounded text-[8px] font-bold uppercase ${o.side === "BUY" ? 'text-green-600' : 'text-red-500'}">${o.side}</span>
                         </div>
-                        <p class="text-[9px] text-on-surface-variant dark:text-outline-variant mt-1">
+                        <p class="text-[9px] text-on-surface-variant dark:text-dark-on-surface-variant mt-1">
                             ${o.orderType} · ${o.quantity} sh @ ${fmtNum(o.limitPrice || o.stopPrice)} · ${o.timeInForce}
                         </p>
                     </div>
-                    <button class="text-on-surface-variant hover:text-error transition-colors" onclick="window.cancelPaperOrder('${o.id}')">
+                    <button class="text-on-surface-variant dark:text-dark-on-surface-variant hover:text-error transition-colors" onclick="window.cancelPaperOrder('${o.id}')">
                         <span class="material-symbols-outlined text-[18px]">cancel</span>
                     </button>
                 `;
@@ -919,11 +919,11 @@
         const histPanel = document.getElementById('panel-history');
         histPanel.innerHTML = "";
         if (state.orders.length === 0) {
-            histPanel.innerHTML = `<div class="py-8 text-center text-xs text-on-surface-variant dark:text-outline-variant">No orders submitted.</div>`;
+            histPanel.innerHTML = `<div class="py-8 text-center text-xs text-on-surface-variant dark:text-dark-on-surface-variant">No orders submitted.</div>`;
         } else {
             state.orders.slice(0, 50).forEach((o) => {
                 const card = document.createElement('div');
-                card.className = "p-sm border border-outline-variant/10 rounded-xl bg-surface-container-lowest dark:bg-surface-container-low shadow-xs";
+                card.className = "p-sm border border-outline-variant/10 rounded-xl bg-surface-container-lowest dark:bg-dark-surface-container shadow-xs";
                 
                 let badgeTheme = "bg-slate-100 text-slate-700";
                 if (o.status === "FILLED") badgeTheme = "bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-400";
@@ -936,12 +936,12 @@
                         <span class="text-xs font-bold tp-mono dark:text-white">${o.symbol} <b class="${o.side === 'BUY' ? 'text-green-600' : 'text-red-500'}">[${o.side}]</b></span>
                         <span class="px-2 py-0.5 rounded text-[8px] font-bold uppercase ${badgeTheme}">${o.status}</span>
                     </div>
-                    <div class="text-[9px] text-on-surface-variant dark:text-outline-variant mt-1">
+                    <div class="text-[9px] text-on-surface-variant dark:text-dark-on-surface-variant mt-1">
                         ${o.orderType} · ${o.quantity} sh ${o.averageFillPrice ? `@ ${fmtUSD(o.averageFillPrice)}` : ''} 
                         ${o.slippageBps ? `· ${fmtBps(o.slippageBps)} slip` : ''}
                         ${o.rejectionReason ? `— ${o.rejectionReason}` : ''}
                     </div>
-                    <span class="text-[8px] text-on-surface-variant dark:text-outline-variant mt-0.5 block">${new Date(o.submittedAt).toLocaleTimeString()}</span>
+                    <span class="text-[8px] text-on-surface-variant dark:text-dark-on-surface-variant mt-0.5 block">${new Date(o.submittedAt).toLocaleTimeString()}</span>
                 `;
                 histPanel.appendChild(card);
             });
@@ -951,11 +951,11 @@
         const trdPanel = document.getElementById('panel-trades');
         trdPanel.innerHTML = "";
         if (state.closedTrades.length === 0) {
-            trdPanel.innerHTML = `<div class="py-8 text-center text-xs text-on-surface-variant dark:text-outline-variant">No realized trades yet.</div>`;
+            trdPanel.innerHTML = `<div class="py-8 text-center text-xs text-on-surface-variant dark:text-dark-on-surface-variant">No realized trades yet.</div>`;
         } else {
             state.closedTrades.slice(0, 50).forEach((t) => {
                 const card = document.createElement('div');
-                card.className = "p-sm border border-outline-variant/10 rounded-xl bg-surface-container-lowest dark:bg-surface-container-low shadow-xs";
+                card.className = "p-sm border border-outline-variant/10 rounded-xl bg-surface-container-lowest dark:bg-dark-surface-container shadow-xs";
                 card.innerHTML = `
                     <div class="flex justify-between items-center">
                         <span class="text-xs font-bold tp-mono dark:text-white">${t.symbol}</span>
@@ -963,10 +963,10 @@
                             ${t.pnl >= 0 ? '+' : ''}${fmtUSD(t.pnl)}
                         </span>
                     </div>
-                    <div class="text-[9px] text-on-surface-variant dark:text-outline-variant mt-1">
+                    <div class="text-[9px] text-on-surface-variant dark:text-dark-on-surface-variant mt-1">
                         ${t.quantity} sh · Entry: ${fmtNum(t.entryPrice)} &rarr; Exit: ${fmtNum(t.exitPrice)}
                     </div>
-                    <div class="text-[8px] text-on-surface-variant dark:text-outline-variant mt-1">
+                    <div class="text-[8px] text-on-surface-variant dark:text-dark-on-surface-variant mt-1">
                         Fees: ${fmtUSD(t.fees)} ${t.slippageBps ? `· Slippage: ${fmtBps(t.slippageBps)}` : ''}
                     </div>
                 `;
