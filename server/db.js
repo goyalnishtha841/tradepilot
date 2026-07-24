@@ -89,9 +89,11 @@ async function init() {
       symbol TEXT NOT NULL,
       quantity NUMERIC NOT NULL,
       avg_cost NUMERIC NOT NULL,
+      currency TEXT,
       created_at TIMESTAMPTZ DEFAULT now()
     );
   `);
+  await pool.query(`ALTER TABLE holdings ADD COLUMN IF NOT EXISTS currency TEXT;`);
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS watchlist (
@@ -102,7 +104,7 @@ async function init() {
       UNIQUE(user_id, symbol)
     );
   `);
-    await pool.query(`
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS user_preferences (
       id SERIAL PRIMARY KEY,
       user_id INTEGER UNIQUE REFERENCES users(id) ON DELETE CASCADE,
@@ -112,12 +114,13 @@ async function init() {
       learning_preference TEXT,
       goals TEXT[],
       favorite_sectors TEXT[],
+      base_currency TEXT DEFAULT 'INR',
       onboarding_completed BOOLEAN DEFAULT FALSE,
       created_at TIMESTAMPTZ DEFAULT NOW(),
-      updated_at TIMESTAMPTZ DEFAULT
-       NOW()
+      updated_at TIMESTAMPTZ DEFAULT NOW()
     );
   `);
+  await pool.query(`ALTER TABLE user_preferences ADD COLUMN IF NOT EXISTS base_currency TEXT DEFAULT 'INR';`);
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS portfolio_news (
@@ -356,19 +359,19 @@ module.exports = {
   // --- Holdings (portfolio) ---
   async listHoldings(userId) {
     const { rows } = await pool.query(
-      `SELECT id, symbol, quantity, avg_cost AS "avgCost", created_at AS "createdAt"
+      `SELECT id, symbol, quantity, avg_cost AS "avgCost", currency, created_at AS "createdAt"
        FROM holdings WHERE user_id = $1 ORDER BY created_at DESC`,
       [userId]
     );
     return rows;
   },
 
-  async createHolding(userId, { symbol, quantity, avgCost }) {
+  async createHolding(userId, { symbol, quantity, avgCost, currency }) {
     const { rows } = await pool.query(
-      `INSERT INTO holdings (user_id, symbol, quantity, avg_cost)
-       VALUES ($1, $2, $3, $4)
-       RETURNING id, symbol, quantity, avg_cost AS "avgCost", created_at AS "createdAt"`,
-      [userId, symbol, quantity, avgCost]
+      `INSERT INTO holdings (user_id, symbol, quantity, avg_cost, currency)
+       VALUES ($1, $2, $3, $4, $5)
+       RETURNING id, symbol, quantity, avg_cost AS "avgCost", currency, created_at AS "createdAt"`,
+      [userId, symbol, quantity, avgCost, currency || null]
     );
     return rows[0];
   },
@@ -379,6 +382,45 @@ module.exports = {
       [holdingId, userId]
     );
     return rowCount > 0;
+  },
+
+  async updateHolding(userId, holdingId, { quantity, avgCost, currency }) {
+    const { rows } = await pool.query(
+      `UPDATE holdings
+       SET quantity = $1, avg_cost = $2, currency = COALESCE($5, currency)
+       WHERE id = $3 AND user_id = $4
+       RETURNING id, symbol, quantity, avg_cost AS "avgCost", currency, created_at AS "createdAt"`,
+      [quantity, avgCost, holdingId, userId, currency || null]
+    );
+    return rows[0] || null;
+  },
+
+  async getUserBaseCurrency(userId) {
+    try {
+      const { rows } = await pool.query(
+        `SELECT base_currency FROM user_preferences WHERE user_id = $1`,
+        [userId]
+      );
+      return (rows[0] && rows[0].base_currency) || 'INR';
+    } catch (err) {
+      return 'INR';
+    }
+  },
+
+  async setUserBaseCurrency(userId, baseCurrency) {
+    const validCurrencies = ['INR', 'USD', 'EUR', 'GBP', 'JPY', 'CAD', 'AUD', 'CNY', 'HKD', 'SGD'];
+    const currency = validCurrencies.includes(String(baseCurrency).toUpperCase())
+      ? String(baseCurrency).toUpperCase()
+      : 'INR';
+
+    await pool.query(
+      `INSERT INTO user_preferences (user_id, base_currency)
+       VALUES ($1, $2)
+       ON CONFLICT (user_id)
+       DO UPDATE SET base_currency = $2, updated_at = NOW()`,
+      [userId, currency]
+    );
+    return currency;
   },
 
   // --- Watchlist ---
@@ -498,40 +540,7 @@ module.exports = {
 
   },
 
-  async updateHolding(userId, holdingId, holding) {
-    const { symbol, quantity, avgCost } = holding;
-    const { rows } = await pool.query(
 
-        `UPDATE holdings
-         SET symbol=$1,
-             quantity=$2,
-             avg_cost=$3
-         WHERE id=$4
-         AND user_id=$5
-         RETURNING id,
-                   symbol,
-                   quantity,
-                   avg_cost AS "avgCost"`,
-
-        [
-
-            symbol,
-
-            quantity,
-
-            avgCost,
-
-            holdingId,
-
-            userId
-
-        ]
-
-    );
-
-    return rows[0];
-
-  },
 
   async getPortfolioSummary(userId) {
     const { rows } = await pool.query(

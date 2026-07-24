@@ -8,7 +8,7 @@ const { getOrGenerateNews } = require('./news-service');
 const router = express.Router();
 
 function isValidSymbol(symbol) {
-  return typeof symbol === 'string' && /^[A-Za-z.\-]{1,15}$/.test(symbol.trim());
+  return typeof symbol === 'string' && /^[A-Za-z0-9.\-]{1,15}$/.test(symbol.trim());
 }
 
 async function getQuoteWithFallback(symbol) {
@@ -41,7 +41,18 @@ router.post('/', requireAuth, async (req, res) => {
     if (!isValidSymbol(symbol)) {
       return res.status(400).json({ error: 'Please enter a valid stock symbol (e.g. AAPL, TSLA, NVDA).' });
     }
-    const item = await db.addToWatchlist(req.user.id, symbol.trim().toUpperCase());
+
+    const sym = symbol.trim().toUpperCase();
+    try {
+      await getRealQuote(sym);
+    } catch (err) {
+      if (err.message === 'SYMBOL_NOT_FOUND') {
+        return res.status(400).json({ error: `Stock symbol '${sym}' does not exist in the real world.` });
+      }
+      console.warn(`Verification of ${sym} during add skipped due to: ${err.message}`);
+    }
+
+    const item = await db.addToWatchlist(req.user.id, sym);
     res.json({ item: { ...item, quote: await getQuoteWithFallback(item.symbol) } });
   } catch (err) {
     console.error('Add watchlist error:', err);

@@ -1,8 +1,8 @@
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 const express = require('express');
 const cors = require('cors');
 const fetch = require('node-fetch');
-const path = require('path');
 const { router: authRouter, requireAuth } = require('./auth');
 const onboardingRouter = require('./onboarding');
 const alertsRouter = require('./alerts');
@@ -15,7 +15,7 @@ const papertradingRouter = require('./papertrading');
 const db = require('./db');
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = parseInt(process.env.PORT, 10) || 3001;
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
 
 app.use(cors());
@@ -136,15 +136,16 @@ ${context ? `\n\nContext about what the user is currently looking at: ${context}
 });
 
 function listenOnPort(port, attempt = 1) {
-  const server = app.listen(port, () => {
+  const currentPort = Number(port);
+  const server = app.listen(currentPort, () => {
     console.log(`\n✅ TradePilot server running!`);
-    console.log(`   Open this in your browser: http://localhost:${port}/home.html\n`);
+    console.log(`   Open this in your browser: http://localhost:${currentPort}/home.html\n`);
   });
 
   server.on('error', (err) => {
     if (err.code === 'EADDRINUSE' && attempt < 5) {
-      const nextPort = port + 1;
-      console.warn(`Port ${port} is busy. Trying ${nextPort} instead...`);
+      const nextPort = currentPort + 1;
+      console.warn(`Port ${currentPort} is busy. Trying ${nextPort} instead...`);
       server.close(() => listenOnPort(nextPort, attempt + 1));
     } else {
       console.error('Failed to start server:', err);

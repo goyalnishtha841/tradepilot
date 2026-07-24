@@ -40,7 +40,7 @@ const TYPES_REQUIRING_TARGET = [
 ];
 
 function isValidSymbol(symbol) {
-  return typeof symbol === 'string' && /^[A-Za-z.\-]{1,15}$/.test(symbol.trim());
+  return typeof symbol === 'string' && /^[A-Za-z0-9.\-]{1,15}$/.test(symbol.trim());
 }
 
 // Real-time price with graceful fallback to a simulated one if the live feed fails.

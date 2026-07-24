@@ -18,7 +18,14 @@ async function fetchJson(url) {
 
 // ---------- Component 1: Live Quote ----------
 
-async function getRealQuote(symbolRaw) {
+const quoteCache = {};
+const fundamentalsCache = {};
+const sectorCache = {};
+
+const QUOTE_CACHE_TTL_MS = 30000; // 30 seconds
+const FUNDAMENTALS_CACHE_TTL_MS = 10 * 60000; // 10 minutes
+
+async function getRealQuoteRaw(symbolRaw) {
   const symbol = symbolRaw.trim().toUpperCase();
   const url = `${YAHOO_BASE}/v8/finance/chart/${encodeURIComponent(symbol)}`;
   const data = await fetchJson(url);
@@ -55,6 +62,17 @@ async function getRealQuote(symbolRaw) {
     postMarketChangePercent: typeof meta.postMarketChangePercent === 'number' ? Math.round(meta.postMarketChangePercent * 100) / 100 : null,
     volume
   };
+}
+
+async function getRealQuote(symbolRaw) {
+  const symbol = symbolRaw.trim().toUpperCase();
+  const now = Date.now();
+  if (quoteCache[symbol] && (now - quoteCache[symbol].timestamp < QUOTE_CACHE_TTL_MS)) {
+    return quoteCache[symbol].data;
+  }
+  const data = await getRealQuoteRaw(symbol);
+  quoteCache[symbol] = { data, timestamp: now };
+  return data;
 }
 
 // ---------- Component 2: Chart + RSI ----------
@@ -137,7 +155,7 @@ async function getCrumbAndCookie() {
   return cachedAuth;
 }
 
-async function getFundamentals(symbolRaw) {
+async function getFundamentalsRaw(symbolRaw) {
   const symbol = symbolRaw.trim().toUpperCase();
   const modules = 'summaryDetail,financialData,assetProfile,price';
 
@@ -194,11 +212,65 @@ async function getFundamentals(symbolRaw) {
     revenueGrowth: raw(financialData, 'revenueGrowth'),
     grossMargin: raw(financialData, 'grossMargins'),
     sector: assetProfile.sector || null,
+    companyName: price.longName || price.shortName || null,
     industry: assetProfile.industry || null,
     exchange: price.exchangeName || null,
     volume: firstMatch(summaryDetail, volumeCandidates),
     avgVolume: firstMatch(summaryDetail, avgVolumeCandidates)
   };
+}
+
+async function getFundamentals(symbolRaw) {
+  const symbol = symbolRaw.trim().toUpperCase();
+  const now = Date.now();
+  if (fundamentalsCache[symbol] && (now - fundamentalsCache[symbol].timestamp < FUNDAMENTALS_CACHE_TTL_MS)) {
+    return fundamentalsCache[symbol].data;
+  }
+  const data = await getFundamentalsRaw(symbol);
+  fundamentalsCache[symbol] = { data, timestamp: now };
+  return data;
+}
+
+const companyNameCache = {};
+
+async function getRealQuoteWithSector(symbolRaw) {
+  const symbol = symbolRaw.trim().toUpperCase();
+  const quote = await getRealQuote(symbol);
+  
+  if (sectorCache[symbol]) {
+    quote.sector = sectorCache[symbol];
+  }
+  if (companyNameCache[symbol]) {
+    quote.companyName = companyNameCache[symbol];
+  }
+  
+  if (!quote.sector || !quote.companyName) {
+    try {
+      const fundamentals = await getFundamentals(symbol);
+      if (fundamentals) {
+        if (fundamentals.sector) {
+          sectorCache[symbol] = fundamentals.sector;
+          quote.sector = fundamentals.sector;
+        }
+        if (fundamentals.companyName) {
+          companyNameCache[symbol] = fundamentals.companyName;
+          quote.companyName = fundamentals.companyName;
+        }
+      }
+    } catch (err) {
+      console.warn(`Could not fetch fundamentals for sector/company of ${symbol}:`, err.message);
+    }
+    if (!quote.sector) {
+      const { getSectorForSymbol } = require('./mock-market');
+      quote.sector = getSectorForSymbol(symbol);
+    }
+    if (!quote.companyName) {
+      const { LEGIT_SYMBOLS } = require('./mock-market');
+      const found = LEGIT_SYMBOLS.find(s => s.symbol === symbol);
+      quote.companyName = found ? found.name : symbol;
+    }
+  }
+  return quote;
 }
 
 // ---------- Component 4: News ----------
@@ -214,14 +286,42 @@ async function getNews(symbolRaw, count = 2) {
   const data = await res.json();
   const rawNews = Array.isArray(data.news) ? data.news : [];
 
-  // The article's true subject is (almost always) listed FIRST in relatedTickers.
-  // This is a much stronger signal than just "does the array include this symbol somewhere" —
-  // it filters out broad market/ETF roundups that just mention the symbol in passing.
-  const relevant = rawNews.filter((item) =>
-    Array.isArray(item.relatedTickers) &&
-    item.relatedTickers.length > 0 &&
-    item.relatedTickers[0] === symbol
-  );
+  // Some auto-generated content (bot-written "Earnings Call Summary" articles,
+  // generic listicles) gets mistagged by Yahoo with a trending/high-traffic
+  // ticker's relatedTickers regardless of what the article is actually about.
+  // Look up the company name so we can double-check the title genuinely
+  // references this company, not just trust the (possibly wrong) tag.
+  let nameNeedle = null;
+  try {
+    const fundamentals = await getFundamentals(symbol);
+    if (fundamentals && fundamentals.companyName) {
+      // "NVIDIA Corporation" -> "nvidia" — first word is usually enough to match
+      // real headlines ("Nvidia surges...") without being overly strict.
+      nameNeedle = fundamentals.companyName.split(/[\s,]+/)[0].toLowerCase();
+    }
+  } catch (err) {
+    // Non-fatal — fall back to symbol-only matching below if this fails.
+  }
+
+// The title actually naming the company (or its symbol) is a far more reliable
+  // signal than Yahoo's relatedTickers tag — auto-generated "Earnings Call
+  // Summary" spam gets mistagged with trending tickers regardless of subject,
+  // while genuine coverage of a company almost always names it in the title.
+  // So: if we know the company name, trust the title check alone rather than
+  // requiring both — requiring both was too strict and hid real coverage.
+  const relevant = rawNews.filter((item) => {
+    const title = (item.title || '').toLowerCase();
+
+    if (nameNeedle) {
+      return title.includes(symbol.toLowerCase()) || title.includes(nameNeedle);
+    }
+
+    // Couldn't resolve a company name to check the title against — fall back
+    // to the original tag-based signal so behavior doesn't regress to "show everything".
+    return Array.isArray(item.relatedTickers) &&
+      item.relatedTickers.length > 0 &&
+      item.relatedTickers[0] === symbol;
+  });
 
   // Deliberately do NOT pad with broader/looser matches if fewer than `count` qualify —
   // showing fewer genuinely relevant articles beats padding with noise.
@@ -275,4 +375,18 @@ async function getMarketMovers(type = 'gainers', count = 5) {
   }).filter((q) => typeof q.price === 'number' && typeof q.changePercent === 'number');
 }
 
-module.exports = { getRealQuote, getHistoricalData, getFundamentals, getNews, getMarketMovers };
+async function searchSymbols(query) {
+  const url = `${YAHOO_BASE}/v1/finance/search?q=${encodeURIComponent(query)}&quotesCount=10&newsCount=0`;
+  const res = await fetch(url, { headers: { 'User-Agent': USER_AGENT } });
+  if (!res.ok) throw new Error(`Yahoo Search failed: ${res.status}`);
+  const data = await res.json();
+  const quotes = Array.isArray(data.quotes) ? data.quotes : [];
+  return quotes.map(q => ({
+    symbol: q.symbol,
+    name: q.shortname || q.longname || q.symbol,
+    exchange: q.exchange || '',
+    type: q.quoteType || ''
+  }));
+}
+
+module.exports = { getRealQuote, getHistoricalData, getFundamentals, getNews, getMarketMovers, searchSymbols, getRealQuoteWithSector };

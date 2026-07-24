@@ -94,11 +94,13 @@ function getMockQuote(symbolRaw) {
   const changePercent = Math.round(changeWave * 3 * 100) / 100; // +/- 3%
   const changeAbs = Math.round(price * (changePercent / 100) * 100) / 100;
 
+  const isIndian = symbol.endsWith('.NS') || symbol.endsWith('.BO') || ['GODREJPROP', 'RELIANCE', 'TCS', 'INFY', 'HDFCBANK', 'ICICIBANK', 'TATAMOTORS', 'SBIN', 'ITC', 'BHARTIARTL', 'WIPRO', 'LT'].includes(symbol);
   return {
     symbol,
     price,
     changePercent,
     changeAbs,
+    currency: isIndian ? 'INR' : (symbol.endsWith('.L') ? 'GBP' : (symbol.endsWith('.PA') || symbol.endsWith('.DE') ? 'EUR' : 'USD')),
     sector: getSectorForSymbol(symbol),
     simulated: true
   };
