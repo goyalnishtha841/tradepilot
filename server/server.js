@@ -58,6 +58,7 @@ const cleanPages = [
   'learn',
   'today',
   'settings',
+  'profile',
   'signin',
   'signup',
   'onboarding'

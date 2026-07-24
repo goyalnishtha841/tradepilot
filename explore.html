@@ -186,7 +186,7 @@
 </div>
 <div class="mt-auto pt-md border-t border-outline-variant/20">
 <button class="w-full py-3 bg-secondary-container text-on-secondary-container rounded-20 font-bold text-label-md hover:opacity-90 transition-opacity mb-md">
-            Explain Like I'm 18
+            Explain Like I'm 7
         </button>
 <div class="flex flex-col gap-1">
 <a href="/settings" class="text-on-surface-variant hover:bg-surface-variant/50 rounded-20 mx-2 my-1 px-4 py-3 flex items-center gap-3 cursor-pointer">
@@ -204,15 +204,41 @@
 <main class="mt-16 p-gutter max-w-container-max mx-auto">
 <!-- Sector Picker + Beginner-friendly Search -->
 <section class="mb-sm">
+<div class="max-w-6xl mx-auto">
 <div class="flex flex-wrap justify-center gap-sm mb-sm" id="sector-chip-row">
 <span class="px-5 py-2 rounded-full text-label-md font-bold bg-surface-container text-on-surface-variant animate-pulse">Loading sectors…</span>
 </div>
-<div class="relative max-w-3xl mx-auto">
-<span class="material-symbols-outlined absolute left-5 top-1/2 -translate-y-1/2 text-on-surface-variant text-2xl pointer-events-none">search</span>
-<input autocomplete="off" id="market-search-input" class="w-full bg-white border border-outline-variant rounded-full pl-14 pr-5 py-4 text-title-md font-title-md shadow-sm focus:ring-2 focus:ring-secondary/30 focus:outline-none transition-all" placeholder="Search by company name or symbol... (e.g. Nvidia or NVDA)" type="text"/>
+<div class="relative mx-auto" id="search-bar-wrapper">
+<span class="material-symbols-outlined absolute left-5 top-1/2 -translate-y-1/2 text-on-surface-variant text-xl pointer-events-none">search</span>
+<input autocomplete="off" id="market-search-input" class="w-full bg-white border border-outline-variant rounded-full pl-12 pr-5 py-3 text-label-md font-label-md shadow-sm focus:ring-2 focus:ring-secondary/30 focus:outline-none transition-all" placeholder="Search by company name or symbol... (e.g. Nvidia or NVDA)" type="text"/>
 <div class="hidden absolute left-0 right-0 top-full mt-2 bg-white border border-outline-variant/60 rounded-20 shadow-xl z-40 max-h-96 overflow-y-auto" id="search-suggestions"></div>
 </div>
+</div>
 </section>
+<script>
+(function () {
+  var chipRow = document.getElementById('sector-chip-row');
+  var wrapper = document.getElementById('search-bar-wrapper');
+  if (!chipRow || !wrapper) return;
+
+  function syncSearchBarWidth() {
+    var width = chipRow.scrollWidth;
+    if (width > 0) {
+      wrapper.style.width = width + 'px';
+      wrapper.style.maxWidth = '100%';
+    }
+  }
+
+  syncSearchBarWidth();
+  window.addEventListener('load', syncSearchBarWidth);
+  window.addEventListener('resize', syncSearchBarWidth);
+
+  // Sector chips are populated asynchronously by explore-search.js, so
+  // re-sync whenever the chip row's contents change.
+  var observer = new MutationObserver(syncSearchBarWidth);
+  observer.observe(chipRow, { childList: true, subtree: true });
+})();
+</script>
 <!-- Header & Profile Area -->
 <section class="grid grid-cols-1 lg:grid-cols-12 gap-lg items-end mb-sm">
 <div class="lg:col-span-8">
@@ -268,29 +294,22 @@
 </div>
 <!-- AI Insights Panel -->
 <div class="lg:col-span-4 flex flex-col gap-md">
-<div class="bg-primary-container p-md rounded-20 text-on-primary-container relative overflow-hidden ai-border">
-<div class="flex items-center justify-between mb-xs">
-<h3 class="font-bold flex items-center gap-2">
-<span class="material-symbols-outlined">magic_button</span>
+<div class="glass-card p-md relative overflow-hidden">
+<div class="flex items-center mb-xs">
+<h3 class="font-bold flex items-center gap-2 text-on-surface">
+<span class="material-symbols-outlined text-primary">magic_button</span>
                         Summary
                     </h3>
-<span class="flex items-center gap-1">
-<span id="ai-confidence-badge" class="bg-secondary text-white text-[10px] px-2 py-0.5 rounded-full font-bold">98% CONFIDENCE</span>
-<span class="material-symbols-outlined text-sm opacity-70 cursor-help" id="confidence-info-icon" title="Confidence shows how much real market data (price, RSI, valuation, and news) was available to generate this summary. More available data means a higher score — it is not a prediction of how the stock will perform.">info</span>
-</span>
 </div>
-<p id="ai-narrative-text" class="text-label-md leading-relaxed mb-xs">
+<p id="ai-narrative-text" class="text-label-md leading-relaxed mb-md text-on-surface">
                     NVIDIA is surging today following a breakthrough in Blackwell chip yield reports and increased AI infrastructure spending from Google. This suggests sustained dominance in the datacenter segment through Q4.
                 </p>
-<p class="text-[10px] text-on-primary-container/70 italic mb-md">
-                    Confidence = how much real data (price, RSI, valuation, news) was available for this summary — not a forecast of stock performance.
-                </p>
 <div class="space-y-3">
-<div class="flex items-center gap-2 text-xs">
+<div class="flex items-center gap-2 text-xs text-on-surface">
 <span id="ai-signal-1-icon" class="material-symbols-outlined text-green-500 text-sm">verified</span>
 <span id="ai-signal-1-text">Strong Buy Consensus</span>
 </div>
-<div class="flex items-center gap-2 text-xs">
+<div class="flex items-center gap-2 text-xs text-on-surface">
 <span id="ai-signal-2-icon" class="material-symbols-outlined text-yellow-500 text-sm">warning</span>
 <span id="ai-signal-2-text">Risk: Supply chain concentration in SE Asia.</span>
 </div>
@@ -416,13 +435,49 @@
 </div>
 </div>
 </div>
-<!-- News & Timeline -->
-<div class="lg:col-span-8 flex flex-col gap-md">
+<!-- Ecosystem Neighbors (elongated horizontal row) -->
+<div class="lg:col-span-12 glass-card p-md">
+<h4 class="text-label-md font-bold mb-md">Ecosystem Neighbors</h4>
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-md">
+<div class="flex items-center justify-between gap-xs">
+<div class="flex items-center gap-xs">
+<div class="w-8 h-8 rounded bg-surface-container flex items-center justify-center font-bold text-xs shrink-0">AMD</div>
+<div>
+<p class="text-xs font-bold">Advanced Micro</p>
+<p class="text-[10px] text-on-surface-variant">Semiconductors</p>
+</div>
+</div>
+<span class="text-xs font-bold text-green-600 shrink-0">+1.2%</span>
+</div>
+<div class="flex items-center justify-between gap-xs">
+<div class="flex items-center gap-xs">
+<div class="w-8 h-8 rounded bg-surface-container flex items-center justify-center font-bold text-xs shrink-0">AVGO</div>
+<div>
+<p class="text-xs font-bold">Broadcom Inc</p>
+<p class="text-[10px] text-on-surface-variant">Connectivity</p>
+</div>
+</div>
+<span class="text-xs font-bold text-error shrink-0">-0.4%</span>
+</div>
+<div class="flex items-center justify-between gap-xs">
+<div class="flex items-center gap-xs">
+<div class="w-8 h-8 rounded bg-surface-container flex items-center justify-center font-bold text-xs shrink-0">TSM</div>
+<div>
+<p class="text-xs font-bold">TSMC</p>
+<p class="text-[10px] text-on-surface-variant">Foundry</p>
+</div>
+</div>
+<span class="text-xs font-bold text-green-600 shrink-0">+3.1%</span>
+</div>
+</div>
+</div>
+<!-- Relevant Intelligence (full width row) -->
+<div class="lg:col-span-12 flex flex-col gap-md">
 <div class="flex items-center justify-between">
 <h2 class="text-title-md font-title-md">Relevant Intelligence</h2>
 <button id="view-all-news-btn" class="text-label-sm text-primary font-bold">View All</button>
 </div>
-<div class="space-y-4">
+<div class="grid grid-cols-1 gap-md">
 <div id="news-card-0" class="glass-card p-sm flex gap-md items-center group cursor-pointer hover:shadow-md transition-all">
 <div class="w-24 h-24 rounded-xl overflow-hidden shrink-0">
 <img id="news-img-0" class="w-full h-full object-cover group-hover:scale-105 transition-transform" data-alt="News" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBpIHPmdC13QW6g6GaqYwvp8HU8F9ltPo4kFBR3tAcuBxPS9ctKqZt_K_TDIfiaJI6Z_QAUlLEIZKYe54XtQ0PJOm1Q05S9PDTcH4KsjNGGk9WYtetaJk8X_OwmMGQW8SI445sxwdTM0C9HoMbQew5_StLki1XpH0cxeenIhjM2788p4wtcchytW7nfGgUdbpVMurUyqBTvvxo2yRxmpC3aQnsfYHSkFMkI5skX7SbbXd0_u9QSqGm7TW1yIupdnQRD44vVi7qlyR8"/>
@@ -451,50 +506,13 @@
 </div>
 </div>
 </div>
-<!-- Related Stocks & Ask AI -->
-<div class="lg:col-span-4 flex flex-col gap-md">
-<div class="glass-card p-md">
-<h4 class="text-label-md font-bold mb-md">Ecosystem Neighbors</h4>
-<div class="space-y-4">
-<div class="flex items-center justify-between">
-<div class="flex items-center gap-xs">
-<div class="w-8 h-8 rounded bg-surface-container flex items-center justify-center font-bold text-xs">AMD</div>
-<div>
-<p class="text-xs font-bold">Advanced Micro</p>
-<p class="text-[10px] text-on-surface-variant">Semiconductors</p>
-</div>
-</div>
-<span class="text-xs font-bold text-green-600">+1.2%</span>
-</div>
-<div class="flex items-center justify-between">
-<div class="flex items-center gap-xs">
-<div class="w-8 h-8 rounded bg-surface-container flex items-center justify-center font-bold text-xs">AVGO</div>
-<div>
-<p class="text-xs font-bold">Broadcom Inc</p>
-<p class="text-[10px] text-on-surface-variant">Connectivity</p>
-</div>
-</div>
-<span class="text-xs font-bold text-error">-0.4%</span>
-</div>
-<div class="flex items-center justify-between">
-<div class="flex items-center gap-xs">
-<div class="w-8 h-8 rounded bg-surface-container flex items-center justify-center font-bold text-xs">TSM</div>
-<div>
-<p class="text-xs font-bold">TSMC</p>
-<p class="text-[10px] text-on-surface-variant">Foundry</p>
-</div>
-</div>
-<span class="text-xs font-bold text-green-600">+3.1%</span>
-</div>
-</div>
-</div>
-<!-- Ask AI Interaction -->
-<div class="bg-surface-container-low rounded-20 p-md border border-secondary/10 flex flex-col gap-sm">
+<!-- Deep Dive / Ask AI (full width row) -->
+<div class="lg:col-span-12 bg-surface-container-low rounded-20 p-md border border-secondary/10 flex flex-col gap-sm">
 <p id="deep-dive-title" class="text-label-sm font-bold text-primary flex items-center gap-2">
 <span class="material-symbols-outlined text-base">chat_bubble</span>
                     Deep Dive NVDA
                 </p>
-<div class="flex flex-col gap-xs" id="ai-suggested-prompts">
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-xs" id="ai-suggested-prompts">
 <button id="prompt-0" class="suggested-prompt w-full text-left p-2 bg-white rounded-lg text-xs hover:bg-primary-container hover:text-white transition-all">"Will the supply chain issues hurt Q4?"</button>
 <button id="prompt-1" class="suggested-prompt w-full text-left p-2 bg-white rounded-lg text-xs hover:bg-primary-container hover:text-white transition-all">"Explain Blackwell architecture to a 5-year old."</button>
 <button id="prompt-2" class="suggested-prompt w-full text-left p-2 bg-white rounded-lg text-xs hover:bg-primary-container hover:text-white transition-all">"How does NVDA debt compare to Apple?"</button>
@@ -503,7 +521,6 @@
 <div class="relative">
 <input id="ai-chat-input" class="w-full bg-white border-outline-variant/30 rounded-xl pr-10 text-xs py-3 focus:ring-primary" placeholder="Ask TradePilot AI..." type="text"/>
 <button id="ai-chat-send" class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-primary">arrow_forward</button>
-</div>
 </div>
 </div>
 </div>

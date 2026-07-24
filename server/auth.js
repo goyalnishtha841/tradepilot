@@ -125,15 +125,20 @@ function requireAuth(req, res, next) {
 }
 
 // GET /api/auth/me — used by pages to check "am I logged in?"
+// GET /api/auth/me — used by pages to check "am I logged in?"
 router.get('/me', requireAuth, async (req, res) => {
   try {
     const prefs = await db.getUserPreferences(req.user.id);
+    const fullUser = await db.getUserById(req.user.id);
 
     res.json({
       user: {
         id: req.user.id,
-        name: req.user.name,
+        name: fullUser ? fullUser.name : req.user.name,
         email: req.user.email,
+        phone: fullUser ? fullUser.phone : null,
+        avatarId: fullUser ? fullUser.avatarId : 'slate',
+        createdAt: fullUser ? fullUser.createdAt : null,
         onboardingCompleted: prefs ? prefs.onboarding_completed : false
       }
     });
@@ -143,17 +148,32 @@ router.get('/me', requireAuth, async (req, res) => {
   }
 });
 
-// PATCH /api/auth/profile — update display name
+// PATCH /api/auth/profile — update display name, phone, and/or avatar choice
 router.patch('/profile', requireAuth, async (req, res) => {
   try {
-    const { name } = req.body;
-    if (!name || !name.trim()) {
+    const { name, phone, avatarId } = req.body;
+    if (name !== undefined && !name.trim()) {
       return res.status(400).json({ error: 'Please enter your name.' });
     }
 
-    const updated = await db.updateName(req.user.id, name.trim());
+    const updated = await db.updateProfileDetails(req.user.id, {
+      name: name !== undefined ? name.trim() : null,
+      phone: phone !== undefined ? phone.trim() : null,
+      avatarId: avatarId !== undefined ? avatarId : null
+    });
+
     const token = signToken(updated);
-    res.json({ token, user: { id: updated.id, name: updated.name, email: updated.email } });
+    res.json({
+      token,
+      user: {
+        id: updated.id,
+        name: updated.name,
+        email: updated.email,
+        phone: updated.phone,
+        avatarId: updated.avatarId,
+        createdAt: updated.createdAt
+      }
+    });
   } catch (err) {
     console.error('Update profile error:', err);
     res.status(500).json({ error: 'Could not update your profile.' });

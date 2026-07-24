@@ -29,6 +29,11 @@ async function init() {
       created_at TIMESTAMPTZ DEFAULT now()
     );
   `);
+  // Added for the profile page: phone number (optional) and a preset avatar choice.
+  // IF NOT EXISTS makes this safe to run against the existing shared database —
+  // it won't error out for teammates who already have the users table.
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS phone TEXT;`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_id TEXT NOT NULL DEFAULT 'slate';`);
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS alerts (
@@ -157,7 +162,7 @@ async function init() {
 
 async function findByEmail(email) {
   const { rows } = await pool.query(
-    `SELECT id, name, email, password_hash AS "passwordHash", created_at AS "createdAt"
+    `SELECT id, name, email, password_hash AS "passwordHash", phone, avatar_id AS "avatarId", created_at AS "createdAt"
      FROM users WHERE LOWER(email) = LOWER($1)`,
     [email]
   );
@@ -467,9 +472,26 @@ module.exports = {
     return rows[0];
   },
 
+// Used by the new Profile page's "Settings" edit form — updates name, phone,
+  // and/or avatar choice in one call. Only fields that are actually passed
+  // (non-null) get overwritten — e.g. saving just the avatar won't wipe phone.
+  async updateProfileDetails(userId, { name, phone, avatarId }) {
+    const { rows } = await pool.query(
+      `UPDATE users
+       SET name = COALESCE($1, name),
+           phone = COALESCE($2, phone),
+           avatar_id = COALESCE($3, avatar_id)
+       WHERE id = $4
+       RETURNING id, name, email, phone, avatar_id AS "avatarId", created_at AS "createdAt"`,
+      [name || null, phone || null, avatarId || null, userId]
+    );
+    return rows[0];
+  },
+
   async getUserById(userId) {
     const { rows } = await pool.query(
-      `SELECT id, name, email, password_hash AS "passwordHash" FROM users WHERE id = $1`,
+      `SELECT id, name, email, password_hash AS "passwordHash", phone, avatar_id AS "avatarId", created_at AS "createdAt"
+       FROM users WHERE id = $1`,
       [userId]
     );
     return rows[0] || null;
