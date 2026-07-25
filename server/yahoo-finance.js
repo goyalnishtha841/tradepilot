@@ -341,6 +341,34 @@ async function getNews(symbolRaw, count = 2) {
   });
 }
 
+// Lighter-weight variant for broad-market/index/ETF symbols (SPY, QQQ, DIA, etc.)
+// used as a general "market news" stand-in. getNews()'s relevance filter needs a
+// resolvable company name (via getFundamentals) or a strict relatedTickers[0]
+// match — ETFs have neither, so it was silently returning empty for these and
+// killing the market-headlines fallback. Here we just require a real title/link,
+// since for a broad market ticker almost anything Yahoo tags to it is on-topic.
+async function getRawNews(symbolRaw, count = 6) {
+  const symbol = symbolRaw.trim().toUpperCase();
+  const url = `${YAHOO_BASE}/v1/finance/search?q=${encodeURIComponent(symbol)}&newsCount=25&quotesCount=0`;
+  const res = await fetch(url, { headers: { 'User-Agent': USER_AGENT } });
+
+  if (res.status === 404) throw new Error('SYMBOL_NOT_FOUND');
+  if (!res.ok) throw new Error(`Yahoo Finance request failed: ${res.status}`);
+
+  const data = await res.json();
+  const rawNews = Array.isArray(data.news) ? data.news : [];
+
+  return rawNews
+    .filter((item) => item && item.title && item.link)
+    .slice(0, count)
+    .map((item) => ({
+      title: item.title,
+      publisher: item.publisher || 'Unknown source',
+      link: item.link,
+      publishedAt: typeof item.providerPublishTime === 'number' ? item.providerPublishTime * 1000 : null
+    }));
+}
+
 // ---------- Component 5: Market-wide Gainers/Losers ----------
 // Uses Yahoo's public predefined screener (day_gainers / day_losers) — this is a
 // genuinely market-wide ranking, not limited to a fixed watchlist. Less documented/
@@ -389,4 +417,4 @@ async function searchSymbols(query) {
   }));
 }
 
-module.exports = { getRealQuote, getHistoricalData, getFundamentals, getNews, getMarketMovers, searchSymbols, getRealQuoteWithSector };
+module.exports = { getRealQuote, getHistoricalData, getFundamentals, getNews, getRawNews, getMarketMovers, searchSymbols, getRealQuoteWithSector };

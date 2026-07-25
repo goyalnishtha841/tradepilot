@@ -1,7 +1,7 @@
 const fetch = require('node-fetch');
 const db = require('./db');
 
-const { getNews: getYahooNews } = require('./yahoo-finance');
+const { getNews: getYahooNews, getRawNews: getYahooRawNews } = require('./yahoo-finance');
 
 const FINNHUB_API_KEY = process.env.FINNHUB_API_KEY;
 
@@ -153,13 +153,65 @@ async function getOrGenerateNews(table, symbols) {
   return allNews;
 }
 
+// Broad-market symbols used to stand in for "general market news" — Yahoo's
+// search endpoint is per-symbol, it has no general/category news feed, so we
+// aggregate headlines across a handful of broad-market tickers instead.
+const MARKET_PROXY_SYMBOLS = ['SPY', 'QQQ', 'AAPL', 'MSFT', 'NVDA', 'TSLA'];
+
+/**
+ * Fetches general market headlines directly from Yahoo Finance, aggregated
+ * across a few broad-market symbols and deduplicated.
+ */
+async function fetchYahooMarketHeadlines() {
+  const results = await Promise.allSettled(
+    MARKET_PROXY_SYMBOLS.map(symbol => getYahooRawNews(symbol, 6))
+  );
+
+  const seenTitles = new Set();
+  const seenUrls = new Set();
+  const uniqueArticles = [];
+
+  for (const result of results) {
+    if (result.status !== 'fulfilled') continue;
+    for (const item of result.value) {
+      const title = (item.title || '').trim();
+      const url = (item.link || '').trim();
+      if (!title || !url) continue;
+      if (seenTitles.has(title) || seenUrls.has(url)) continue;
+      seenTitles.add(title);
+      seenUrls.add(url);
+      uniqueArticles.push({
+        title,
+        url,
+        source: item.publisher || 'Yahoo Finance',
+        publishedAt: item.publishedAt ? new Date(item.publishedAt).toISOString() : new Date().toISOString()
+      });
+    }
+  }
+
+  if (uniqueArticles.length === 0) {
+    const failedReasons = results
+      .filter(r => r.status === 'rejected')
+      .map(r => r.reason && r.reason.message)
+      .filter(Boolean);
+    throw new Error(
+      failedReasons.length
+        ? `Yahoo Finance returned no market headlines (${failedReasons.join('; ')})`
+        : 'Yahoo Finance returned no market headlines for any tracked symbol'
+    );
+  }
+
+  uniqueArticles.sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));
+  return uniqueArticles.slice(0, 12);
+}
+
 let cachedHeadlines = null;
 let cachedAt = null;
 const CACHE_TTL_MS = 5 * 60 * 1000;
 
 async function getMarketHeadlines() {
   const now = Date.now();
-  
+
   if (cachedHeadlines && cachedAt && (now - cachedAt < CACHE_TTL_MS)) {
     return {
       news: cachedHeadlines,
@@ -168,56 +220,19 @@ async function getMarketHeadlines() {
   }
 
   try {
-    if (!FINNHUB_API_KEY) {
-      throw new Error('FINNHUB_API_KEY is not configured');
-    }
-
-    const url = `https://finnhub.io/api/v1/news?category=general&token=${FINNHUB_API_KEY}`;
-    const response = await fetch(url);
-
-    if (!response.ok) {
-      throw new Error(`Finnhub news provider returned status code ${response.status}`);
-    }
-
-    const articles = await response.json();
-    if (!Array.isArray(articles)) {
-      throw new Error('Invalid response format from Finnhub news provider');
-    }
-
-    const validArticles = articles.filter(art => art && art.headline && art.url);
-    const seenTitles = new Set();
-    const seenUrls = new Set();
-    const uniqueArticles = [];
-
-    for (const art of validArticles) {
-      const title = art.headline.trim();
-      const url = art.url.trim();
-      if (!seenTitles.has(title) && !seenUrls.has(url)) {
-        seenTitles.add(title);
-        seenUrls.add(url);
-        uniqueArticles.push({
-          title,
-          url,
-          source: art.source || 'Finnhub',
-          publishedAt: art.datetime ? new Date(art.datetime * 1000).toISOString() : new Date().toISOString()
-        });
-      }
-    }
-
-    uniqueArticles.sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));
-    const headlines = uniqueArticles.slice(0, 12);
-    
+    const headlines = await fetchYahooMarketHeadlines();
     cachedHeadlines = headlines;
     cachedAt = now;
 
     return {
       news: headlines,
+      source: 'yahoo',
       updatedAt: new Date(now).toISOString()
     };
   } catch (err) {
     console.error('Market headlines fetch error:', err.message);
     if (cachedHeadlines && cachedAt) {
-      console.warn('Returning stale cached headlines due to provider fetch failure.');
+      console.warn('Returning stale cached headlines due to fetch failure.');
       return {
         news: cachedHeadlines,
         stale: true,
