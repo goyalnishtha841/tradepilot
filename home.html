@@ -157,6 +157,10 @@
             padding: 24px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
         }
+        html.dark .bento-item {
+            border: 1px solid #464554;
+            background: #1c1f2a;
+        }
         .hide-scrollbar::-webkit-scrollbar {
             display: none;
         }
@@ -170,17 +174,17 @@
 <!-- TopNavBar -->
 <nav class="fixed top-0 w-full z-50 bg-white/70 backdrop-blur-md border-b border-outline-variant/30 shadow-sm dark:bg-dark-surface/80">
 <div class="flex justify-between items-center h-16 px-gutter max-w-container-max mx-auto">
-<div class="flex items-center gap-lg">
-<span class="text-title-md font-title-md font-bold text-primary tracking-tight dark:text-dark-primary">TradePilot</span>
-<div class="hidden md:flex items-center gap-md">
+<div class="flex items-center gap-xs">
+<a href="/home" class="text-title-md font-title-md font-bold text-primary tracking-tight dark:text-dark-primary">TradePilot</a>
+</div>
+<div class="hidden md:flex items-center gap-lg">
 <a class="nav-auth-link text-label-md font-label-md text-on-surface-variant hover:text-primary transition-colors dark:text-dark-on-surface-variant" data-target="/today" href="/signin">Market Pulse</a>
 <a class="nav-auth-link text-label-md font-label-md text-on-surface-variant hover:text-primary transition-colors dark:text-dark-on-surface-variant" data-target="/explore" href="/signin">Explore</a>
 <a class="nav-auth-link text-label-md font-label-md text-on-surface-variant hover:text-primary transition-colors dark:text-dark-on-surface-variant" data-target="/learn" href="/signin">Learn</a>
 </div>
-</div>
-<div class="flex items-center gap-sm">
-<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-all active:scale-95 dark:text-dark-on-surface-variant" id="dark-mode-icon-toggle">dark_mode</button>
-<a id="nav-account-btn" href="/signin" class="material-symbols-outlined material-symbols-outlined text-on-surface-variant hover:text-primary transition-all active:scale-95 cursor-pointer dark:text-dark-on-surface-variant">account_circle</a>
+<div class="flex items-center gap-md">
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors p-2 rounded-full hover:bg-surface-container dark:text-dark-on-surface-variant" id="dark-mode-icon-toggle" title="Toggle Dark Mode">dark_mode</button>
+<a id="nav-account-btn" href="/signin" class="material-symbols-outlined material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors p-2 hover:bg-surface-container rounded-full transition-all cursor-pointer dark:text-dark-on-surface-variant">account_circle</a>
 </div>
 </div>
 </nav>
@@ -200,11 +204,11 @@
 </script>
 <main class="pt-16">
 <!-- Hero Section -->
-<section class="relative min-h-[800px] flex flex-col justify-center overflow-hidden bg-surface dark:bg-dark-surface-container">
+<section class="relative flex flex-col justify-center overflow-hidden bg-surface dark:bg-dark-surface-container">
 
 <div class="relative px-gutter max-w-container-max mx-auto w-full grid grid-cols-1 md:grid-cols-2 gap-xl items-center py-xl">
 <div class="space-y-md text-center md:text-left">
-<span class="inline-flex items-center gap-xs px-3 py-1 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm dark:bg-dark-secondary-container/20">
+<span class="inline-flex items-center gap-xs px-3 py-1 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm dark:bg-dark-secondary-container/20 dark:text-dark-secondary">
 <span class="relative flex h-2 w-2">
 <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary opacity-75"></span>
 <span class="relative inline-flex rounded-full h-2 w-2 bg-secondary"></span>
@@ -212,14 +216,14 @@
                     AI MENTORSHIP IS LIVE
                 </span>
 <h1 class="font-display-lg text-display-lg text-primary tracking-tight leading-tight dark:text-dark-primary">
-                    Master the Market with Your <span class="text-secondary italic">AI Mentor</span>
+                    Master the Market with Your <span class="text-secondary dark:text-dark-secondary italic">AI Mentor</span>
 </h1>
 <p class="font-body-lg text-body-lg text-on-surface-variant max-w-lg mx-auto md:mx-0 dark:text-dark-on-surface-variant">
                     Understand why stocks move through AI-powered explanations, financial news, technical indicators, and guided learning.
                 </p>
 <div class="flex flex-col sm:flex-row items-center gap-sm pt-base">
 <a href="/signin" data-target="/learn" class="hero-auth-link w-full sm:w-auto text-center px-lg py-4 bg-primary text-on-primary rounded-xl font-label-md text-label-md transition-all hover:shadow-lg hover:shadow-primary/10 active:scale-95">Start Learning</a>
-<a href="/signin" data-target="/today" class="hero-auth-link w-full sm:w-auto text-center px-lg py-4 bg-secondary-container text-on-secondary-container rounded-xl font-label-md text-label-md transition-all hover:bg-secondary-container/80 active:scale-95 dark:bg-dark-secondary-container/20">Market Analysis</a>
+<a href="/signin" data-target="/today" class="hero-auth-link w-full sm:w-auto text-center px-lg py-4 bg-secondary-container text-on-secondary-container rounded-xl font-label-md text-label-md transition-all hover:bg-secondary-container/80 active:scale-95 dark:bg-dark-secondary-container dark:text-dark-bg dark:hover:opacity-90">Market Analysis</a>
 </div>
 </div>
 <div class="hidden md:block relative">
@@ -234,7 +238,7 @@
 <p class="text-label-sm font-label-sm text-on-surface-variant dark:text-dark-on-surface-variant">Momentum Analysis</p>
 </div>
 </div>
-<span class="px-2 py-1 rounded bg-secondary/10 text-secondary font-label-sm text-label-sm">High Confidence</span>
+<span class="px-2 py-1 rounded bg-secondary/10 text-secondary font-label-sm text-label-sm dark:bg-dark-secondary/20 dark:text-dark-secondary">High Confidence</span>
 </div>
 <div class="ai-gradient-border pl-md py-sm bg-surface-container-low rounded-r-xl dark:bg-dark-surface-container">
 <p class="text-body-md font-body-md text-on-surface italic dark:text-dark-on-surface">"The recent breakout above $800 was driven by enterprise AI adoption shifts. This is a primary educational pivot for Q3 strategies."</p>
@@ -253,35 +257,6 @@
 <!-- Decorative blur -->
 <div class="absolute -top-10 -right-10 w-64 h-64 bg-secondary-container rounded-full blur-3xl opacity-30 -z-10 dark:bg-dark-secondary-container/20"></div>
 <div class="absolute -bottom-10 -left-10 w-48 h-48 bg-primary-fixed rounded-full blur-3xl opacity-20 -z-10"></div>
-</div>
-</div>
-<!-- Upcoming Impact Strip -->
-<div class="w-full bg-surface-container-low backdrop-blur-sm border-y border-outline-variant/20 dark:bg-dark-surface-container">
-<div class="max-w-container-max mx-auto px-gutter py-4">
-<div class="flex items-center gap-md overflow-x-auto hide-scrollbar">
-<div class="flex-shrink-0 flex items-center gap-2">
-<span class="text-label-sm font-bold text-secondary uppercase tracking-widest">Upcoming Impact</span>
-<div class="h-4 w-px bg-outline-variant/30 mx-2"></div>
-</div>
-<div class="flex items-center gap-sm">
-<div class="flex items-center gap-2 px-4 py-2 bg-white rounded-lg border border-outline-variant/20 shadow-sm whitespace-nowrap dark:bg-dark-surface-container">
-<span class="text-label-sm font-bold text-primary dark:text-dark-primary">OCT 24</span>
-<span class="text-label-sm text-on-surface-variant dark:text-dark-on-surface-variant">CPI Inflation Data</span>
-</div>
-<div class="flex items-center gap-2 px-4 py-2 bg-white rounded-lg border border-outline-variant/20 shadow-sm whitespace-nowrap dark:bg-dark-surface-container">
-<span class="text-label-sm font-bold text-primary dark:text-dark-primary">OCT 26</span>
-<span class="text-label-sm text-on-surface-variant dark:text-dark-on-surface-variant">MSFT Earnings Call</span>
-</div>
-<div class="flex items-center gap-2 px-4 py-2 bg-white rounded-lg border border-outline-variant/20 shadow-sm whitespace-nowrap dark:bg-dark-surface-container">
-<span class="text-label-sm font-bold text-primary dark:text-dark-primary">OCT 31</span>
-<span class="text-label-sm text-on-surface-variant dark:text-dark-on-surface-variant">Jobless Claims Report</span>
-</div>
-<div class="flex items-center gap-2 px-4 py-2 bg-white rounded-lg border border-outline-variant/20 shadow-sm whitespace-nowrap opacity-60 dark:bg-dark-surface-container">
-<span class="text-label-sm font-bold text-primary dark:text-dark-primary">NOV 02</span>
-<span class="text-label-sm text-on-surface-variant dark:text-dark-on-surface-variant">Fed Rate Decision</span>
-</div>
-</div>
-</div>
 </div>
 </div>
 </section>
@@ -304,7 +279,7 @@
 </div>
 <div class="flex-1 w-full h-48 md:h-full bg-surface-container-low rounded-xl overflow-hidden relative dark:bg-dark-surface-container">
 <div class="absolute inset-0 flex flex-col p-md gap-xs">
-<div class="h-6 w-3/4 bg-white rounded shadow-sm flex items-center px-2 text-[10px] text-outline dark:bg-dark-surface-container">What happened to $AAPL?</div>
+<div class="h-6 w-3/4 bg-white rounded shadow-sm flex items-center px-2 text-[10px] text-outline dark:bg-dark-surface-container dark:text-dark-on-surface-variant">What happened to $AAPL?</div>
 <div class="h-16 w-full bg-secondary-container rounded shadow-sm border border-secondary/10 p-2 dark:bg-dark-secondary-container/20">
 <div class="w-4 h-4 rounded-full bg-secondary mb-1"></div>
 <div class="h-2 w-full bg-secondary/20 rounded mb-1"></div>
@@ -332,8 +307,8 @@
 </div>
 <h3 class="font-title-md text-title-md text-primary dark:text-dark-primary">AI Research</h3>
 <p class="text-body-md text-on-surface-variant dark:text-dark-on-surface-variant">Analyze 10-K filings and conference calls in seconds with specialized AI research agents.</p>
-<div class="h-24 bg-surface-container-low rounded-lg mt-md flex items-center justify-center dark:bg-dark-surface-container">
-<span class="material-symbols-outlined text-outline animate-pulse">analytics</span>
+<div class="pt-sm">
+<div class="w-full h-32 bg-cover bg-center rounded-lg grayscale hover:grayscale-0 transition-all duration-500" style="background-image: url('https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&amp;fit=crop&amp;w=800&amp;q=80')"></div>
 </div>
 </div>
 <!-- Learning Academy -->
@@ -344,9 +319,10 @@
 </div>
 <h3 class="font-title-md text-title-md text-primary dark:text-dark-primary">Learning Academy</h3>
 <p class="text-body-md text-on-surface-variant dark:text-dark-on-surface-variant">Structured courses on technical analysis, macroeconomics, and risk management. No trading required, just pure financial literacy.</p>
-<button class="text-label-md font-label-md text-secondary hover:underline flex items-center gap-xs">Browse Curriculum <span class="material-symbols-outlined text-[16px]">arrow_forward</span></button>
+<a href="/signin" data-target="/learn" class="hero-auth-link text-label-md font-label-md text-secondary dark:text-dark-secondary hover:underline flex items-center gap-xs">Browse Curriculum <span class="material-symbols-outlined text-[16px]">arrow_forward</span></a>
 </div>
-<div class="flex-1 -mr-24 -mb-12 relative opacity-50 md:opacity-100">
+<div class="flex-1 -mr-24 -mb-12 relative opacity-50 md:opacity-100 min-h-[180px] md:min-h-0">
+<div class="absolute inset-0 bg-cover bg-center rounded-2xl" style="background-image: url('https://images.unsplash.com/photo-1501504905252-473c47e087f8?auto=format&amp;fit=crop&amp;w=800&amp;q=80')"></div>
 </div>
 </div>
 </div>
@@ -362,7 +338,7 @@
 <div class="relative flex flex-col md:flex-row justify-between items-start gap-lg">
 <div class="flex-1 relative z-10 group">
 <div class="mb-md p-lg rounded-2xl bg-white border border-outline-variant/30 shadow-sm transition-all group-hover:border-secondary dark:bg-dark-surface-container">
-<span class="font-display-lg text-display-lg text-outline-variant/20 block mb-xs">01</span>
+<span class="font-display-lg text-display-lg text-outline-variant/50 dark:text-dark-outline-variant/40 block mb-xs">01</span>
 <h4 class="font-title-md text-title-md text-primary mb-sm dark:text-dark-primary">Identify a Symbol</h4>
 <p class="text-body-md text-on-surface-variant dark:text-dark-on-surface-variant">Select any stock, ETF, or index you're curious about. No need to trade, just focus on understanding.</p>
 </div>
@@ -372,7 +348,7 @@
 </div>
 <div class="flex-1 relative z-10 group">
 <div class="mb-md p-lg rounded-2xl bg-white border border-outline-variant/30 shadow-sm transition-all group-hover:border-secondary dark:bg-dark-surface-container">
-<span class="font-display-lg text-display-lg text-outline-variant/20 block mb-xs">02</span>
+<span class="font-display-lg text-display-lg text-outline-variant/50 dark:text-dark-outline-variant/40 block mb-xs">02</span>
 <h4 class="font-title-md text-title-md text-primary mb-sm dark:text-dark-primary">Ask the AI Mentor</h4>
 <p class="text-body-md text-on-surface-variant dark:text-dark-on-surface-variant">"Explain why this stock dropped today" or "Show me the technical indicators for a breakout."</p>
 </div>
@@ -382,7 +358,7 @@
 </div>
 <div class="flex-1 relative z-10 group">
 <div class="mb-md p-lg rounded-2xl bg-white border border-outline-variant/30 shadow-sm transition-all group-hover:border-secondary dark:bg-dark-surface-container">
-<span class="font-display-lg text-display-lg text-outline-variant/20 block mb-xs">03</span>
+<span class="font-display-lg text-display-lg text-outline-variant/50 dark:text-dark-outline-variant/40 block mb-xs">03</span>
 <h4 class="font-title-md text-title-md text-primary mb-sm dark:text-dark-primary">Build Mastery</h4>
 <p class="text-body-md text-on-surface-variant dark:text-dark-on-surface-variant">Save insights to your Knowledge Hub and track your daily learning goals in the dashboard.</p>
 </div>
@@ -394,7 +370,7 @@
 <section class="py-xl">
 <div class="px-gutter max-w-container-max mx-auto grid grid-cols-1 md:grid-cols-2 gap-xl items-center">
 <div class="order-2 md:order-1">
-<div class="w-full aspect-square rounded-[40px] bg-cover bg-center shadow-2xl" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCOkQtpT1JO7lD1QmyyetCp_Tl8eRK5IRG7j3pr7bU2p1ceZdz2Unb52CfPkCgbhu7U_5aVGrJr8fdUtTNCTxhi2E3tjyWsnnYMZXRMpbjxv1Q-8pXyECkjtjJuKzvLc1w2VM1OAcVE8gFZVkDtF5S2lDLGXQnLd2YAsh_Xu-BUfK8BQAK2UPCBjmQOOcJpxYX5amvRNLnpYCh3Li3MxAG6I6-pREuVAvdStpPs7gq6nsY4zEmV41nEzfDJWFIGWucZmOLMn62xdm4')"></div>
+<div class="w-full aspect-square rounded-[40px] bg-cover bg-center shadow-2xl" style="background-image: url('https://images.unsplash.com/photo-1767424412548-1a1ac7f4b9bc?auto=format&amp;fit=crop&amp;w=1200&amp;q=80')"></div>
 </div>
 <div class="order-1 md:order-2 space-y-md">
 <h2 class="font-headline-lg text-headline-lg text-primary dark:text-dark-primary">A Calm Place for Financial Curiosity</h2>
@@ -532,7 +508,7 @@
 </main>
 <footer class="w-full py-xl bg-surface-container-low border-t border-outline-variant/20 dark:bg-dark-surface-container">
 <div class="flex flex-col items-center gap-md px-gutter max-w-container-max mx-auto text-center">
-<span class="text-label-md font-label-md font-black text-on-surface dark:text-dark-on-surface">TradePilot</span>
+<span class="text-label-md font-label-md font-black">TradePilot</span>
 <p class="text-body-md font-body-md text-on-surface-variant dark:text-dark-on-surface-variant">© 2026 TradePilot. Empowering effortless mastery through AI intelligence.</p>
 </div>
 </footer>

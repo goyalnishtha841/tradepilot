@@ -140,24 +140,20 @@
 <!-- TopNavBar -->
 <nav class="fixed top-0 w-full bg-white/70 backdrop-blur-md border-b border-outline-variant/30 shadow-sm z-50 dark:bg-dark-surface/80">
 <div class="flex justify-between items-center h-16 px-gutter max-w-container-max mx-auto">
-<div class="flex items-center gap-xl">
-<span class="text-title-md font-title-md font-bold text-primary tracking-tight dark:text-dark-primary">TradePilot</span>
-<div class="hidden md:flex items-center gap-md h-full">
-<a class="text-on-surface-variant hover:text-primary transition-colors text-label-md font-label-md dark:text-dark-on-surface-variant" href="/dashboard">Dashboard</a>
-<a class="text-on-surface-variant hover:text-primary transition-colors text-label-md font-label-md dark:text-dark-on-surface-variant" href="/today">Market Pulse</a>
-<a class="text-on-surface-variant hover:text-primary transition-colors text-label-md font-label-md dark:text-dark-on-surface-variant" href="/explore">Explore</a>
-<a class="text-primary border-b-2 border-primary pb-1 text-label-md font-label-md dark:text-dark-primary" href="/alerts">Radar Alerts</a>
-<a class="text-on-surface-variant hover:text-primary transition-colors text-label-md font-label-md dark:text-dark-on-surface-variant" href="/learn">Learn</a>
+<div class="flex items-center gap-xs">
+<a href="/home" class="text-title-md font-title-md font-bold text-primary tracking-tight dark:text-dark-primary">TradePilot</a>
 </div>
+<div class="hidden md:flex items-center gap-lg">
+<a class="text-label-md font-label-md text-on-surface-variant hover:text-primary transition-colors dark:text-dark-on-surface-variant" href="/dashboard">Dashboard</a>
+<a class="text-label-md font-label-md text-on-surface-variant hover:text-primary transition-colors dark:text-dark-on-surface-variant" href="/today">Market Pulse</a>
+<a class="text-label-md font-label-md text-on-surface-variant hover:text-primary transition-colors dark:text-dark-on-surface-variant" href="/explore">Explore</a>
+<a class="text-label-md font-label-md text-primary border-b-2 border-primary pb-1 dark:text-dark-primary" href="/alerts">Radar Alerts</a>
+<a class="text-label-md font-label-md text-on-surface-variant hover:text-primary transition-colors dark:text-dark-on-surface-variant" href="/learn">Learn</a>
 </div>
-<div class="flex items-center gap-sm">
-<button class="p-2 hover:bg-surface-container-low rounded-full transition-all" id="dark-mode-icon-toggle">
-<span class="material-symbols-outlined text-on-surface dark:text-dark-on-surface">dark_mode</span>
-</button>
-<button class="material-symbols-outlined text-on-surface hover:bg-surface-container-low rounded-full p-2 transition-all dark:text-dark-on-surface" id="ai-toggle" title="Toggle AI Mentor">psychology</button>
-<button class="p-2 hover:bg-surface-container-low rounded-full transition-all">
-<a id="nav-account-btn" href="/signin" class="material-symbols-outlined material-symbols-outlined text-on-surface cursor-pointer dark:text-dark-on-surface">account_circle</a>
-</button>
+<div class="flex items-center gap-md">
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors p-2 rounded-full hover:bg-surface-container dark:text-dark-on-surface-variant" id="dark-mode-icon-toggle" title="Toggle Dark Mode">dark_mode</button>
+<button class="material-symbols-outlined text-on-surface-variant hover:bg-surface-container-low rounded-full p-2 transition-all dark:text-dark-on-surface-variant" id="ai-toggle" title="Toggle AI Mentor">psychology</button>
+<a id="nav-account-btn" href="/signin" class="material-symbols-outlined material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors p-2 hover:bg-surface-container rounded-full transition-all cursor-pointer dark:text-dark-on-surface-variant">account_circle</a>
 </div>
 </div>
 </nav>
@@ -218,8 +214,8 @@
 <p class="text-body-md font-body-md text-on-surface-variant max-w-xl dark:text-dark-on-surface-variant">Automatic signals from your real holdings, plus custom alerts you set yourself.</p>
 </div>
 <div class="flex items-center gap-sm shrink-0">
-<button id="refresh-all-btn" class="p-3 bg-white border border-outline-variant/30 rounded-xl text-on-surface-variant hover:text-primary hover:border-primary/40 transition-all shadow-sm dark:bg-dark-surface-container dark:text-dark-on-surface-variant" title="Refresh everything on this page">
-<span class="material-symbols-outlined text-[22px]">refresh</span>
+<button id="refresh-all-btn" class="p-3 bg-primary text-white rounded-xl shadow-lg hover:shadow-xl active:scale-95 transition-all" title="Refresh everything on this page">
+<span class="material-symbols-outlined text-[20px]">refresh</span>
 </button>
 <button id="open-create-alert-btn" class="bg-primary text-white px-6 py-3 rounded-xl text-label-md font-label-md shadow-lg hover:shadow-xl active:scale-95 transition-all flex items-center gap-2">
 <span class="material-symbols-outlined text-[20px]">add</span>
@@ -368,7 +364,7 @@ You don't have any alerts yet — click "Create New Alert" above to set one up.
 <footer class="w-full py-xl bg-surface-container-low border-t border-outline-variant/20 mt-xl dark:bg-dark-surface-container">
 <div class="flex flex-col items-center gap-md px-gutter max-w-container-max mx-auto text-center">
 <span class="text-label-md font-label-md font-black">TradePilot</span>
-<p class="text-label-sm font-label-sm text-on-surface-variant max-w-xl dark:text-dark-on-surface-variant">© 2026 TradePilot. Empowering effortless mastery through AI intelligence. Investing involves risk.</p>
+<p class="text-body-md font-body-md text-on-surface-variant max-w-xl dark:text-dark-on-surface-variant">© 2026 TradePilot. Empowering effortless mastery through AI intelligence.</p>
 </div>
 </footer>
 <script>

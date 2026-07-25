@@ -247,29 +247,74 @@
     async function askFollowup(question) {
       if (!question || !question.trim()) return;
       followupAnswer.classList.remove('hidden');
+      followupAnswer.classList.remove('text-error', 'dark:text-dark-error');
       followupAnswer.textContent = 'Thinking…';
       const originalBtnText = followupBtn.textContent;
       followupBtn.disabled = true;
       followupBtn.textContent = '...';
+      let cooldownStarted = false;
 
       const context = lastNarrative
         ? `Market Pulse summary — Market Overview: ${lastNarrative.marketOverview} Sector Movement: ${lastNarrative.sectorMovement} Portfolio Relevance: ${lastNarrative.portfolioRelevance}`
         : "Today's market summary hasn't loaded yet for this user.";
 
       try {
-        const res = await fetch('/api/chat', {
+        const res = await fetch('/api/narrative/followup', {
           method: 'POST',
           headers: authHeaders({ 'Content-Type': 'application/json' }),
           body: JSON.stringify({ message: question, context })
         });
         const data = await res.json();
-        followupAnswer.textContent = res.ok ? data.reply : (data.error || 'Something went wrong.');
+
+        if (res.status === 429) {
+          followupAnswer.classList.add('text-error', 'dark:text-dark-error');
+          followupAnswer.textContent = data.error || "You're asking a lot of questions — please slow down a little.";
+          startFollowupCooldown(data.retryAfterSeconds || 0);
+          cooldownStarted = true;
+          return;
+        }
+
+        if (!res.ok) {
+          followupAnswer.classList.add('text-error', 'dark:text-dark-error');
+          followupAnswer.textContent = data.error || 'Something went wrong.';
+          return;
+        }
+
+        followupAnswer.textContent = data.reply;
       } catch (err) {
+        followupAnswer.classList.add('text-error', 'dark:text-dark-error');
         followupAnswer.textContent = 'Could not reach the AI server.';
       } finally {
-        followupBtn.disabled = false;
-        followupBtn.textContent = originalBtnText;
+        // Don't clobber the cooldown countdown that startFollowupCooldown just set.
+        if (!cooldownStarted) {
+          followupBtn.disabled = false;
+          followupBtn.textContent = originalBtnText;
+        }
       }
+    }
+
+    // While a rate-limit cooldown is active, disable the button and count down
+    // so it's obvious why nothing is happening instead of it just looking broken.
+    let followupCooldownInterval = null;
+    function startFollowupCooldown(seconds) {
+      if (!followupBtn || seconds <= 0) return;
+      if (followupCooldownInterval) clearInterval(followupCooldownInterval);
+
+      let remaining = seconds;
+      followupBtn.disabled = true;
+      followupBtn.textContent = `Wait ${remaining}s`;
+
+      followupCooldownInterval = setInterval(() => {
+        remaining -= 1;
+        if (remaining <= 0) {
+          clearInterval(followupCooldownInterval);
+          followupCooldownInterval = null;
+          followupBtn.disabled = false;
+          followupBtn.textContent = 'Analyze';
+        } else {
+          followupBtn.textContent = `Wait ${remaining}s`;
+        }
+      }, 1000);
     }
 
     if (followupBtn) {
