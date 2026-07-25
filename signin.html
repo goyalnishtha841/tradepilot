@@ -19,6 +19,31 @@
         theme: {
           extend: {
             "colors": {
+                    "dark-bg": "#0B0F19",
+                    "dark-surface": "#0f131d",
+                    "dark-surface-container-lowest": "#0a0e18",
+                    "dark-surface-container-low": "#171b26",
+                    "dark-surface-container": "#1c1f2a",
+                    "dark-surface-container-high": "#262a35",
+                    "dark-surface-container-highest": "#313540",
+                    "dark-on-surface": "#dfe2f1",
+                    "dark-on-surface-variant": "#c7c4d7",
+                    "dark-outline": "#908fa0",
+                    "dark-outline-variant": "#464554",
+                    "dark-primary": "#c0c1ff",
+                    "dark-on-primary": "#1000a9",
+                    "dark-primary-container": "#8083ff",
+                    "dark-on-primary-container": "#e1e0ff",
+                    "dark-secondary": "#4cd7f6",
+                    "dark-on-secondary": "#003640",
+                    "dark-secondary-container": "#03b5d3",
+                    "dark-tertiary": "#ffb95f",
+                    "dark-tertiary-container": "#ca8100",
+                    "dark-error": "#ffb4ab",
+                    "dark-error-container": "#93000a",
+                    "dark-on-error-container": "#ffdad6",
+                    "dark-positive": "#3B82F6",
+                    "dark-negative": "#EF4444",
                     "on-tertiary-fixed-variant": "#574425",
                     "background": "#fcf8fa",
                     "tertiary-fixed-dim": "#dec29a",
@@ -147,46 +172,49 @@
         }
     </style>
 </head>
-<body class="bg-background text-on-surface font-body-md min-h-screen">
-<nav class="fixed top-0 w-full z-50 bg-white/70 backdrop-blur-md border-b border-outline-variant/30 shadow-sm">
+<body class="bg-background text-on-surface font-body-md min-h-screen dark:bg-dark-bg dark:text-dark-on-surface transition-colors duration-300">
+<nav class="fixed top-0 w-full z-50 bg-white/70 backdrop-blur-md border-b border-outline-variant/30 shadow-sm dark:bg-dark-surface/80">
 <div class="flex justify-between items-center h-16 px-gutter max-w-container-max mx-auto">
-<a href="/home"" class="text-title-md font-title-md font-bold text-primary tracking-tight">TradePilot</a>
-<a href="/signup"" class="text-label-md font-label-md text-on-surface-variant hover:text-primary transition-colors">New here? <span class="text-primary font-bold">Create an account</span></a>
+<a href="/home" class="text-title-md font-title-md font-bold text-primary tracking-tight dark:text-dark-primary">TradePilot</a>
+<div class="flex items-center gap-md">
+<a href="/signup" class="text-label-md font-label-md text-on-surface-variant hover:text-primary transition-colors dark:text-dark-on-surface-variant">New here? <span class="text-primary font-bold dark:text-dark-primary">Create an account</span></a>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors p-2 rounded-full hover:bg-surface-container dark:text-dark-on-surface-variant" id="dark-mode-icon-toggle" title="Toggle Dark Mode">dark_mode</button>
+</div>
 </div>
 </nav>
 
 <main class="min-h-screen flex items-center justify-center px-gutter pt-16">
-<div class="w-full max-w-md bg-white border border-outline-variant/20 rounded-xl shadow-xl p-xl my-xl">
+<div class="w-full max-w-md bg-white border border-outline-variant/20 rounded-xl shadow-xl p-xl my-xl dark:bg-dark-surface-container dark:border-dark-outline-variant/30">
 <div class="text-center mb-lg">
-<h1 class="text-headline-lg font-headline-lg text-primary mb-xs">Welcome back</h1>
-<p class="text-body-md font-body-md text-on-surface-variant">Sign in to continue with your AI Mentor.</p>
+<h1 class="text-headline-lg font-headline-lg text-primary mb-xs dark:text-dark-primary">Welcome back</h1>
+<p class="text-body-md font-body-md text-on-surface-variant dark:text-dark-on-surface-variant">Sign in to continue with your AI Mentor.</p>
 </div>
 
-<div id="signin-error" class="hidden bg-error-container text-on-error-container text-label-md font-label-md rounded-xl px-4 py-3 mb-md"></div>
+<div id="signin-error" class="hidden bg-error-container text-on-error-container text-label-md font-label-md rounded-xl px-4 py-3 mb-md dark:bg-dark-error-container dark:text-dark-on-error-container"></div>
 
 <form id="signin-form" class="flex flex-col gap-md">
 <div>
-<label class="block text-label-md font-label-md text-on-surface-variant mb-xs" for="email">Email</label>
-<input id="email" name="email" type="email" required class="w-full border border-outline-variant/40 rounded-xl px-4 py-3 text-body-md focus:ring-2 focus:ring-primary focus:outline-none" placeholder="you@example.com"/>
+<label class="block text-label-md font-label-md text-on-surface-variant mb-xs dark:text-dark-on-surface-variant" for="email">Email</label>
+<input id="email" name="email" type="email" required class="w-full border border-outline-variant/40 rounded-xl px-4 py-3 text-body-md focus:ring-2 focus:ring-primary focus:outline-none dark:bg-dark-surface-container-low dark:border-dark-outline-variant/40 dark:text-dark-on-surface dark:focus:ring-dark-primary" placeholder="you@example.com"/>
 </div>
 <div>
-<label class="block text-label-md font-label-md text-on-surface-variant mb-xs" for="password">Password</label>
-<input id="password" name="password" type="password" required class="w-full border border-outline-variant/40 rounded-xl px-4 py-3 text-body-md focus:ring-2 focus:ring-primary focus:outline-none" placeholder="Your password"/>
+<label class="block text-label-md font-label-md text-on-surface-variant mb-xs dark:text-dark-on-surface-variant" for="password">Password</label>
+<input id="password" name="password" type="password" required class="w-full border border-outline-variant/40 rounded-xl px-4 py-3 text-body-md focus:ring-2 focus:ring-primary focus:outline-none dark:bg-dark-surface-container-low dark:border-dark-outline-variant/40 dark:text-dark-on-surface dark:focus:ring-dark-primary" placeholder="Your password"/>
 </div>
-<button id="signin-submit" type="submit" class="w-full mt-sm py-3 bg-primary text-on-primary rounded-xl font-label-md text-label-md font-bold hover:opacity-90 transition-all active:scale-95">
+<button id="signin-submit" type="submit" class="w-full mt-sm py-3 bg-primary text-on-primary rounded-xl font-label-md text-label-md font-bold hover:opacity-90 transition-all active:scale-95 dark:bg-dark-primary dark:text-dark-on-primary">
 Sign In
 </button>
 </form>
 
 <div class="flex items-center my-md">
-  <div class="flex-grow h-px bg-outline-variant/30"></div>
-  <span class="px-3 text-label-sm text-on-surface-variant font-medium">or</span>
-  <div class="flex-grow h-px bg-outline-variant/30"></div>
+  <div class="flex-grow h-px bg-outline-variant/30 dark:bg-dark-outline-variant/30"></div>
+  <span class="px-3 text-label-sm text-on-surface-variant font-medium dark:text-dark-on-surface-variant">or</span>
+  <div class="flex-grow h-px bg-outline-variant/30 dark:bg-dark-outline-variant/30"></div>
 </div>
 
 <div id="google-btn-container" class="w-full flex justify-center"></div>
 
-<button id="mock-google-btn" class="hidden w-full flex items-center justify-center gap-sm py-3 border border-outline-variant/30 rounded-xl font-label-md text-label-md text-on-surface hover:bg-surface-container-low transition-all active:scale-95 mt-2">
+<button id="mock-google-btn" class="hidden w-full flex items-center justify-center gap-sm py-3 border border-outline-variant/30 rounded-xl font-label-md text-label-md text-on-surface hover:bg-surface-container-low transition-all active:scale-95 mt-2 dark:border-dark-outline-variant/30 dark:text-dark-on-surface dark:hover:bg-dark-surface-container-high">
   <svg class="w-5 h-5 animate-pulse" viewBox="0 0 24 24">
     <path fill="#EA4335" d="M12 5.04c1.66 0 3.2.57 4.38 1.69l3.27-3.27C17.67 1.54 14.98 1 12 1 7.35 1 3.37 3.65 1.42 7.55l3.87 3C6.24 7.62 8.87 5.04 12 5.04z"/>
     <path fill="#4285F4" d="M23.49 12.27c0-.81-.07-1.59-.2-2.36H12v4.51h6.46c-.29 1.48-1.14 2.73-2.4 3.58l3.73 2.89c2.18-2.01 3.7-4.97 3.7-8.62z"/>
@@ -198,6 +226,7 @@ Sign In
 </div>
 </main>
 
+<script src="assets/auth-guard.js"></script>
 <script>
 (function () {
   const form = document.getElementById('signin-form');
@@ -282,7 +311,7 @@ Sign In
         });
         google.accounts.id.renderButton(
           document.getElementById('google-btn-container'),
-          { theme: 'outline', size: 'large', width: 384, text: 'signin_with' }
+          { theme: document.documentElement.classList.contains('dark') ? 'filled_black' : 'outline', size: 'large', width: 384, text: 'signin_with' }
         );
         google.accounts.id.prompt();
       } else {
@@ -333,6 +362,17 @@ Sign In
   window.initGoogleAuth = initGoogleAuth;
   if (window.google && window.google.accounts) {
     initGoogleAuth();
+  }
+
+  // Google's button is a static embedded widget — it won't restyle itself if the
+  // user flips dark mode after we've already rendered it, so re-render on toggle.
+  const darkToggleBtn = document.getElementById('dark-mode-icon-toggle');
+  if (darkToggleBtn) {
+    darkToggleBtn.addEventListener('click', () => {
+      if (window.google && window.google.accounts && window.google.accounts.id) {
+        setTimeout(() => initGoogleAuth(), 0);
+      }
+    });
   }
 })();
 </script>

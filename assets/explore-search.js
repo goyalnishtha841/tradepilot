@@ -100,22 +100,22 @@ let lastChartPositive = null;
     function suggestionRow(symbol, name, subtitle) {
       const row = document.createElement('button');
       row.type = 'button';
-      row.className = 'w-full text-left px-5 py-3 flex items-center justify-between gap-md hover:bg-surface-container-low transition-colors border-b border-outline-variant/10 last:border-b-0';
+      row.className = 'w-full text-left px-5 py-3 flex items-center justify-between gap-md hover:bg-surface-container-low dark:hover:bg-dark-surface-container-high transition-colors border-b border-outline-variant/10 last:border-b-0';
 
       const left = document.createElement('div');
       const nameEl = document.createElement('p');
-      nameEl.className = 'text-label-md font-bold text-on-surface';
+      nameEl.className = 'text-label-md font-bold text-on-surface dark:text-dark-on-surface';
       nameEl.textContent = `${name} (${symbol})`;
       left.appendChild(nameEl);
       if (subtitle) {
         const subEl = document.createElement('p');
-        subEl.className = 'text-[11px] text-on-surface-variant';
+        subEl.className = 'text-[11px] text-on-surface-variant dark:text-dark-on-surface-variant';
         subEl.textContent = subtitle;
         left.appendChild(subEl);
       }
 
       const goIcon = document.createElement('span');
-      goIcon.className = 'material-symbols-outlined text-on-surface-variant text-base shrink-0';
+      goIcon.className = 'material-symbols-outlined text-on-surface-variant dark:text-dark-on-surface-variant text-base shrink-0';
       goIcon.textContent = 'north_east';
 
       row.appendChild(left);
@@ -137,7 +137,7 @@ let lastChartPositive = null;
 
       if (!items || items.length === 0) {
         const empty = document.createElement('p');
-        empty.className = 'px-5 py-4 text-label-sm text-on-surface-variant';
+        empty.className = 'px-5 py-4 text-label-sm text-on-surface-variant dark:text-dark-on-surface-variant';
         empty.textContent = emptyMessage || 'No matches found.';
         suggestionsBox.appendChild(empty);
       } else {
@@ -257,7 +257,7 @@ let lastChartPositive = null;
         }
 
         const label = document.createElement('span');
-        label.className = 'text-label-md text-on-surface-variant self-center mr-1';
+        label.className = 'text-label-md text-on-surface-variant dark:text-dark-on-surface-variant self-center mr-1';
         label.textContent = 'Browse by sector:';
         sectorChipRow.appendChild(label);
 
@@ -266,7 +266,7 @@ let lastChartPositive = null;
           chip.type = 'button';
           chip.dataset.sector = sector;
           chip.textContent = sector;
-          chip.className = 'px-5 py-2 rounded-full text-label-md font-bold bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors';
+          chip.className = 'px-5 py-2 rounded-full text-label-md font-bold bg-surface-container dark:bg-dark-surface-container text-on-surface-variant dark:text-dark-on-surface-variant hover:bg-surface-container-high dark:hover:bg-dark-surface-container-high transition-colors';
 
           chip.addEventListener('click', () => {
             const isActive = selectedSector === sector;
@@ -275,7 +275,7 @@ let lastChartPositive = null;
             sectorChipRow.querySelectorAll('button[data-sector]').forEach((b) => {
               b.className = b.dataset.sector === selectedSector
                 ? 'px-5 py-2 rounded-full text-label-md font-bold bg-primary text-white transition-colors'
-                : 'px-5 py-2 rounded-full text-label-md font-bold bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors';
+                : 'px-5 py-2 rounded-full text-label-md font-bold bg-surface-container dark:bg-dark-surface-container text-on-surface-variant dark:text-dark-on-surface-variant hover:bg-surface-container-high dark:hover:bg-dark-surface-container-high transition-colors';
             });
 
             searchInput.value = '';
@@ -428,7 +428,7 @@ chartImg.src = canvas.toDataURL('image/png');
           if (!b) return;
           b.className = rr === r
             ? 'px-3 py-1 bg-primary text-white text-label-sm rounded-full'
-            : 'px-3 py-1 hover:bg-surface-container text-label-sm rounded-full transition-colors';
+            : 'px-3 py-1 hover:bg-surface-container dark:hover:bg-dark-surface-container text-label-sm rounded-full transition-colors';
         });
         loadChart(currentSymbol);
       });
