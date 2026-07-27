@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+
+<html class="scroll-smooth" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>My Profile | TradePilot</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            border-radius: 20px;
+        }
+        html.dark .glass-card {
+            background: rgba(28, 31, 42, 0.7);
+            border: 1px solid rgba(70, 69, 84, 0.6);
+        }
+        .rounded-20 {
+            border-radius: 20px;
+        }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #e4e2e4; border-radius: 10px; }
+        .chip {
+            padding: 8px 16px;
+            border-radius: 9999px;
+            font-size: 14px;
+            font-weight: 700;
+            background: #f0edef;
+            color: #45464d;
+        }
+        html.dark .chip {
+            background: #262a35;
+            color: #c7c4d7;
+        }
+        .toggle-btn {
+            padding: 10px 14px;
+            border-radius: 12px;
+            border: 1px solid rgba(198,198,205,0.6);
+            font-size: 13px;
+            font-weight: 700;
+            background: #f6f3f5;
+            color: #45464d;
+            cursor: pointer;
+            transition: all .15s ease;
+        }
+        html.dark .toggle-btn {
+            background: #1c1f2a;
+            color: #c7c4d7;
+            border-color: rgba(70,69,84,0.6);
+        }
+        .toggle-btn.active {
+            background: #000000;
+            color: #ffffff;
+            border-color: #000000;
+        }
+        html.dark .toggle-btn.active {
+            background: #c0c1ff;
+            color: #1000a9;
+            border-color: #c0c1ff;
+        }
+        .avatar-swatch {
+            width: 44px;
+            height: 44px;
+            border-radius: 9999px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: 700;
+            border: 3px solid transparent;
+        }
+        .avatar-swatch.selected {
+            border-color: #000000;
+        }
+        html.dark .avatar-swatch.selected {
+            border-color: #dfe2f1;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                    "dark-bg": "#0B0F19",
+                    "dark-surface": "#0f131d",
+                    "dark-surface-container-lowest": "#0a0e18",
+                    "dark-surface-container-low": "#171b26",
+                    "dark-surface-container": "#1c1f2a",
+                    "dark-surface-container-high": "#262a35",
+                    "dark-surface-container-highest": "#313540",
+                    "dark-on-surface": "#dfe2f1",
+                    "dark-on-surface-variant": "#c7c4d7",
+                    "dark-outline": "#908fa0",
+                    "dark-outline-variant": "#464554",
+                    "dark-primary": "#c0c1ff",
+                    "dark-on-primary": "#1000a9",
+                    "dark-primary-container": "#8083ff",
+                    "dark-on-primary-container": "#e1e0ff",
+                    "dark-secondary": "#4cd7f6",
+                    "dark-on-secondary": "#003640",
+                    "dark-secondary-container": "#03b5d3",
+                    "dark-tertiary": "#ffb95f",
+                    "dark-tertiary-container": "#ca8100",
+                    "dark-error": "#ffb4ab",
+                    "dark-error-container": "#93000a",
+                    "dark-on-error-container": "#ffdad6",
+                    "dark-positive": "#3B82F6",
+                    "dark-negative": "#EF4444",
+                        "surface-dim": "#dcd9db", "on-surface": "#1b1b1d", "surface-variant": "#e4e2e4",
+                        "on-tertiary-container": "#98805d", "surface-container-highest": "#e4e2e4",
+                        "inverse-on-surface": "#f3f0f2", "surface-tint": "#565e74", "background": "#fcf8fa",
+                        "tertiary-fixed": "#fcdeb5", "surface": "#fcf8fa", "on-primary-container": "#7c839b",
+                        "on-secondary-fixed-variant": "#3c475a", "surface-container-lowest": "#ffffff",
+                        "outline": "#76777d", "secondary": "#545f73", "surface-container-low": "#f6f3f5",
+                        "on-tertiary": "#ffffff", "secondary-fixed-dim": "#bcc7de", "secondary-fixed": "#d8e3fb",
+                        "on-background": "#1b1b1d", "on-tertiary-fixed": "#271901", "on-tertiary-fixed-variant": "#574425",
+                        "on-primary-fixed-variant": "#3f465c", "on-surface-variant": "#45464d",
+                        "tertiary-container": "#271901", "primary-container": "#131b2e", "tertiary-fixed-dim": "#dec29a",
+                        "primary-fixed-dim": "#bec6e0", "on-primary": "#ffffff", "error-container": "#ffdad6",
+                        "on-secondary": "#ffffff", "surface-container-high": "#eae7e9", "surface-container": "#f0edef",
+                        "on-primary-fixed": "#131b2e", "on-secondary-container": "#586377", "secondary-container": "#d5e0f8",
+                        "primary": "#000000", "surface-bright": "#fcf8fa", "tertiary": "#000000", "error": "#ba1a1a",
+                        "on-error-container": "#93000a", "on-secondary-fixed": "#111c2d", "inverse-primary": "#bec6e0",
+                        "on-error": "#ffffff", "outline-variant": "#c6c6cd", "primary-fixed": "#dae2fd",
+                        "inverse-surface": "#303032"
+                    },
+                    "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "20": "20px", "full": "9999px" },
+                    "spacing": { "container-max": "1280px", "gutter": "24px", "sm": "16px", "md": "24px", "base": "4px", "xs": "8px", "lg": "40px", "xl": "64px" },
+                    "fontFamily": { "headline-lg": ["Inter"], "body-md": ["Inter"], "title-md": ["Inter"], "label-md": ["Inter"], "label-sm": ["Inter"] },
+                    "fontSize": {
+                        "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "title-md": ["20px", {"lineHeight": "1.4", "fontWeight": "600"}],
+                        "label-md": ["14px", {"lineHeight": "1.2", "letterSpacing": "0.01em", "fontWeight": "500"}],
+                        "headline-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "label-sm": ["12px", {"lineHeight": "1.2", "letterSpacing": "0.03em", "fontWeight": "600"}]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body data-auth="required" class="bg-background dark:bg-dark-bg font-body-md text-on-surface dark:text-dark-on-surface">
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full bg-white/70 backdrop-blur-md border-b border-outline-variant/30 shadow-sm z-50 dark:bg-dark-surface/80">
+<div class="flex justify-between items-center h-16 px-gutter max-w-container-max mx-auto">
+<div class="flex items-center gap-xs">
+<a href="/home" class="text-title-md font-title-md font-bold text-primary tracking-tight dark:text-dark-primary">TradePilot</a>
+</div>
+<div class="hidden md:flex items-center gap-lg">
+<a class="text-label-md font-label-md text-on-surface-variant hover:text-primary transition-colors dark:text-dark-on-surface-variant" href="/dashboard">Dashboard</a>
+<a class="text-label-md font-label-md text-on-surface-variant hover:text-primary transition-colors dark:text-dark-on-surface-variant" href="/today">Market Pulse</a>
+<a class="text-label-md font-label-md text-on-surface-variant hover:text-primary transition-colors dark:text-dark-on-surface-variant" href="/explore">Explore</a>
+<a class="text-label-md font-label-md text-on-surface-variant hover:text-primary transition-colors dark:text-dark-on-surface-variant" href="/alerts">Radar Alerts</a>
+<a class="text-label-md font-label-md text-on-surface-variant hover:text-primary transition-colors dark:text-dark-on-surface-variant" href="/learn">Learn</a>
+</div>
+<div class="flex items-center gap-md">
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors p-2 rounded-full hover:bg-surface-container dark:text-dark-on-surface-variant" id="dark-mode-icon-toggle" title="Toggle Dark Mode">dark_mode</button>
+<a id="nav-account-btn" href="/signin" class="material-symbols-outlined material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors p-2 hover:bg-surface-container rounded-full transition-all cursor-pointer dark:text-dark-on-surface-variant">account_circle</a>
+</div>
+</div>
+</nav>
+
+<!-- Settings Modal -->
+<div id="settings-modal" class="hidden fixed inset-0 bg-black/50 z-50 items-center justify-center p-md">
+<div id="settings-dialog" class="bg-surface dark:bg-dark-surface rounded-20 shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col">
+<div class="flex items-center justify-between p-md border-b border-outline-variant/20 shrink-0">
+<h3 class="text-xl font-bold text-on-surface dark:text-dark-on-surface">Settings</h3>
+<button id="close-settings-btn" class="material-symbols-outlined text-on-surface-variant hover:text-primary p-1.5 rounded-full hover:bg-surface-container-low transition-all dark:text-dark-on-surface-variant">close</button>
+</div>
+<div class="flex-1 overflow-y-auto p-md space-y-md">
+
+
+<div class="glass-card p-lg">
+<h4 class="text-lg font-bold mb-md text-on-surface dark:text-dark-on-surface">Edit Profile Details</h4>
+<div id="details-error" class="hidden bg-error-container text-on-error-container text-sm rounded-xl px-4 py-3 mb-md"></div>
+<div id="details-success" class="hidden bg-secondary-container text-on-secondary-container text-sm rounded-xl px-4 py-3 mb-md dark:bg-dark-secondary-container/20 dark:text-dark-on-surface"></div>
+<div class="flex flex-col gap-md">
+<div>
+<label class="block text-sm text-on-surface-variant mb-xs dark:text-dark-on-surface-variant" for="settings-name">Full name</label>
+<input id="settings-name" type="text" class="w-full border border-outline-variant/40 rounded-xl px-4 py-3 text-base bg-white dark:bg-dark-surface-container text-on-surface dark:text-dark-on-surface focus:ring-2 focus:ring-primary focus:outline-none"/>
+</div>
+<div>
+<label class="block text-sm text-on-surface-variant mb-xs dark:text-dark-on-surface-variant">Email</label>
+<input id="settings-email" type="email" disabled class="w-full border border-outline-variant/40 rounded-xl px-4 py-3 text-base bg-surface-container-low text-on-surface-variant dark:bg-dark-surface-container-high dark:text-dark-on-surface-variant"/>
+</div>
+<div>
+<label class="block text-sm text-on-surface-variant mb-xs dark:text-dark-on-surface-variant" for="settings-phone">Phone number</label>
+<input id="settings-phone" type="tel" placeholder="+91 98765 43210" class="w-full border border-outline-variant/40 rounded-xl px-4 py-3 text-base bg-white dark:bg-dark-surface-container text-on-surface dark:text-dark-on-surface focus:ring-2 focus:ring-primary focus:outline-none"/>
+</div>
+<button id="save-details-btn" class="self-start px-6 py-3 bg-primary text-on-primary rounded-xl text-sm font-bold hover:opacity-90 transition-all">Save Changes</button>
+</div>
+</div>
+
+<div class="glass-card p-lg">
+<h4 class="text-lg font-bold mb-md text-on-surface dark:text-dark-on-surface">Change Password</h4>
+<div id="password-error" class="hidden bg-error-container text-on-error-container text-sm rounded-xl px-4 py-3 mb-md"></div>
+<div id="password-success" class="hidden bg-secondary-container text-on-secondary-container text-sm rounded-xl px-4 py-3 mb-md dark:bg-dark-secondary-container/20 dark:text-dark-on-surface"></div>
+<div class="flex flex-col gap-md">
+<div>
+<label class="block text-sm text-on-surface-variant mb-xs dark:text-dark-on-surface-variant" for="current-password">Current password</label>
+<input id="current-password" type="password" class="w-full border border-outline-variant/40 rounded-xl px-4 py-3 text-base bg-white dark:bg-dark-surface-container text-on-surface dark:text-dark-on-surface focus:ring-2 focus:ring-primary focus:outline-none"/>
+<label class="flex items-center gap-xs mt-xs text-sm text-on-surface-variant cursor-pointer select-none dark:text-dark-on-surface-variant">
+<input id="show-current-password" type="checkbox" class="rounded"/>
+Show password
+</label>
+</div>
+<div>
+<label class="block text-sm text-on-surface-variant mb-xs dark:text-dark-on-surface-variant" for="new-password">New password</label>
+<input id="new-password" type="password" placeholder="At least 8 characters, with a letter and a number" class="w-full border border-outline-variant/40 rounded-xl px-4 py-3 text-base bg-white dark:bg-dark-surface-container text-on-surface dark:text-dark-on-surface focus:ring-2 focus:ring-primary focus:outline-none"/>
+<label class="flex items-center gap-xs mt-xs text-sm text-on-surface-variant cursor-pointer select-none dark:text-dark-on-surface-variant">
+<input id="show-new-password" type="checkbox" class="rounded"/>
+Show password
+</label>
+</div>
+<button id="save-password-btn" class="self-start px-6 py-3 bg-primary text-on-primary rounded-xl text-sm font-bold hover:opacity-90 transition-all">Update Password</button>
+</div>
+</div>
+
+<div class="glass-card p-lg">
+<h4 class="text-lg font-bold mb-md text-on-surface dark:text-dark-on-surface">Edit Investor Profile</h4>
+<div id="investor-error" class="hidden bg-error-container text-on-error-container text-sm rounded-xl px-4 py-3 mb-md"></div>
+<div id="investor-success" class="hidden bg-secondary-container text-on-secondary-container text-sm rounded-xl px-4 py-3 mb-md dark:bg-dark-secondary-container/20 dark:text-dark-on-surface"></div>
+
+<p class="text-sm font-bold text-on-surface-variant mb-xs dark:text-dark-on-surface-variant">Experience level</p>
+<div id="edit-experience" class="flex flex-wrap gap-xs mb-md">
+<button type="button" class="toggle-btn" data-value="Beginner">Beginner</button>
+<button type="button" class="toggle-btn" data-value="Intermediate">Intermediate</button>
+<button type="button" class="toggle-btn" data-value="Advanced">Advanced</button>
+</div>
+
+<p class="text-sm font-bold text-on-surface-variant mb-xs dark:text-dark-on-surface-variant">User type</p>
+<div id="edit-usertype" class="flex flex-wrap gap-xs mb-md">
+<button type="button" class="toggle-btn" data-value="learner">Learner</button>
+<button type="button" class="toggle-btn" data-value="investor">Investor</button>
+<button type="button" class="toggle-btn" data-value="broker-assistant user">Broker-Assistant User</button>
+</div>
+
+<p class="text-sm font-bold text-on-surface-variant mb-xs dark:text-dark-on-surface-variant">Risk preference</p>
+<div id="edit-risk" class="flex flex-wrap gap-xs mb-md">
+<button type="button" class="toggle-btn" data-value="Low">Low (Conservative)</button>
+<button type="button" class="toggle-btn" data-value="Medium">Medium (Balanced)</button>
+<button type="button" class="toggle-btn" data-value="High">High (Aggressive)</button>
+</div>
+
+<p class="text-sm font-bold text-on-surface-variant mb-xs dark:text-dark-on-surface-variant">Learning style (select any)</p>
+<div id="edit-learning" class="flex flex-wrap gap-xs mb-md">
+<button type="button" class="toggle-btn" data-value="Text articles">Text Narratives</button>
+<button type="button" class="toggle-btn" data-value="Interactive Quizzes">Quizzes</button>
+<button type="button" class="toggle-btn" data-value="AI Mentor Chat">Mentor Chat</button>
+<button type="button" class="toggle-btn" data-value="Hands-on Portfolio Simulation">Simulation</button>
+</div>
+
+<p class="text-sm font-bold text-on-surface-variant mb-xs dark:text-dark-on-surface-variant">Goals (select any)</p>
+<div id="edit-goals" class="flex flex-wrap gap-xs mb-md">
+<button type="button" class="toggle-btn" data-value="Wealth Building">Wealth Building</button>
+<button type="button" class="toggle-btn" data-value="Day Trading">Day Trading</button>
+<button type="button" class="toggle-btn" data-value="Retirement Planning">Retirement Planning</button>
+<button type="button" class="toggle-btn" data-value="Financial Education">Financial Education</button>
+<button type="button" class="toggle-btn" data-value="Portfolio Diversification">Portfolio Diversification</button>
+</div>
+
+<p class="text-sm font-bold text-on-surface-variant mb-xs dark:text-dark-on-surface-variant">Favorite sectors (select any)</p>
+<div id="edit-sectors" class="flex flex-wrap gap-xs mb-lg">
+<button type="button" class="toggle-btn" data-value="Technology">Technology</button>
+<button type="button" class="toggle-btn" data-value="Healthcare">Healthcare</button>
+<button type="button" class="toggle-btn" data-value="Finance">Finance</button>
+<button type="button" class="toggle-btn" data-value="Energy">Energy</button>
+<button type="button" class="toggle-btn" data-value="Consumer Discretionary">Consumer Discretionary</button>
+<button type="button" class="toggle-btn" data-value="Industrials">Industrials</button>
+</div>
+
+<button id="save-investor-btn" class="px-6 py-3 bg-primary text-on-primary rounded-xl text-sm font-bold hover:opacity-90 transition-all">Save Investor Profile</button>
+</div>
+
+</div>
+</div>
+</div>
+
+<main class="mt-16 p-gutter max-w-container-max mx-auto pb-xl">
+<div class="max-w-5xl mx-auto space-y-sm">
+
+<h1 class="text-3xl font-bold mt-md">My Profile</h1>
+
+<div id="profile-banner" class="hidden rounded-xl px-4 py-3 text-base"></div>
+
+<div class="space-y-sm">
+
+<!-- Identity Card: hero banner + avatar + details -->
+<div class="glass-card overflow-hidden">
+<div class="relative h-24 bg-primary-container dark:bg-dark-primary-container/20">
+<button id="open-settings-btn" class="absolute top-3 right-3 px-3.5 py-1.5 bg-white/15 border border-white/30 backdrop-blur-sm text-white rounded-full font-semibold text-sm hover:bg-white/25 transition-all flex items-center gap-1.5 dark:bg-dark-surface-container">
+<span class="material-symbols-outlined text-base">settings</span>
+Settings
+</button>
+<div class="absolute -bottom-12 left-1/2 -translate-x-1/2">
+<div class="relative">
+<div id="profile-avatar-view" class="w-24 h-24 rounded-full flex items-center justify-center text-white text-3xl font-bold border-4 border-surface shadow-lg"></div>
+<button id="open-avatar-picker-btn" class="absolute bottom-0 right-0 bg-white border border-outline-variant rounded-full p-1.5 shadow-md hover:bg-surface-container-low transition-all dark:bg-dark-surface-container" title="Change avatar">
+<span class="material-symbols-outlined text-base text-on-surface dark:text-dark-on-surface">photo_camera</span>
+</button>
+</div>
+</div>
+</div>
+
+<div class="pt-14 pb-md px-lg text-center">
+<h2 id="profile-name-view" class="text-2xl font-bold">—</h2>
+<p id="profile-email-view" class="text-base text-on-surface-variant dark:text-dark-on-surface-variant">—</p>
+<p id="profile-phone-view" class="text-base text-on-surface-variant dark:text-dark-on-surface-variant"></p>
+<p id="profile-member-since" class="text-sm text-on-surface-variant/70 mt-xs dark:text-dark-on-surface-variant"></p>
+
+<!-- Avatar Picker (hidden until camera icon clicked) -->
+<div id="avatar-picker" class="hidden mt-md pt-md border-t border-outline-variant/20 text-left max-w-sm mx-auto">
+<p class="text-sm font-bold text-on-surface-variant mb-sm dark:text-dark-on-surface-variant">Choose an avatar color</p>
+<div id="avatar-swatch-row" class="flex flex-wrap gap-sm"></div>
+<button id="save-avatar-btn" class="mt-md px-5 py-2 bg-primary text-white rounded-xl text-sm font-bold hover:opacity-90 transition-all">Save Avatar</button>
+</div>
+</div>
+</div>
+
+<!-- Investor Profile summary -->
+<div class="glass-card p-lg">
+<h3 class="text-lg font-bold mb-sm">Investor Profile</h3>
+<div id="investor-profile-view" class="flex flex-col gap-xs">
+<div class="flex items-center gap-3 p-3 rounded-2xl bg-surface-container-low dark:bg-dark-surface-container-high">
+<div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-primary text-lg dark:text-dark-primary">school</span>
+</div>
+<div>
+<p class="text-sm text-on-surface-variant dark:text-dark-on-surface-variant">Experience level</p>
+<p id="ip-experience" class="font-bold text-lg">—</p>
+</div>
+</div>
+<div class="flex items-center gap-3 p-3 rounded-2xl bg-surface-container-low dark:bg-dark-surface-container-high">
+<div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-primary text-lg dark:text-dark-primary">badge</span>
+</div>
+<div>
+<p class="text-sm text-on-surface-variant dark:text-dark-on-surface-variant">User type</p>
+<p id="ip-usertype" class="font-bold text-lg">—</p>
+</div>
+</div>
+<div class="flex items-center gap-3 p-3 rounded-2xl bg-surface-container-low dark:bg-dark-surface-container-high">
+<div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-primary text-lg dark:text-dark-primary">shield</span>
+</div>
+<div>
+<p class="text-sm text-on-surface-variant dark:text-dark-on-surface-variant">Risk preference</p>
+<p id="ip-risk" class="font-bold text-lg">—</p>
+</div>
+</div>
+<div class="flex items-center gap-3 p-3 rounded-2xl bg-surface-container-low dark:bg-dark-surface-container-high">
+<div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-primary text-lg dark:text-dark-primary">auto_stories</span>
+</div>
+<div>
+<p class="text-sm text-on-surface-variant dark:text-dark-on-surface-variant">Learning style</p>
+<p id="ip-learning" class="font-bold text-lg">—</p>
+</div>
+</div>
+</div>
+<div class="mt-md">
+<span class="text-base font-semibold text-on-surface-variant dark:text-dark-on-surface-variant">Goals</span>
+<div id="ip-goals" class="flex flex-wrap gap-xs mt-xs"></div>
+</div>
+<div class="mt-sm">
+<span class="text-base font-semibold text-on-surface-variant dark:text-dark-on-surface-variant">Favorite sectors</span>
+<div id="ip-sectors" class="flex flex-wrap gap-xs mt-xs"></div>
+</div>
+</div>
+
+<!-- Logout — last -->
+<div class="glass-card p-sm flex items-center justify-between gap-sm">
+<div>
+<p class="text-sm font-bold">Log out</p>
+<p class="text-xs text-on-surface-variant dark:text-dark-on-surface-variant">You'll need to sign in again to access your account.</p>
+</div>
+<button id="profile-logout-btn" class="px-4 py-1.5 border border-error text-error rounded-xl text-sm font-bold hover:bg-error hover:text-white transition-all shrink-0">Log Out</button>
+</div>
+
+</div>
+<!-- /stacked sections -->
+
+</div>
+</main>
+
+<footer class="w-full py-xl bg-surface-container-low border-t border-outline-variant/20 mt-xl dark:bg-dark-surface-container">
+<div class="flex flex-col items-center gap-md px-gutter max-w-container-max mx-auto text-center">
+<span class="text-label-md font-label-md font-black">TradePilot</span>
+<p class="text-body-md font-body-md text-on-surface-variant max-w-xl dark:text-dark-on-surface-variant">© 2026 TradePilot. Empowering effortless mastery through AI intelligence.</p>
+</div>
+</footer>
+
+<script src="assets/auth-guard.js"></script>
+<script>
+(function () {
+  const API_AUTH = '/api/auth';
+  const API_ONBOARDING = '/api/onboarding';
+  const AVATAR_COLORS = window.TradePilotAvatarColors || {
+    slate: '#565e74', blue: '#3b82f6', green: '#10b981', purple: '#8b5cf6',
+    pink: '#ec4899', orange: '#f97316', teal: '#14b8a6', red: '#ef4444'
+  };
+
+  let currentUser = null;
+  let selectedAvatarId = 'slate';
+  const multiSelectState = { learningPreference: [], goals: [], sectors: [] };
+  let selectedExperience = null;
+  let selectedUserType = null;
+  let selectedRisk = null;
+
+  function initial(name) {
+    return name && name.trim() ? name.trim()[0].toUpperCase() : '?';
+  }
+
+  function showBanner(msg, isError) {
+    const el = document.getElementById('profile-banner');
+    el.textContent = msg;
+    el.className = (isError ? 'bg-error-container dark:bg-dark-error-container/40 text-on-error-container dark:text-dark-on-error-container' : 'bg-secondary-container dark:bg-dark-secondary-container/30 text-on-secondary-container dark:text-dark-on-surface') +
+      ' rounded-xl px-4 py-3 text-label-md font-label-md';
+    setTimeout(() => el.classList.add('hidden'), 4000);
+  }
+
+  function showMsg(id, msg, isError) {
+    const el = document.getElementById(id);
+    el.textContent = msg;
+    el.classList.remove('hidden');
+    el.className = (isError ? 'bg-error-container dark:bg-dark-error-container/40 text-on-error-container dark:text-dark-on-error-container' : 'bg-secondary-container dark:bg-dark-secondary-container/30 text-on-secondary-container dark:text-dark-on-surface') +
+      ' text-label-md rounded-xl px-4 py-3 mb-md';
+  }
+
+  function renderAvatarView() {
+    const el = document.getElementById('profile-avatar-view');
+    el.style.background = AVATAR_COLORS[selectedAvatarId] || AVATAR_COLORS.slate;
+    el.textContent = initial(currentUser ? currentUser.name : '');
+  }
+
+  function renderAvatarSwatches() {
+    const row = document.getElementById('avatar-swatch-row');
+    row.innerHTML = '';
+    Object.keys(AVATAR_COLORS).forEach((key) => {
+      const sw = document.createElement('div');
+      sw.className = 'avatar-swatch' + (key === selectedAvatarId ? ' selected' : '');
+      sw.style.background = AVATAR_COLORS[key];
+      sw.textContent = initial(currentUser ? currentUser.name : '');
+      sw.dataset.avatarId = key;
+      sw.addEventListener('click', () => {
+        selectedAvatarId = key;
+        renderAvatarSwatches();
+        renderAvatarView();
+      });
+      row.appendChild(sw);
+    });
+  }
+
+  function chip(text) {
+    const span = document.createElement('span');
+    span.className = 'chip';
+    span.textContent = text;
+    return span;
+  }
+
+  function setupToggleGroup(containerId, selectedValues, isMulti, onSelect) {
+    const container = document.getElementById(containerId);
+    container.querySelectorAll('.toggle-btn').forEach((btn) => {
+      const val = btn.dataset.value;
+      if (isMulti ? selectedValues.includes(val) : selectedValues === val) {
+        btn.classList.add('active');
+      }
+      btn.addEventListener('click', () => {
+        if (isMulti) {
+          const idx = multiSelectState[onSelect].indexOf(val);
+          if (idx > -1) {
+            multiSelectState[onSelect].splice(idx, 1);
+            btn.classList.remove('active');
+          } else {
+            multiSelectState[onSelect].push(val);
+            btn.classList.add('active');
+          }
+        } else {
+          container.querySelectorAll('.toggle-btn').forEach((b) => b.classList.remove('active'));
+          btn.classList.add('active');
+          if (onSelect === 'experience') selectedExperience = val;
+          if (onSelect === 'usertype') selectedUserType = val;
+          if (onSelect === 'risk') selectedRisk = val;
+        }
+      });
+    });
+  }
+
+  async function loadProfile() {
+    const token = window.TradePilotAuth.getToken();
+    const res = await fetch(API_AUTH + '/me', { headers: { Authorization: 'Bearer ' + token } });
+    const data = await res.json();
+    if (!data.user) return;
+
+    currentUser = data.user;
+    selectedAvatarId = currentUser.avatarId || 'slate';
+
+    document.getElementById('profile-name-view').textContent = currentUser.name || '—';
+    document.getElementById('profile-email-view').textContent = currentUser.email || '—';
+    document.getElementById('profile-phone-view').textContent = currentUser.phone || 'No phone number added';
+    document.getElementById('profile-member-since').textContent = currentUser.createdAt
+      ? 'Member since ' + new Date(currentUser.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'long' })
+      : '';
+
+    document.getElementById('settings-name').value = currentUser.name || '';
+    document.getElementById('settings-email').value = currentUser.email || '';
+    document.getElementById('settings-phone').value = currentUser.phone || '';
+
+    renderAvatarView();
+    renderAvatarSwatches();
+  }
+
+  async function loadInvestorProfile() {
+    const res = await fetch(API_ONBOARDING, { headers: window.TradePilotAuth.authHeader() });
+    const data = await res.json();
+    const prefs = data.preferences || {};
+
+    document.getElementById('ip-experience').textContent = prefs.experience_level || 'Not set';
+    document.getElementById('ip-usertype').textContent = prefs.user_type || 'Not set';
+    document.getElementById('ip-risk').textContent = prefs.risk_preference || 'Not set';
+    document.getElementById('ip-learning').textContent = prefs.learning_preference || 'Not set';
+
+    const goalsWrap = document.getElementById('ip-goals');
+    goalsWrap.innerHTML = '';
+    (prefs.goals || []).forEach((g) => goalsWrap.appendChild(chip(g)));
+    if (!prefs.goals || prefs.goals.length === 0) goalsWrap.appendChild(chip('None set'));
+
+    const sectorsWrap = document.getElementById('ip-sectors');
+    sectorsWrap.innerHTML = '';
+    (prefs.favorite_sectors || []).forEach((s) => sectorsWrap.appendChild(chip(s)));
+    if (!prefs.favorite_sectors || prefs.favorite_sectors.length === 0) sectorsWrap.appendChild(chip('None set'));
+
+    // Pre-fill the edit form with current values
+    selectedExperience = prefs.experience_level || null;
+    selectedUserType = prefs.user_type || null;
+    selectedRisk = prefs.risk_preference || null;
+    multiSelectState.learningPreference = prefs.learning_preference
+      ? prefs.learning_preference.split(',').map((s) => s.trim()).filter(Boolean)
+      : [];
+    multiSelectState.goals = prefs.goals || [];
+    multiSelectState.sectors = prefs.favorite_sectors || [];
+
+    setupToggleGroup('edit-experience', selectedExperience, false, 'experience');
+    setupToggleGroup('edit-usertype', selectedUserType, false, 'usertype');
+    setupToggleGroup('edit-risk', selectedRisk, false, 'risk');
+    setupToggleGroup('edit-learning', multiSelectState.learningPreference, true, 'learningPreference');
+    setupToggleGroup('edit-goals', multiSelectState.goals, true, 'goals');
+    setupToggleGroup('edit-sectors', multiSelectState.sectors, true, 'sectors');
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    loadProfile();
+    loadInvestorProfile();
+
+    document.getElementById('open-avatar-picker-btn').addEventListener('click', () => {
+      document.getElementById('avatar-picker').classList.toggle('hidden');
+    });
+
+    document.getElementById('save-avatar-btn').addEventListener('click', async () => {
+      try {
+        const res = await fetch(API_AUTH + '/profile', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', ...window.TradePilotAuth.authHeader() },
+          body: JSON.stringify({ avatarId: selectedAvatarId })
+        });
+        const data = await res.json();
+        if (!res.ok) return showBanner(data.error || 'Could not save avatar.', true);
+
+        localStorage.setItem('tradepilot_token', data.token);
+        localStorage.setItem('tradepilot_user', JSON.stringify(data.user));
+        showBanner('Avatar updated.', false);
+        document.getElementById('avatar-picker').classList.add('hidden');
+        loadProfile();
+      } catch (err) {
+        showBanner('Network error saving avatar.', true);
+      }
+    });
+
+    const settingsModal = document.getElementById('settings-modal');
+    const settingsDialog = document.getElementById('settings-dialog');
+    const openSettingsBtn = document.getElementById('open-settings-btn');
+    const closeSettingsBtn = document.getElementById('close-settings-btn');
+
+    function openSettings() {
+      settingsModal.classList.remove('hidden');
+      settingsModal.classList.add('flex');
+    }
+    function closeSettings() {
+      settingsModal.classList.add('hidden');
+      settingsModal.classList.remove('flex');
+    }
+
+    openSettingsBtn.addEventListener('click', openSettings);
+    closeSettingsBtn.addEventListener('click', closeSettings);
+
+    // Click the dark backdrop (anywhere outside the dialog box) to close
+    settingsModal.addEventListener('click', (e) => {
+      if (!settingsDialog.contains(e.target)) closeSettings();
+    });
+
+    // Escape key closes it too
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !settingsModal.classList.contains('hidden')) closeSettings();
+    });
+
+    // Show/hide typed password
+    document.getElementById('show-current-password').addEventListener('change', function () {
+      document.getElementById('current-password').type = this.checked ? 'text' : 'password';
+    });
+    document.getElementById('show-new-password').addEventListener('change', function () {
+      document.getElementById('new-password').type = this.checked ? 'text' : 'password';
+    });
+
+    document.getElementById('save-details-btn').addEventListener('click', async () => {
+      const name = document.getElementById('settings-name').value.trim();
+      const phone = document.getElementById('settings-phone').value.trim();
+      if (!name) return showMsg('details-error', 'Please enter your name.', true);
+
+      try {
+        const res = await fetch(API_AUTH + '/profile', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', ...window.TradePilotAuth.authHeader() },
+          body: JSON.stringify({ name, phone })
+        });
+        const data = await res.json();
+        if (!res.ok) return showMsg('details-error', data.error || 'Could not save changes.', true);
+
+        localStorage.setItem('tradepilot_token', data.token);
+        localStorage.setItem('tradepilot_user', JSON.stringify(data.user));
+        showMsg('details-success', 'Profile details updated.', false);
+        loadProfile();
+      } catch (err) {
+        showMsg('details-error', 'Network error saving changes.', true);
+      }
+    });
+
+    document.getElementById('save-password-btn').addEventListener('click', async () => {
+      const currentPassword = document.getElementById('current-password').value;
+      const newPassword = document.getElementById('new-password').value;
+
+      try {
+        const res = await fetch(API_AUTH + '/change-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...window.TradePilotAuth.authHeader() },
+          body: JSON.stringify({ currentPassword, newPassword })
+        });
+        const data = await res.json();
+        if (!res.ok) return showMsg('password-error', data.error || 'Could not update password.', true);
+
+        document.getElementById('current-password').value = '';
+        document.getElementById('new-password').value = '';
+        showMsg('password-success', 'Password updated.', false);
+      } catch (err) {
+        showMsg('password-error', 'Network error updating password.', true);
+      }
+    });
+
+    document.getElementById('save-investor-btn').addEventListener('click', async () => {
+      try {
+        const res = await fetch(API_ONBOARDING, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...window.TradePilotAuth.authHeader() },
+          body: JSON.stringify({
+            experienceLevel: selectedExperience,
+            userType: selectedUserType,
+            riskPreference: selectedRisk,
+            learningPreference: multiSelectState.learningPreference,
+            goals: multiSelectState.goals,
+            sectors: multiSelectState.sectors
+            // watchlist/portfolio intentionally omitted — leaves existing holdings untouched
+          })
+        });
+        const data = await res.json();
+        if (!res.ok) return showMsg('investor-error', data.error || 'Could not save investor profile.', true);
+
+        showMsg('investor-success', 'Investor profile updated.', false);
+        loadInvestorProfile();
+      } catch (err) {
+        showMsg('investor-error', 'Network error saving investor profile.', true);
+      }
+    });
+
+    document.getElementById('profile-logout-btn').addEventListener('click', () => {
+      if (confirm('Log out of TradePilot?')) {
+        window.TradePilotAuth.logout();
+      }
+    });
+  });
+})();
+</script>
+</body></html>

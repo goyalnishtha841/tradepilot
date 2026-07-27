@@ -1,4 +1,4 @@
-// Shared auth logic: protects app pages, wires up the account icon (sign in / log out).
+// Shared auth logic: protects app pages, wires up the account icon (sign in / profile).
 window.TradePilotAuth = {
   getToken: function () {
     return localStorage.getItem('tradepilot_token');
@@ -23,6 +23,23 @@ window.TradePilotAuth = {
     window.location.href = '/signin';
   }
 };
+
+// Shared avatar palette — same keys/hex used on the Profile page's avatar picker,
+// so whatever a user picks there renders identically here in the nav.
+window.TradePilotAvatarColors = {
+  slate: '#565e74',
+  blue: '#3b82f6',
+  green: '#10b981',
+  purple: '#8b5cf6',
+  pink: '#ec4899',
+  orange: '#f97316',
+  teal: '#14b8a6',
+  red: '#ef4444'
+};
+
+function tradepilotInitial(name) {
+  return name && name.trim() ? name.trim()[0].toUpperCase() : '?';
+}
 
 document.addEventListener('DOMContentLoaded', function () {
   const requiresAuth = document.body.getAttribute('data-auth') === 'required';
@@ -61,10 +78,14 @@ document.addEventListener('DOMContentLoaded', function () {
             id: data.user.id,
             name: data.user.name,
             email: data.user.email,
+            phone: data.user.phone,
+            avatarId: data.user.avatarId,
+            createdAt: data.user.createdAt,
             onboardingCompleted: data.user.onboardingCompleted
           };
 
           localStorage.setItem('tradepilot_user', JSON.stringify(updatedUser));
+          renderNavAvatar(updatedUser);
 
           if (!data.user.onboardingCompleted && !isOnboardingPage && requiresAuth) {
             window.location.href = '/onboarding';
@@ -76,25 +97,27 @@ document.addEventListener('DOMContentLoaded', function () {
       .catch(err => console.error('Failed to sync auth session:', err));
   }
 
-  // Wire up the account icon in the top nav
+  // Wire up the account icon in the top nav — now a real profile link, not a logout trap
   const accountBtn = document.getElementById('nav-account-btn');
 
   if (accountBtn) {
     if (token && user) {
-      accountBtn.title = 'Signed in as ' + user.name + ' — click to log out';
-      accountBtn.setAttribute('href', '#');
-
-      accountBtn.addEventListener('click', function (e) {
-        e.preventDefault();
-
-        if (confirm('Log out of TradePilot?')) {
-          window.TradePilotAuth.logout();
-        }
-      });
+      accountBtn.title = 'View profile — ' + user.name;
+      accountBtn.setAttribute('href', '/profile');
+      renderNavAvatar(user);
     } else {
       accountBtn.title = 'Sign in';
       accountBtn.setAttribute('href', '/signin');
     }
+  }
+
+  function renderNavAvatar(u) {
+    if (!accountBtn || !u) return;
+    const color = (window.TradePilotAvatarColors[u.avatarId] || window.TradePilotAvatarColors.slate);
+    accountBtn.classList.remove('material-symbols-outlined');
+    accountBtn.innerHTML =
+      '<span style="display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:9999px;background:' +
+      color + ';color:#fff;font-size:13px;font-weight:700;">' + tradepilotInitial(u.name) + '</span>';
   }
 
   // Wire up the AI sidebar toggle
@@ -114,6 +137,26 @@ document.addEventListener('DOMContentLoaded', function () {
         aiSidebar.classList.add('translate-x-full');
         aiSidebar.classList.remove('translate-x-0');
       }
+    });
+  }
+// Dark mode: applied consistently on every page that includes this script,
+  // persisted the same way settings.html already does (localStorage key
+  // 'tradepilot_dark_mode', 'dark' class on <html>).
+  const darkModeEnabled = localStorage.getItem('tradepilot_dark_mode') === 'true';
+  document.documentElement.classList.toggle('dark', darkModeEnabled);
+
+  const darkModeIconToggle = document.getElementById('dark-mode-icon-toggle');
+  if (darkModeIconToggle) {
+    // Some pages put the icon text directly on the button, others nest it in a
+    // <span class="material-symbols-outlined"> — handle both without needing
+    // to restructure every page's markup.
+    const iconTarget = darkModeIconToggle.querySelector('.material-symbols-outlined') || darkModeIconToggle;
+    iconTarget.textContent = darkModeEnabled ? 'light_mode' : 'dark_mode';
+    darkModeIconToggle.addEventListener('click', function () {
+      const newState = localStorage.getItem('tradepilot_dark_mode') !== 'true';
+      localStorage.setItem('tradepilot_dark_mode', String(newState));
+      document.documentElement.classList.toggle('dark', newState);
+      iconTarget.textContent = newState ? 'light_mode' : 'dark_mode';
     });
   }
 });

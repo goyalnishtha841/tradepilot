@@ -4,6 +4,7 @@ const { requireAuth } = require('./auth');
 const { getRealQuote, getHistoricalData, getFundamentals, getNews, searchSymbols, getRealQuoteWithSector } = require('./yahoo-finance');
 const { getMockQuote, LEGIT_SYMBOLS } = require('./mock-market');
 const { getAIAnalysis } = require('./ai-analysis');
+const { SECTOR_NAMES, getStocksForSector } = require('./sector-stocks');
 
 const router = express.Router();
 const VALID_RANGES = ['1D', '1W', '1M', '3M', '1Y'];
@@ -12,10 +13,66 @@ function isValidSymbol(symbol) {
   return typeof symbol === 'string' && /^[A-Za-z0-9.\-]{1,15}$/.test(symbol.trim());
 }
 
+let showcaseCache = null;
+let showcaseCacheTime = 0;
+const SHOWCASE_CACHE_MS = 60 * 1000; // 1 minute — public page, keep Yahoo calls light
+
+// GET /api/market/showcase — public, no auth. Real live data for the homepage
+// hero visual (not personalized — nobody's logged in there). Fixed to NVDA so
+// it can be cached and doesn't accept arbitrary symbols from anonymous callers.
+router.get('/showcase', async (req, res) => {
+  try {
+    if (showcaseCache && Date.now() - showcaseCacheTime < SHOWCASE_CACHE_MS) {
+      return res.json(showcaseCache);
+    }
+    const [quote, chart] = await Promise.all([
+      getRealQuote('NVDA'),
+      getHistoricalData('NVDA', '1M')
+    ]);
+    const closes = (chart.points || chart.data || []).map((p) => p.close ?? p.price ?? p.y).filter((v) => typeof v === 'number');
+    const payload = {
+      symbol: 'NVDA',
+      name: 'NVIDIA Corporation',
+      price: quote.price,
+      changePercent: quote.changePercent,
+      sparkline: closes.length ? closes : null,
+      generatedAt: new Date().toISOString()
+    };
+    showcaseCache = payload;
+    showcaseCacheTime = Date.now();
+    res.json(payload);
+  } catch (err) {
+    console.error('Showcase quote error:', err.message, err.stack ? '\n' + err.stack : '');
+    if (showcaseCache) return res.json(showcaseCache); // serve stale cache over an error
+    res.status(502).json({ error: 'Live showcase data unavailable right now.' });
+  }
+});
+
 // GET /api/market/symbols
 // Used by the dashboard/watchlist autocomplete dropdown for suggestions as you type.
 router.get('/symbols', requireAuth, (req, res) => {
   res.json({ symbols: LEGIT_SYMBOLS });
+});
+
+// GET /api/market/sectors
+// Used by the Explore page's beginner-friendly "pick a sector first" flow.
+router.get('/sectors', requireAuth, (req, res) => {
+  res.json({ sectors: SECTOR_NAMES });
+});
+
+// GET /api/market/sector-stocks?sector=Technology
+// Returns ~10 well-known stocks for the chosen sector, so a beginner can browse
+// by sector before they know any ticker symbols.
+router.get('/sector-stocks', requireAuth, (req, res) => {
+  const { sector } = req.query;
+  if (!sector || typeof sector !== 'string') {
+    return res.status(400).json({ error: 'Please provide a sector.' });
+  }
+  const stocks = getStocksForSector(sector);
+  if (stocks.length === 0) {
+    return res.status(404).json({ error: `No stock list available for "${sector}".` });
+  }
+  res.json({ sector, stocks });
 });
 
 // GET /api/market/search?q=QUERY — search Yahoo Finance for symbols/names dynamically

@@ -286,14 +286,42 @@ async function getNews(symbolRaw, count = 2) {
   const data = await res.json();
   const rawNews = Array.isArray(data.news) ? data.news : [];
 
-  // The article's true subject is (almost always) listed FIRST in relatedTickers.
-  // This is a much stronger signal than just "does the array include this symbol somewhere" —
-  // it filters out broad market/ETF roundups that just mention the symbol in passing.
-  const relevant = rawNews.filter((item) =>
-    Array.isArray(item.relatedTickers) &&
-    item.relatedTickers.length > 0 &&
-    item.relatedTickers[0] === symbol
-  );
+  // Some auto-generated content (bot-written "Earnings Call Summary" articles,
+  // generic listicles) gets mistagged by Yahoo with a trending/high-traffic
+  // ticker's relatedTickers regardless of what the article is actually about.
+  // Look up the company name so we can double-check the title genuinely
+  // references this company, not just trust the (possibly wrong) tag.
+  let nameNeedle = null;
+  try {
+    const fundamentals = await getFundamentals(symbol);
+    if (fundamentals && fundamentals.companyName) {
+      // "NVIDIA Corporation" -> "nvidia" — first word is usually enough to match
+      // real headlines ("Nvidia surges...") without being overly strict.
+      nameNeedle = fundamentals.companyName.split(/[\s,]+/)[0].toLowerCase();
+    }
+  } catch (err) {
+    // Non-fatal — fall back to symbol-only matching below if this fails.
+  }
+
+// The title actually naming the company (or its symbol) is a far more reliable
+  // signal than Yahoo's relatedTickers tag — auto-generated "Earnings Call
+  // Summary" spam gets mistagged with trending tickers regardless of subject,
+  // while genuine coverage of a company almost always names it in the title.
+  // So: if we know the company name, trust the title check alone rather than
+  // requiring both — requiring both was too strict and hid real coverage.
+  const relevant = rawNews.filter((item) => {
+    const title = (item.title || '').toLowerCase();
+
+    if (nameNeedle) {
+      return title.includes(symbol.toLowerCase()) || title.includes(nameNeedle);
+    }
+
+    // Couldn't resolve a company name to check the title against — fall back
+    // to the original tag-based signal so behavior doesn't regress to "show everything".
+    return Array.isArray(item.relatedTickers) &&
+      item.relatedTickers.length > 0 &&
+      item.relatedTickers[0] === symbol;
+  });
 
   // Deliberately do NOT pad with broader/looser matches if fewer than `count` qualify —
   // showing fewer genuinely relevant articles beats padding with noise.
@@ -311,6 +339,34 @@ async function getNews(symbolRaw, count = 2) {
       thumbnail
     };
   });
+}
+
+// Lighter-weight variant for broad-market/index/ETF symbols (SPY, QQQ, DIA, etc.)
+// used as a general "market news" stand-in. getNews()'s relevance filter needs a
+// resolvable company name (via getFundamentals) or a strict relatedTickers[0]
+// match — ETFs have neither, so it was silently returning empty for these and
+// killing the market-headlines fallback. Here we just require a real title/link,
+// since for a broad market ticker almost anything Yahoo tags to it is on-topic.
+async function getRawNews(symbolRaw, count = 6) {
+  const symbol = symbolRaw.trim().toUpperCase();
+  const url = `${YAHOO_BASE}/v1/finance/search?q=${encodeURIComponent(symbol)}&newsCount=25&quotesCount=0`;
+  const res = await fetch(url, { headers: { 'User-Agent': USER_AGENT } });
+
+  if (res.status === 404) throw new Error('SYMBOL_NOT_FOUND');
+  if (!res.ok) throw new Error(`Yahoo Finance request failed: ${res.status}`);
+
+  const data = await res.json();
+  const rawNews = Array.isArray(data.news) ? data.news : [];
+
+  return rawNews
+    .filter((item) => item && item.title && item.link)
+    .slice(0, count)
+    .map((item) => ({
+      title: item.title,
+      publisher: item.publisher || 'Unknown source',
+      link: item.link,
+      publishedAt: typeof item.providerPublishTime === 'number' ? item.providerPublishTime * 1000 : null
+    }));
 }
 
 // ---------- Component 5: Market-wide Gainers/Losers ----------
@@ -361,4 +417,4 @@ async function searchSymbols(query) {
   }));
 }
 
-module.exports = { getRealQuote, getHistoricalData, getFundamentals, getNews, getMarketMovers, searchSymbols, getRealQuoteWithSector };
+module.exports = { getRealQuote, getHistoricalData, getFundamentals, getNews, getRawNews, getMarketMovers, searchSymbols, getRealQuoteWithSector };

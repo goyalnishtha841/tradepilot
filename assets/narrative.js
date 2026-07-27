@@ -247,29 +247,74 @@
     async function askFollowup(question) {
       if (!question || !question.trim()) return;
       followupAnswer.classList.remove('hidden');
+      followupAnswer.classList.remove('text-error', 'dark:text-dark-error');
       followupAnswer.textContent = 'Thinking…';
       const originalBtnText = followupBtn.textContent;
       followupBtn.disabled = true;
       followupBtn.textContent = '...';
+      let cooldownStarted = false;
 
       const context = lastNarrative
         ? `Market Pulse summary — Market Overview: ${lastNarrative.marketOverview} Sector Movement: ${lastNarrative.sectorMovement} Portfolio Relevance: ${lastNarrative.portfolioRelevance}`
         : "Today's market summary hasn't loaded yet for this user.";
 
       try {
-        const res = await fetch('/api/chat', {
+        const res = await fetch('/api/narrative/followup', {
           method: 'POST',
           headers: authHeaders({ 'Content-Type': 'application/json' }),
           body: JSON.stringify({ message: question, context })
         });
         const data = await res.json();
-        followupAnswer.textContent = res.ok ? data.reply : (data.error || 'Something went wrong.');
+
+        if (res.status === 429) {
+          followupAnswer.classList.add('text-error', 'dark:text-dark-error');
+          followupAnswer.textContent = data.error || "You're asking a lot of questions — please slow down a little.";
+          startFollowupCooldown(data.retryAfterSeconds || 0);
+          cooldownStarted = true;
+          return;
+        }
+
+        if (!res.ok) {
+          followupAnswer.classList.add('text-error', 'dark:text-dark-error');
+          followupAnswer.textContent = data.error || 'Something went wrong.';
+          return;
+        }
+
+        followupAnswer.textContent = data.reply;
       } catch (err) {
+        followupAnswer.classList.add('text-error', 'dark:text-dark-error');
         followupAnswer.textContent = 'Could not reach the AI server.';
       } finally {
-        followupBtn.disabled = false;
-        followupBtn.textContent = originalBtnText;
+        // Don't clobber the cooldown countdown that startFollowupCooldown just set.
+        if (!cooldownStarted) {
+          followupBtn.disabled = false;
+          followupBtn.textContent = originalBtnText;
+        }
       }
+    }
+
+    // While a rate-limit cooldown is active, disable the button and count down
+    // so it's obvious why nothing is happening instead of it just looking broken.
+    let followupCooldownInterval = null;
+    function startFollowupCooldown(seconds) {
+      if (!followupBtn || seconds <= 0) return;
+      if (followupCooldownInterval) clearInterval(followupCooldownInterval);
+
+      let remaining = seconds;
+      followupBtn.disabled = true;
+      followupBtn.textContent = `Wait ${remaining}s`;
+
+      followupCooldownInterval = setInterval(() => {
+        remaining -= 1;
+        if (remaining <= 0) {
+          clearInterval(followupCooldownInterval);
+          followupCooldownInterval = null;
+          followupBtn.disabled = false;
+          followupBtn.textContent = 'Analyze';
+        } else {
+          followupBtn.textContent = `Wait ${remaining}s`;
+        }
+      }, 1000);
     }
 
     if (followupBtn) {
@@ -314,9 +359,9 @@
           sectorMomentumGrid.innerHTML = data.sectorPerformance.map((s) => {
             let bg, text;
             if (s.changePercent >= 1) { bg = 'bg-emerald-500'; text = 'text-white'; }
-            else if (s.changePercent > 0) { bg = 'bg-emerald-100'; text = 'text-emerald-800'; }
-            else if (s.changePercent === 0) { bg = 'bg-surface-container'; text = 'text-on-surface-variant'; }
-            else if (s.changePercent > -1) { bg = 'bg-rose-100'; text = 'text-rose-800'; }
+            else if (s.changePercent > 0) { bg = 'bg-emerald-100 dark:bg-emerald-900/40'; text = 'text-emerald-800 dark:text-emerald-300'; }
+            else if (s.changePercent === 0) { bg = 'bg-surface-container dark:bg-dark-surface-container'; text = 'text-on-surface-variant dark:text-dark-on-surface-variant'; }
+            else if (s.changePercent > -1) { bg = 'bg-rose-100 dark:bg-rose-900/40'; text = 'text-rose-800 dark:text-rose-300'; }
             else { bg = 'bg-rose-500'; text = 'text-white'; }
             return `<div data-hover-tile class="rounded-xl flex flex-col items-center justify-center gap-1 py-md px-xs ${bg} ${text}">
               <span class="text-label-sm font-bold">${s.sector}</span>
@@ -328,11 +373,11 @@
         // Sector performance grid (detailed cards)
         if (sectorPerfGrid) {
           sectorPerfGrid.innerHTML = data.sectorPerformance.map((s) => {
-            const color = s.changePercent > 0 ? 'text-green-600' : s.changePercent < 0 ? 'text-red-600' : 'text-on-surface-variant';
-            return `<div class="p-md rounded-xl bg-surface-container-low border border-outline-variant/20 hover:border-primary transition-all">
-              <div class="text-label-sm font-label-sm text-on-surface-variant mb-xs">${s.sector}</div>
+            const color = s.changePercent > 0 ? 'text-green-600 dark:text-green-400' : s.changePercent < 0 ? 'text-red-600 dark:text-red-400' : 'text-on-surface-variant dark:text-dark-on-surface-variant';
+            return `<div class="p-md rounded-xl bg-surface-container-low dark:bg-dark-surface-container border border-outline-variant/20 hover:border-primary transition-all">
+              <div class="text-label-sm font-label-sm text-on-surface-variant dark:text-dark-on-surface-variant mb-xs">${s.sector}</div>
               <div class="text-headline-sm font-headline-sm ${color}">${s.changePercent > 0 ? '+' : ''}${s.changePercent}%</div>
-              <div class="mt-sm text-label-sm font-label-sm text-on-surface-variant">${s.symbol}${s.simulated ? ' · simulated' : ''}</div>
+              <div class="mt-sm text-label-sm font-label-sm text-on-surface-variant dark:text-dark-on-surface-variant">${s.symbol}${s.simulated ? ' · simulated' : ''}</div>
             </div>`;
           }).join('');
         }
@@ -341,26 +386,26 @@
         function renderMoversList(el, items, colorClass) {
           if (!el) return;
           if (!items.length) {
-            el.innerHTML = '<p class="text-label-sm text-on-surface-variant">No movers found right now.</p>';
+            el.innerHTML = '<p class="text-label-sm text-on-surface-variant dark:text-dark-on-surface-variant">No movers found right now.</p>';
             return;
           }
           el.innerHTML = items.map((s) => `
             <div class="flex items-start justify-between">
               <div class="flex gap-md">
-                <div class="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center font-bold">${s.symbol.slice(0, 2)}</div>
+                <div class="w-12 h-12 rounded-full bg-surface-container dark:bg-dark-surface-container flex items-center justify-center font-bold text-on-surface dark:text-dark-on-surface">${s.symbol.slice(0, 2)}</div>
                 <div>
-                  <h4 class="font-semibold text-body-md">${s.symbol}</h4>
-                  <p class="text-label-sm font-label-sm text-on-surface-variant">${s.name}${s.simulated ? ' · simulated' : ''}</p>
+                  <h4 class="font-semibold text-body-md text-on-surface dark:text-dark-on-surface">${s.symbol}</h4>
+                  <p class="text-label-sm font-label-sm text-on-surface-variant dark:text-dark-on-surface-variant">${s.name}${s.simulated ? ' · simulated' : ''}</p>
                 </div>
               </div>
               <div class="text-right">
                 <div class="${colorClass} font-bold">${s.changePercent > 0 ? '+' : ''}${s.changePercent}%</div>
-                <div class="text-label-sm text-on-surface-variant">$${s.price}</div>
+                <div class="text-label-sm text-on-surface-variant dark:text-dark-on-surface-variant">$${s.price}</div>
               </div>
             </div>`).join('');
         }
-        renderMoversList(gainersList, data.gainers, 'text-green-600');
-        renderMoversList(losersList, data.losers, 'text-red-600');
+        renderMoversList(gainersList, data.gainers, 'text-green-600 dark:text-green-400');
+        renderMoversList(losersList, data.losers, 'text-red-600 dark:text-red-400');
         const scopeLabel = data.moversScope === 'market-wide' ? 'Market-wide' : 'Limited universe';
         const gainersScopeBadge = document.getElementById('gainers-scope-badge');
         const losersScopeBadge = document.getElementById('losers-scope-badge');
@@ -370,29 +415,29 @@
         // Direct Financial Impact
         if (dfiContent) {
           if (!data.directFinancialImpact) {
-            dfiContent.innerHTML = '<p class="text-body-md text-on-surface-variant">Add holdings to your Portfolio to see today\'s real financial impact here.</p>';
+            dfiContent.innerHTML = '<p class="text-body-md text-on-surface-variant dark:text-dark-on-surface-variant">Add holdings to your Portfolio to see today\'s real financial impact here.</p>';
             if (dfiBadge) dfiBadge.textContent = 'No holdings';
           } else {
             const impact = data.directFinancialImpact;
             const isUp = impact.totalDollarChange >= 0;
-            const color = isUp ? 'text-green-600' : 'text-red-600';
+            const color = isUp ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400';
             if (dfiBadge) dfiBadge.textContent = impact.anySimulated ? 'Partially simulated' : 'Live';
             dfiContent.innerHTML = `
               <div class="flex items-baseline gap-sm mb-lg">
                 <span class="text-display-lg font-bold ${color}">${isUp ? '+' : ''}$${Math.abs(impact.totalDollarChange).toLocaleString()}</span>
-                <span class="text-title-md font-semibold ${color} ${isUp ? 'bg-green-50' : 'bg-red-50'} px-2 py-0.5 rounded">today, from your holdings</span>
+                <span class="text-title-md font-semibold ${color} ${isUp ? 'bg-green-50 dark:bg-green-900/30' : 'bg-red-50 dark:bg-red-900/30'} px-2 py-0.5 rounded">today, from your holdings</span>
               </div>
               <div class="space-y-sm">
                 ${impact.movers.map((m) => {
                   const mUp = m.dollarChange >= 0;
-                  const severityColor = m.severity === 'Critical' ? 'text-red-600' : m.severity === 'Medium' ? 'text-orange-500' : 'text-on-surface-variant';
-                  return `<div class="p-sm bg-surface-container-low rounded-xl border border-outline-variant/20 flex items-center justify-between">
+                  const severityColor = m.severity === 'Critical' ? 'text-red-600 dark:text-red-400' : m.severity === 'Medium' ? 'text-orange-500 dark:text-orange-400' : 'text-on-surface-variant dark:text-dark-on-surface-variant';
+                  return `<div class="p-sm bg-surface-container-low dark:bg-dark-surface-container rounded-xl border border-outline-variant/20 flex items-center justify-between">
                     <div class="flex items-center gap-md">
-                      <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center font-bold text-xs border border-outline-variant/10">${m.symbol.slice(0, 3)}</div>
-                      <div class="text-label-md font-bold">${m.symbol}</div>
+                      <div class="w-10 h-10 rounded-full bg-white dark:bg-dark-surface-container flex items-center justify-center font-bold text-xs text-on-surface dark:text-dark-on-surface border border-outline-variant/10">${m.symbol.slice(0, 3)}</div>
+                      <div class="text-label-md font-bold text-on-surface dark:text-dark-on-surface">${m.symbol}</div>
                     </div>
                     <div class="text-right">
-                      <div class="text-label-md font-bold ${mUp ? 'text-green-600' : 'text-red-600'}">${mUp ? '+' : ''}$${Math.abs(m.dollarChange).toLocaleString()}</div>
+                      <div class="text-label-md font-bold ${mUp ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}">${mUp ? '+' : ''}$${Math.abs(m.dollarChange).toLocaleString()}</div>
                       <div class="text-label-sm ${severityColor}">${m.severity} · ${m.changePercent > 0 ? '+' : ''}${m.changePercent}%</div>
                     </div>
                   </div>`;
@@ -414,19 +459,19 @@
             const minsAgo = Math.max(1, Math.round((Date.now() - n.publishedAt) / 60000));
             const timeLabel = minsAgo < 60 ? `${minsAgo} mins ago` : `${Math.round(minsAgo / 60)} hr ago`;
             return `<a href="${n.link || '#'}" target="_blank" rel="noopener" class="flex gap-md group cursor-pointer border-b border-outline-variant/10 pb-md block">
-              <div class="w-12 h-12 rounded-lg bg-blue-100 flex-shrink-0 flex items-center justify-center text-blue-700 font-bold text-[10px]">NEWS</div>
+              <div class="w-12 h-12 rounded-lg bg-blue-100 dark:bg-blue-900/40 flex-shrink-0 flex items-center justify-center text-blue-700 dark:text-blue-300 font-bold text-[10px]">NEWS</div>
               <div>
                 <div class="flex items-center gap-sm">
-                  <span class="text-label-sm font-label-sm text-blue-600 font-bold">${n.publisher}</span>
-                  <span class="text-label-sm font-label-sm text-on-surface-variant">${timeLabel}</span>
+                  <span class="text-label-sm font-label-sm text-blue-600 dark:text-blue-400 font-bold">${n.publisher}</span>
+                  <span class="text-label-sm font-label-sm text-on-surface-variant dark:text-dark-on-surface-variant">${timeLabel}</span>
                 </div>
-                <h4 class="text-body-md font-body-md font-semibold group-hover:text-primary transition-colors">${n.title}</h4>
+                <h4 class="text-body-md font-body-md font-semibold text-on-surface dark:text-dark-on-surface group-hover:text-primary transition-colors">${n.title}</h4>
               </div>
             </a>`;
           }
 
           if (!data.narrativeFeed.length) {
-            feedList.innerHTML = '<p class="text-label-sm text-on-surface-variant">No news in the last 24 hours for your tracked symbols.</p>';
+            feedList.innerHTML = '<p class="text-label-sm text-on-surface-variant dark:text-dark-on-surface-variant">No news in the last 24 hours for your tracked symbols.</p>';
             if (moreBtn) moreBtn.classList.add('hidden');
           } else {
             feedList.innerHTML = data.narrativeFeed.slice(0, 3).map(newsItemHtml).join('');
