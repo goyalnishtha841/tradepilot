@@ -5,7 +5,10 @@ const db = require('./db');
 const { requireAuth } = require('./auth');
 const { getMockQuote } = require('./mock-market');
 
-const SYMBOLS = ['AAPL', 'AMZN', 'BTC', 'GOOGL', 'MSFT', 'NVDA', 'SPY', 'TSLA', 'XOM'];
+const SYMBOLS = [
+  'AAPL', 'AMZN', 'BTC', 'GOOGL', 'MSFT', 'NVDA', 'SPY', 'TSLA', 'XOM',
+  'RELIANCE', 'TCS', 'INFY', 'HDFCBANK', 'SBIN', 'ICICIBANK', 'TATAMOTORS', 'BHARTIARTL', 'TATASTEEL', 'LARSEN'
+];
 
 // Simple in-memory cache: refresh real prices at most once per 20 seconds
 let priceCache = null;
@@ -13,11 +16,13 @@ let priceCacheTime = 0;
 const PRICE_CACHE_TTL_MS = 20_000;
 
 /**
- * Fetch real-time stock quote from Finnhub API
+ * Fetch real-time stock quote from Finnhub API or fallback to mock
  */
 async function fetchFinnhubQuote(symbol) {
   const apiKey = process.env.FINNHUB_API_KEY;
-  if (!apiKey) return getMockQuote(symbol);
+  const isIndian = ['RELIANCE', 'TCS', 'INFY', 'HDFCBANK', 'SBIN', 'ICICIBANK', 'TATAMOTORS', 'BHARTIARTL', 'TATASTEEL', 'LARSEN'].includes(symbol);
+
+  if (!apiKey || isIndian) return getMockQuote(symbol);
 
   try {
     const finnSymbol = symbol === 'BTC' ? 'BINANCE:BTCUSDT' : symbol;
@@ -90,7 +95,7 @@ router.get('/news/:symbol', async (req, res) => {
     const articles = await response.json();
     if (!Array.isArray(articles)) return res.json({ news: [] });
 
-    const news = articles.slice(0, 4).map(a => ({
+    const news = articles.slice(0, 5).map(a => ({
       headline: a.headline || `${symbol} Market News`,
       summary: a.summary || '',
       url: a.url || `https://finnhub.io`,
@@ -110,32 +115,42 @@ router.get('/fundamentals/:symbol', async (req, res) => {
   try {
     const symbol = req.params.symbol.toUpperCase();
     const apiKey = process.env.FINNHUB_API_KEY;
-    if (!apiKey) return res.json({ fundamentals: null });
+    const isIndian = ['RELIANCE', 'TCS', 'INFY', 'HDFCBANK', 'SBIN', 'ICICIBANK', 'TATAMOTORS', 'BHARTIARTL', 'TATASTEEL', 'LARSEN'].includes(symbol);
 
-    const finnSymbol = symbol === 'BTC' ? 'BINANCE:BTCUSDT' : symbol;
-    const [profRes, metricRes] = await Promise.all([
-      fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${encodeURIComponent(finnSymbol)}&token=${apiKey}`),
-      fetch(`https://finnhub.io/api/v1/stock/metric?symbol=${encodeURIComponent(finnSymbol)}&metric=all&token=${apiKey}`)
-    ]);
+    let profile = {};
+    let metrics = {};
+    if (apiKey && !isIndian) {
+      const finnSymbol = symbol === 'BTC' ? 'BINANCE:BTCUSDT' : symbol;
+      const [profRes, metricRes] = await Promise.all([
+        fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${encodeURIComponent(finnSymbol)}&token=${apiKey}`),
+        fetch(`https://finnhub.io/api/v1/stock/metric?symbol=${encodeURIComponent(finnSymbol)}&metric=all&token=${apiKey}`)
+      ]);
+      profile = profRes.ok ? await profRes.json() : {};
+      metrics = metricRes.ok ? await metricRes.json() : {};
+    }
 
-    const profile = profRes.ok ? await profRes.json() : {};
-    const metrics = metricRes.ok ? await metricRes.json() : {};
     const m = metrics.metric || {};
+    const currSym = isIndian ? '₹' : '$';
 
     res.json({
       fundamentals: {
         symbol,
-        name: profile.name || symbol,
-        marketCap: profile.marketCapitalization ? `$${(profile.marketCapitalization / 1000).toFixed(2)}B` : 'N/A',
+        name: profile.name || (isIndian ? `${symbol} India Ltd.` : symbol),
+        marketCap: profile.marketCapitalization ? `${currSym}${(profile.marketCapitalization / 1000).toFixed(2)}B` : 'N/A',
         peRatio: m.peBasicExclExtraTTM ? `${m.peBasicExclExtraTTM.toFixed(2)}x` : (m.peTTM ? `${m.peTTM.toFixed(2)}x` : 'N/A'),
         pbRatio: m.pbAnnual ? `${m.pbAnnual.toFixed(2)}x` : 'N/A',
-        week52High: m['52WeekHigh'] ? `$${m['52WeekHigh'].toFixed(2)}` : 'N/A',
-        week52Low: m['52WeekLow'] ? `$${m['52WeekLow'].toFixed(2)}` : 'N/A',
+        eps: m.epsTTM ? `${currSym}${m.epsTTM.toFixed(2)}` : 'N/A',
+        week52High: m['52WeekHigh'] ? `${currSym}${m['52WeekHigh'].toFixed(2)}` : 'N/A',
+        week52Low: m['52WeekLow'] ? `${currSym}${m['52WeekLow'].toFixed(2)}` : 'N/A',
         roe: m.roeTTM ? `${m.roeTTM.toFixed(2)}%` : 'N/A',
         revenueGrowth: m.revenueGrowth3Y ? `${m.revenueGrowth3Y.toFixed(2)}%` : 'N/A',
         quickRatio: m.quickRatioAnnual ? `${m.quickRatioAnnual.toFixed(2)}` : 'N/A',
         debtToEquity: m.totalDebtToEquityAnnual ? `${m.totalDebtToEquityAnnual.toFixed(2)}x` : 'N/A',
-        dividendYield: m.dividendYieldIndicatedAnnual ? `${m.dividendYieldIndicatedAnnual.toFixed(2)}%` : 'N/A'
+        dividendYield: m.dividendYieldIndicatedAnnual ? `${m.dividendYieldIndicatedAnnual.toFixed(2)}%` : 'N/A',
+        sector: profile.finnhubIndustry || (isIndian ? 'Indian Markets' : 'Technology'),
+        industry: profile.finnhubIndustry || 'Equity',
+        exchange: profile.exchange || (isIndian ? 'NSE / BSE' : 'NASDAQ/NYSE'),
+        country: profile.country || (isIndian ? 'IN' : 'US')
       }
     });
   } catch (err) {

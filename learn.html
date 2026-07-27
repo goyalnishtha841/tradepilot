@@ -376,103 +376,319 @@
     <span id="toast-text" class="text-xs font-semibold tp-mono"></span>
   </div>
 
-  <!-- 3-column terminal grid -->
-  <div class="grid grid-cols-1 lg:grid-cols-[230px_1fr_350px] gap-md">
+<!-- Stock Info Modal -->
+<div id="stock-info-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+  <div class="bg-white border border-outline-variant rounded-20px max-w-lg w-full p-md shadow-2xl relative">
+    <div class="flex items-center justify-between border-b border-outline-variant/20 pb-xs mb-sm">
+      <div class="flex items-center gap-xs">
+        <span class="material-symbols-outlined text-primary text-xl">domain</span>
+        <div>
+          <h3 id="modal-stock-name" class="font-bold text-sm text-on-surface">Apple Inc. (AAPL)</h3>
+          <span id="modal-stock-exchange" class="text-[10px] text-on-surface-variant font-semibold">NASDAQ | US</span>
+        </div>
+      </div>
+      <button id="btn-close-stock-info" class="material-symbols-outlined text-sm text-on-surface-variant hover:text-on-surface p-1">close</button>
+    </div>
+    
+    <div class="grid grid-cols-2 sm:grid-cols-3 gap-xs text-xs mb-sm tp-mono">
+      <div class="bg-surface-container p-2 rounded-xl">
+        <span class="text-[8px] uppercase tracking-wider text-on-surface-variant block">Price / Day Change</span>
+        <span id="modal-stock-price" class="font-bold text-on-surface">$214.10</span>
+        <span id="modal-stock-change" class="text-[10px] font-bold text-green-600 block">+1.25%</span>
+      </div>
+      <div class="bg-surface-container p-2 rounded-xl">
+        <span class="text-[8px] uppercase tracking-wider text-on-surface-variant block">Market Cap</span>
+        <span id="modal-stock-mcap" class="font-bold text-on-surface">$3.25T</span>
+      </div>
+      <div class="bg-surface-container p-2 rounded-xl">
+        <span class="text-[8px] uppercase tracking-wider text-on-surface-variant block">P/E Ratio</span>
+        <span id="modal-stock-pe" class="font-bold text-on-surface">32.4x</span>
+      </div>
+      <div class="bg-surface-container p-2 rounded-xl">
+        <span class="text-[8px] uppercase tracking-wider text-on-surface-variant block">EPS</span>
+        <span id="modal-stock-eps" class="font-bold text-on-surface">$6.58</span>
+      </div>
+      <div class="bg-surface-container p-2 rounded-xl">
+        <span class="text-[8px] uppercase tracking-wider text-on-surface-variant block">Div Yield</span>
+        <span id="modal-stock-div" class="font-bold text-on-surface">0.48%</span>
+      </div>
+      <div class="bg-surface-container p-2 rounded-xl">
+        <span class="text-[8px] uppercase tracking-wider text-on-surface-variant block">52W Range</span>
+        <span id="modal-stock-52w" class="font-bold text-on-surface text-[10px]">$164 - $237</span>
+      </div>
+      <div class="bg-surface-container p-2 rounded-xl">
+        <span class="text-[8px] uppercase tracking-wider text-on-surface-variant block">Sector</span>
+        <span id="modal-stock-sector" class="font-bold text-on-surface text-[10px]">Technology</span>
+      </div>
+      <div class="bg-surface-container p-2 rounded-xl">
+        <span class="text-[8px] uppercase tracking-wider text-on-surface-variant block">Industry</span>
+        <span id="modal-stock-industry" class="font-bold text-on-surface text-[10px]">Consumer Electronics</span>
+      </div>
+      <div class="bg-surface-container p-2 rounded-xl">
+        <span class="text-[8px] uppercase tracking-wider text-on-surface-variant block">Country</span>
+        <span id="modal-stock-country" class="font-bold text-on-surface text-[10px]">United States</span>
+      </div>
+    </div>
+  </div>
+</div>
 
-    <!-- LEFT: Watchlist -->
-    <div class="bg-white border border-outline-variant rounded-20px flex flex-col card-shadow" style="height:520px;">
-      <div class="p-xs border-b border-outline-variant/20">
+  <!-- 3-column terminal grid -->
+  <div class="grid grid-cols-1 lg:grid-cols-[240px_1fr_340px] gap-sm">
+
+    <!-- LEFT: Watchlist & Sector Filter -->
+    <div class="bg-white border border-outline-variant rounded-20px flex flex-col card-shadow" style="height:530px;">
+      <div class="p-xs border-b border-outline-variant/20 space-y-1">
         <div class="relative">
-          <span class="material-symbols-outlined absolute left-2 top-1/2 -translate-y-1/2 text-on-surface-variant text-[15px]">search</span>
-          <input id="watchlist-search" class="w-full pl-8 pr-2 py-1.5 bg-surface-container border-none rounded-xl text-xs focus:ring-1 focus:ring-primary/20" placeholder="Symbol..." type="text"/>
+          <span class="material-symbols-outlined absolute left-2 top-1/2 -translate-y-1/2 text-on-surface-variant text-[14px]">search</span>
+          <input id="watchlist-search" class="w-full pl-7 pr-2 py-1 bg-surface-container border-none rounded-xl text-xs focus:ring-1 focus:ring-primary/20" placeholder="Search US & Indian stocks..." type="text"/>
+        </div>
+        <div class="flex items-center gap-1 bg-surface-container rounded-xl px-2 py-0.5 border border-outline-variant/10">
+          <span class="material-symbols-outlined text-[12px] text-on-surface-variant">filter_list</span>
+          <select id="select-sector-filter" class="w-full bg-transparent border-none text-[10px] font-bold text-on-surface py-0.5 px-0 focus:ring-0 cursor-pointer">
+            <option value="ALL">All Sectors</option>
+            <option value="Technology">Technology</option>
+            <option value="Banking">Banking</option>
+            <option value="Finance">Finance</option>
+            <option value="Energy">Energy</option>
+            <option value="Pharma">Pharma</option>
+            <option value="FMCG">FMCG</option>
+            <option value="Automobile">Automobile</option>
+            <option value="Telecom">Telecom</option>
+            <option value="Metals">Metals</option>
+            <option value="Infrastructure">Infrastructure</option>
+          </select>
         </div>
       </div>
       <div id="watchlist-items" class="flex-grow overflow-y-auto pt-scrollbar"></div>
     </div>
 
     <!-- CENTRE: Chart/Depth + Order Ticket -->
-    <div class="flex flex-col gap-md">
+    <div class="flex flex-col gap-sm">
 
-      <!-- Stock Summary + View Toggle -->
-      <div class="bg-white border border-outline-variant rounded-20px p-md card-shadow">
-        <div class="flex justify-between items-start flex-wrap gap-xs mb-xs">
-          <div>
-            <div class="flex items-baseline gap-xs">
-              <h3 id="terminal-symbol" class="text-2xl font-black tracking-tight tp-mono">AAPL</h3>
-              <span id="terminal-name" class="text-xs text-on-surface-variant font-medium">Apple Inc.</span>
-            </div>
-            <div class="flex items-baseline gap-sm mt-0.5">
-              <span id="terminal-price" class="text-2xl font-extrabold tp-mono">$214.10</span>
+      <!-- Stock Summary + View Toggle + TradingView Chart Toolbar -->
+      <div class="bg-white border border-outline-variant rounded-20px p-xs card-shadow">
+        <div class="flex justify-between items-center flex-wrap gap-xs mb-xs px-1">
+          <div class="flex items-center gap-xs">
+            <h3 id="terminal-symbol" class="text-xl font-black tracking-tight tp-mono cursor-pointer hover:text-primary transition-colors">AAPL</h3>
+            <span id="terminal-name" class="text-xs text-on-surface-variant font-medium">Apple Inc.</span>
+            <button id="btn-inspect-stock" class="p-1 text-on-surface-variant hover:text-primary rounded-lg hover:bg-surface-container transition-all" title="View Full Stock Info">
+              <span class="material-symbols-outlined text-[16px]">info</span>
+            </button>
+            <div class="flex items-baseline gap-xs ml-xs">
+              <span id="terminal-price" class="text-lg font-extrabold tp-mono">$214.10</span>
               <span id="terminal-change" class="text-xs font-bold flex items-center gap-0.5 text-green-600">
-                <span class="material-symbols-outlined text-[14px]" id="terminal-arrow">trending_up</span>
+                <span class="material-symbols-outlined text-[12px]" id="terminal-arrow">trending_up</span>
                 <span id="terminal-change-txt">+1.25%</span>
               </span>
             </div>
           </div>
-          <div class="flex gap-1 p-1 bg-surface-container rounded-xl">
-            <button id="btn-show-chart" class="px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 bg-white shadow-sm text-on-surface">
-              <span class="material-symbols-outlined text-[14px]">show_chart</span> Chart
-            </button>
-            <button id="btn-show-depth" class="px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 text-on-surface-variant">
-              <span class="material-symbols-outlined text-[14px]">layers</span> Depth
-            </button>
+
+          <!-- Controls: Chart Type, Indicators, View Toggle -->
+          <div class="flex items-center gap-xs flex-wrap">
+            <!-- Timeframe selector buttons -->
+            <div id="chart-timeframe-controls" class="flex gap-0.5 p-0.5 bg-surface-container rounded-xl text-[9px] font-bold">
+              <button data-range="1D" class="tf-btn px-1.5 py-0.5 rounded-lg bg-white shadow-sm text-primary">1D</button>
+              <button data-range="1W" class="tf-btn px-1.5 py-0.5 rounded-lg text-on-surface-variant hover:text-on-surface">1W</button>
+              <button data-range="1M" class="tf-btn px-1.5 py-0.5 rounded-lg text-on-surface-variant hover:text-on-surface">1M</button>
+              <button data-range="3M" class="tf-btn px-1.5 py-0.5 rounded-lg text-on-surface-variant hover:text-on-surface">3M</button>
+              <button data-range="6M" class="tf-btn px-1.5 py-0.5 rounded-lg text-on-surface-variant hover:text-on-surface">6M</button>
+              <button data-range="YTD" class="tf-btn px-1.5 py-0.5 rounded-lg text-on-surface-variant hover:text-on-surface">YTD</button>
+              <button data-range="1Y" class="tf-btn px-1.5 py-0.5 rounded-lg text-on-surface-variant hover:text-on-surface">1Y</button>
+              <button data-range="5Y" class="tf-btn px-1.5 py-0.5 rounded-lg text-on-surface-variant hover:text-on-surface">5Y</button>
+              <button data-range="MAX" class="tf-btn px-1.5 py-0.5 rounded-lg text-on-surface-variant hover:text-on-surface">MAX</button>
+            </div>
+
+            <!-- Chart Type Dropdown -->
+            <div class="flex items-center gap-0.5 bg-surface-container rounded-xl px-1 py-0.5 border border-outline-variant/10">
+              <span class="material-symbols-outlined text-[12px] text-on-surface-variant">candlestick_chart</span>
+              <select id="select-chart-type" class="bg-transparent border-none text-[9px] font-bold text-on-surface py-0.5 px-0 focus:ring-0 cursor-pointer">
+                <option value="candlestick" selected>Solid Candles</option>
+                <option value="hollow">Hollow Candles</option>
+                <option value="bar">Bars</option>
+                <option value="line">Line</option>
+                <option value="area">Area</option>
+                <option value="baseline">Baseline</option>
+                <option value="heikin">Heikin Ashi</option>
+              </select>
+            </div>
+
+            <!-- Indicators Dropdown -->
+            <div class="flex items-center gap-0.5 bg-surface-container rounded-xl px-1 py-0.5 border border-outline-variant/10">
+              <span class="material-symbols-outlined text-[12px] text-on-surface-variant">show_chart</span>
+              <select id="select-indicator" class="bg-transparent border-none text-[9px] font-bold text-on-surface py-0.5 px-0 focus:ring-0 cursor-pointer">
+                <option value="none" selected>Indicators: None</option>
+                <option value="sma">SMA (20)</option>
+                <option value="ema">EMA (20)</option>
+                <option value="vwap">VWAP</option>
+                <option value="bollinger">Bollinger Bands</option>
+                <option value="rsi">RSI (14)</option>
+                <option value="macd">MACD</option>
+                <option value="volume">Volume</option>
+              </select>
+            </div>
+
+            <div class="flex gap-0.5 p-0.5 bg-surface-container rounded-xl">
+              <button id="btn-show-chart" class="px-2 py-0.5 rounded-lg text-[10px] font-semibold flex items-center gap-1 bg-white shadow-sm text-on-surface">
+                <span class="material-symbols-outlined text-[12px]">show_chart</span> Chart
+              </button>
+              <button id="btn-show-depth" class="px-2 py-0.5 rounded-lg text-[10px] font-semibold flex items-center gap-1 text-on-surface-variant">
+                <span class="material-symbols-outlined text-[12px]">layers</span> Depth &amp; Financials
+              </button>
+            </div>
           </div>
         </div>
-        <!-- Chart area -->
-        <div id="chart-panel" class="w-full h-[260px]"><div id="apex-price-chart"></div></div>
-        <!-- Depth area -->
-        <div id="depth-panel" class="hidden w-full">
-          <div class="grid grid-cols-2 gap-md tp-mono text-xs mb-sm">
-            <div>
-              <div class="text-[9px] uppercase font-bold text-on-surface-variant mb-xs">Bids (Buyers)</div>
-              <div id="bids-ladder" class="space-y-1"></div>
+
+        <!-- Prominent Chart area -->
+        <div id="chart-panel" class="w-full h-[225px]"><div id="apex-price-chart"></div></div>
+
+        <!-- Depth & Financials area -->
+        <div id="depth-panel" class="hidden w-full h-[225px] flex flex-col overflow-hidden">
+          <!-- Sub-tabs -->
+          <div class="flex gap-0.5 p-0.5 bg-surface-container rounded-xl text-[9px] font-bold uppercase mb-xs shrink-0 overflow-x-auto pt-scrollbar">
+            <button id="subtab-orderbook" class="px-2 py-0.5 rounded-lg bg-white shadow-sm text-primary">Order Book</button>
+            <button id="subtab-quarterly" class="px-2 py-0.5 rounded-lg text-on-surface-variant hover:text-on-surface">Quarterly</button>
+            <button id="subtab-annual" class="px-2 py-0.5 rounded-lg text-on-surface-variant hover:text-on-surface">Annual</button>
+            <button id="subtab-balancesheet" class="px-2 py-0.5 rounded-lg text-on-surface-variant hover:text-on-surface">Balance</button>
+            <button id="subtab-income" class="px-2 py-0.5 rounded-lg text-on-surface-variant hover:text-on-surface">Income</button>
+            <button id="subtab-cashflow" class="px-2 py-0.5 rounded-lg text-on-surface-variant hover:text-on-surface">Cash Flow</button>
+            <button id="subtab-ratios" class="px-2 py-0.5 rounded-lg text-on-surface-variant hover:text-on-surface">Ratios</button>
+            <button id="subtab-shareholding" class="px-2 py-0.5 rounded-lg text-on-surface-variant hover:text-on-surface">Holdings</button>
+            <button id="subtab-news" class="px-2 py-0.5 rounded-lg text-on-surface-variant hover:text-on-surface">News</button>
+          </div>
+
+          <div class="flex-1 overflow-y-auto pt-scrollbar pr-1">
+            <!-- Order Book -->
+            <div id="subpanel-orderbook" class="space-y-xs">
+              <div class="grid grid-cols-2 gap-md tp-mono text-xs mb-xs">
+                <div>
+                  <div class="text-[9px] uppercase font-bold text-on-surface-variant mb-xs">Bids (Buyers)</div>
+                  <div id="bids-ladder" class="space-y-1"></div>
+                </div>
+                <div>
+                  <div class="text-[9px] uppercase font-bold text-on-surface-variant mb-xs text-right">Asks (Sellers)</div>
+                  <div id="asks-ladder" class="space-y-1"></div>
+                </div>
+              </div>
+              <p class="text-[9px] text-on-surface-variant">Market orders walk the book level-by-level for a VWAP fill — larger orders get worse average prices, same as a real exchange.</p>
             </div>
-            <div>
-              <div class="text-[9px] uppercase font-bold text-on-surface-variant mb-xs text-right">Asks (Sellers)</div>
-              <div id="asks-ladder" class="space-y-1"></div>
+
+            <!-- Quarterly Results -->
+            <div id="subpanel-quarterly" class="hidden space-y-xs tp-mono text-xs">
+              <div class="grid grid-cols-2 gap-xs bg-surface-container p-2 rounded-xl">
+                <div><span class="text-[8px] uppercase tracking-wider text-on-surface-variant">Q4 Revenue</span><p id="fund-q-rev" class="font-bold text-on-surface">$119.58B (+2.1%)</p></div>
+                <div><span class="text-[8px] uppercase tracking-wider text-on-surface-variant">Q4 Net Income</span><p id="fund-q-net" class="font-bold text-green-600">$33.92B</p></div>
+                <div><span class="text-[8px] uppercase tracking-wider text-on-surface-variant">EPS (Beat/Miss)</span><p id="fund-q-eps" class="font-bold text-green-600">$2.18 (+0.08 Beat)</p></div>
+                <div><span class="text-[8px] uppercase tracking-wider text-on-surface-variant">Operating Margin</span><p id="fund-q-margin" class="font-bold text-on-surface">30.7%</p></div>
+              </div>
+            </div>
+
+            <!-- Annual Results -->
+            <div id="subpanel-annual" class="hidden space-y-xs tp-mono text-xs">
+              <div class="grid grid-cols-2 gap-xs bg-surface-container p-2 rounded-xl">
+                <div><span class="text-[8px] uppercase tracking-wider text-on-surface-variant">FY Revenue</span><p id="fund-a-rev" class="font-bold text-on-surface">$383.29B</p></div>
+                <div><span class="text-[8px] uppercase tracking-wider text-on-surface-variant">FY Net Income</span><p id="fund-a-net" class="font-bold text-green-600">$96.99B</p></div>
+                <div><span class="text-[8px] uppercase tracking-wider text-on-surface-variant">FY Operating Profit</span><p id="fund-a-op" class="font-bold text-on-surface">$114.30B</p></div>
+                <div><span class="text-[8px] uppercase tracking-wider text-on-surface-variant">3Y Rev Growth</span><p id="fund-a-growth" class="font-bold text-green-600">+12.4%</p></div>
+              </div>
+            </div>
+
+            <!-- Balance Sheet -->
+            <div id="subpanel-balancesheet" class="hidden space-y-xs tp-mono text-xs">
+              <div class="grid grid-cols-2 gap-xs bg-surface-container p-2 rounded-xl">
+                <div><span class="text-[8px] uppercase tracking-wider text-on-surface-variant">Total Cash &amp; ST</span><p id="fund-b-cash" class="font-bold text-on-surface">$61.55B</p></div>
+                <div><span class="text-[8px] uppercase tracking-wider text-on-surface-variant">Total Debt</span><p id="fund-b-debt" class="font-bold text-red-500">$106.63B</p></div>
+                <div><span class="text-[8px] uppercase tracking-wider text-on-surface-variant">Free Cash Flow</span><p id="fund-b-fcf" class="font-bold text-green-600">$99.58B</p></div>
+                <div><span class="text-[8px] uppercase tracking-wider text-on-surface-variant">Quick Ratio / D/E</span><p id="fund-b-ratios" class="font-bold text-on-surface">0.88 / 1.45x</p></div>
+              </div>
+            </div>
+
+            <!-- Income Statement -->
+            <div id="subpanel-income" class="hidden space-y-xs tp-mono text-xs">
+              <div class="grid grid-cols-2 gap-xs bg-surface-container p-2 rounded-xl">
+                <div><span class="text-[8px] uppercase tracking-wider text-on-surface-variant">Gross Profit</span><p id="fund-i-gross" class="font-bold text-on-surface">$170.78B</p></div>
+                <div><span class="text-[8px] uppercase tracking-wider text-on-surface-variant">EBITDA</span><p id="fund-i-ebitda" class="font-bold text-green-600">$125.82B</p></div>
+                <div><span class="text-[8px] uppercase tracking-wider text-on-surface-variant">Tax Rate</span><p id="fund-i-tax" class="font-bold text-on-surface">14.7%</p></div>
+                <div><span class="text-[8px] uppercase tracking-wider text-on-surface-variant">Diluted Shares</span><p id="fund-i-shares" class="font-bold text-on-surface">15.55B</p></div>
+              </div>
+            </div>
+
+            <!-- Cash Flow Statement -->
+            <div id="subpanel-cashflow" class="hidden space-y-xs tp-mono text-xs">
+              <div class="grid grid-cols-2 gap-xs bg-surface-container p-2 rounded-xl">
+                <div><span class="text-[8px] uppercase tracking-wider text-on-surface-variant">Operating Cash Flow</span><p id="fund-c-ocf" class="font-bold text-green-600">$110.54B</p></div>
+                <div><span class="text-[8px] uppercase tracking-wider text-on-surface-variant">CapEx</span><p id="fund-c-capex" class="font-bold text-red-500">-$10.96B</p></div>
+                <div><span class="text-[8px] uppercase tracking-wider text-on-surface-variant">Dividend Paid</span><p id="fund-c-div" class="font-bold text-on-surface">-$15.03B</p></div>
+                <div><span class="text-[8px] uppercase tracking-wider text-on-surface-variant">Repurchase of Stock</span><p id="fund-c-buyback" class="font-bold text-on-surface">-$77.55B</p></div>
+              </div>
+            </div>
+
+            <!-- Ratios -->
+            <div id="subpanel-ratios" class="hidden space-y-xs tp-mono text-xs">
+              <div class="grid grid-cols-2 gap-xs bg-surface-container p-2 rounded-xl">
+                <div><span class="text-[8px] uppercase tracking-wider text-on-surface-variant">ROE / ROA</span><p id="fund-r-roe" class="font-bold text-on-surface">160.7% / 28.4%</p></div>
+                <div><span class="text-[8px] uppercase tracking-wider text-on-surface-variant">P/E Ratio</span><p id="fund-r-pe" class="font-bold text-on-surface">32.4x</p></div>
+                <div><span class="text-[8px] uppercase tracking-wider text-on-surface-variant">P/B Ratio</span><p id="fund-r-pb" class="font-bold text-on-surface">48.2x</p></div>
+                <div><span class="text-[8px] uppercase tracking-wider text-on-surface-variant">EV / EBITDA</span><p id="fund-r-ev" class="font-bold text-on-surface">26.1x</p></div>
+              </div>
+            </div>
+
+            <!-- Shareholding Pattern -->
+            <div id="subpanel-shareholding" class="hidden space-y-xs tp-mono text-xs">
+              <div class="grid grid-cols-2 gap-xs bg-surface-container p-2 rounded-xl">
+                <div><span class="text-[8px] uppercase tracking-wider text-on-surface-variant">Institutional</span><p id="fund-s-inst" class="font-bold text-on-surface">60.8%</p></div>
+                <div><span class="text-[8px] uppercase tracking-wider text-on-surface-variant">Promoters / Insiders</span><p id="fund-s-insider" class="font-bold text-on-surface">0.08%</p></div>
+                <div><span class="text-[8px] uppercase tracking-wider text-on-surface-variant">Retail &amp; Others</span><p id="fund-s-retail" class="font-bold text-on-surface">39.12%</p></div>
+                <div><span class="text-[8px] uppercase tracking-wider text-on-surface-variant">Top Holder</span><p id="fund-s-top" class="font-bold text-on-surface">Vanguard (8.6%)</p></div>
+              </div>
+            </div>
+
+            <!-- News Sub-panel -->
+            <div id="subpanel-news" class="hidden space-y-xs text-xs">
+              <div id="finnhub-news-list" class="space-y-2">
+                <p class="text-[10px] text-on-surface-variant italic">Loading live market news...</p>
+              </div>
             </div>
           </div>
-          <p class="text-[9px] text-on-surface-variant">Market orders walk the book level-by-level for a VWAP fill — larger orders get worse average prices, same as a real exchange.</p>
         </div>
       </div>
 
       <!-- Order Ticket -->
-      <div class="bg-white border border-outline-variant rounded-20px p-sm card-shadow">
+      <div class="bg-white border border-outline-variant rounded-20px p-xs card-shadow">
         <!-- Buy/Sell -->
         <div class="grid grid-cols-2 gap-xs mb-xs">
-          <button id="ticket-side-buy" class="py-1.5 rounded-xl text-xs font-bold uppercase transition-all bg-green-600 text-white border border-green-600">Buy</button>
-          <button id="ticket-side-sell" class="py-1.5 rounded-xl text-xs font-bold uppercase transition-all bg-surface-container-low text-on-surface border border-outline-variant/20">Sell</button>
+          <button id="ticket-side-buy" class="py-1 rounded-xl text-xs font-bold uppercase transition-all bg-green-600 text-white border border-green-600">Buy</button>
+          <button id="ticket-side-sell" class="py-1 rounded-xl text-xs font-bold uppercase transition-all bg-surface-container-low text-on-surface border border-outline-variant/20">Sell</button>
         </div>
         <!-- Order Type -->
         <div class="flex gap-1 p-0.5 bg-surface-container rounded-xl mb-xs">
-          <button id="type-market" class="flex-1 py-1 rounded-lg text-[10px] font-semibold uppercase bg-white shadow-sm text-on-surface" data-active="true">Market</button>
-          <button id="type-limit" class="flex-1 py-1 rounded-lg text-[10px] font-semibold uppercase text-on-surface-variant" data-active="false">Limit</button>
-          <button id="type-stop" class="flex-1 py-1 rounded-lg text-[10px] font-semibold uppercase text-on-surface-variant" data-active="false">Stop</button>
+          <button id="type-market" class="flex-1 py-0.5 rounded-lg text-[10px] font-semibold uppercase bg-white shadow-sm text-on-surface" data-active="true">Market</button>
+          <button id="type-limit" class="flex-1 py-0.5 rounded-lg text-[10px] font-semibold uppercase text-on-surface-variant" data-active="false">Limit</button>
+          <button id="type-stop" class="flex-1 py-0.5 rounded-lg text-[10px] font-semibold uppercase text-on-surface-variant" data-active="false">Stop</button>
         </div>
         <!-- Inputs -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-xs mb-xs">
-          <div class="flex flex-col gap-xs">
+          <div class="flex flex-col gap-0.5">
             <label class="text-[8px] font-bold uppercase tracking-wider text-on-surface-variant">Quantity</label>
-            <input id="input-qty" type="number" min="1" step="1" value="1" class="w-full px-2 py-1 bg-surface-container border-none rounded-xl text-xs font-semibold tp-mono"/>
+            <input id="input-qty" type="number" min="1" step="1" value="1" class="w-full px-2 py-0.5 bg-surface-container border-none rounded-xl text-xs font-semibold tp-mono"/>
           </div>
-          <div id="wrapper-limit-price" class="hidden flex flex-col gap-xs">
+          <div id="wrapper-limit-price" class="hidden flex flex-col gap-0.5">
             <label class="text-[8px] font-bold uppercase tracking-wider text-on-surface-variant">Limit Price ($)</label>
-            <input id="input-limit-price" type="number" step="0.01" class="w-full px-2 py-1 bg-surface-container border-none rounded-xl text-xs font-semibold tp-mono" placeholder="0.00"/>
+            <input id="input-limit-price" type="number" step="0.01" class="w-full px-2 py-0.5 bg-surface-container border-none rounded-xl text-xs font-semibold tp-mono" placeholder="0.00"/>
           </div>
-          <div id="wrapper-stop-price" class="hidden flex flex-col gap-xs">
+          <div id="wrapper-stop-price" class="hidden flex flex-col gap-0.5">
             <label class="text-[8px] font-bold uppercase tracking-wider text-on-surface-variant">Stop Price ($)</label>
-            <input id="input-stop-price" type="number" step="0.01" class="w-full px-2 py-1 bg-surface-container border-none rounded-xl text-xs font-semibold tp-mono" placeholder="0.00"/>
+            <input id="input-stop-price" type="number" step="0.01" class="w-full px-2 py-0.5 bg-surface-container border-none rounded-xl text-xs font-semibold tp-mono" placeholder="0.00"/>
           </div>
-          <div id="wrapper-best-liquidity" class="flex flex-col gap-xs">
+          <div id="wrapper-best-liquidity" class="flex flex-col gap-0.5">
             <label id="label-liquidity" class="text-[8px] font-bold uppercase tracking-wider text-on-surface-variant">Best Ask</label>
-            <span id="best-liquidity-price" class="py-1 text-xs font-bold tp-mono">$214.15</span>
+            <span id="best-liquidity-price" class="py-0.5 text-xs font-bold tp-mono">$214.15</span>
           </div>
-          <div id="wrapper-tif" class="hidden flex flex-col gap-xs">
+          <div id="wrapper-tif" class="hidden flex flex-col gap-0.5">
             <label class="text-[8px] font-bold uppercase tracking-wider text-on-surface-variant">TIF</label>
             <div class="flex gap-1">
-              <button id="tif-gtc" class="flex-1 py-1 text-[10px] font-semibold rounded-xl bg-white shadow-sm border border-outline-variant/10">GTC</button>
-              <button id="tif-gtd" class="flex-1 py-1 text-[10px] font-semibold rounded-xl bg-surface-container-low text-on-surface-variant">GTD</button>
-              <select id="select-gtd-min" class="hidden px-1 py-1 bg-surface-container border-none rounded-xl text-[10px] tp-mono">
+              <button id="tif-gtc" class="flex-1 py-0.5 text-[9px] font-semibold rounded-xl bg-white shadow-sm border border-outline-variant/10">GTC</button>
+              <button id="tif-gtd" class="flex-1 py-0.5 text-[9px] font-semibold rounded-xl bg-surface-container-low text-on-surface-variant">GTD</button>
+              <select id="select-gtd-min" class="hidden px-1 py-0.5 bg-surface-container border-none rounded-xl text-[9px] tp-mono">
                 <option value="5">5m</option>
                 <option value="15" selected>15m</option>
                 <option value="60">1h</option>
@@ -485,38 +701,38 @@
           <span id="est-order-value" class="text-on-surface font-bold">$0.00</span>
         </div>
         <div id="ticket-error" class="hidden text-xs text-red-600 font-bold mb-xs"></div>
-        <button id="ticket-submit-btn" class="w-full py-2 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold tracking-wider uppercase text-xs transition-all">Place MARKET BUY Order</button>
+        <button id="ticket-submit-btn" class="w-full py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold tracking-wider uppercase text-xs transition-all">Place MARKET BUY Order</button>
       </div>
     </div>
 
     <!-- RIGHT: Stats & Tabs Panel -->
-    <div class="bg-white border border-outline-variant rounded-20px flex flex-col card-shadow" style="height:520px;">
+    <div class="bg-white border border-outline-variant rounded-20px flex flex-col card-shadow" style="height:530px;">
       <!-- Account Summary -->
-      <div class="p-md border-b border-outline-variant/20 grid grid-cols-2 gap-sm">
+      <div class="p-xs border-b border-outline-variant/20 grid grid-cols-2 gap-xs">
         <div>
-          <span class="text-[9px] uppercase tracking-wider text-on-surface-variant">Cash</span>
-          <p class="text-sm font-bold tp-mono" id="stat-cash-sidebar">$100,000.00</p>
+          <span class="text-[8px] uppercase tracking-wider text-on-surface-variant">Cash</span>
+          <p class="text-xs font-bold tp-mono" id="stat-cash-sidebar">$100,000.00</p>
         </div>
         <div>
-          <span class="text-[9px] uppercase tracking-wider text-on-surface-variant">Equity</span>
-          <p class="text-sm font-bold tp-mono" id="stat-equity-sidebar">$100,000.00</p>
+          <span class="text-[8px] uppercase tracking-wider text-on-surface-variant">Equity</span>
+          <p class="text-xs font-bold tp-mono" id="stat-equity-sidebar">$100,000.00</p>
         </div>
         <div>
-          <span class="text-[9px] uppercase tracking-wider text-on-surface-variant">Unrealized P&amp;L</span>
-          <p class="text-sm font-bold tp-mono text-green-600" id="stat-unreal-sidebar">+$0.00</p>
+          <span class="text-[8px] uppercase tracking-wider text-on-surface-variant">Unrealized P&amp;L</span>
+          <p class="text-xs font-bold tp-mono text-green-600" id="stat-unreal-sidebar">+$0.00</p>
         </div>
         <div>
-          <span class="text-[9px] uppercase tracking-wider text-on-surface-variant">Realized P&amp;L</span>
-          <p class="text-sm font-bold tp-mono" id="stat-real-sidebar">$0.00</p>
+          <span class="text-[8px] uppercase tracking-wider text-on-surface-variant">Realized P&amp;L</span>
+          <p class="text-xs font-bold tp-mono" id="stat-real-sidebar">$0.00</p>
         </div>
       </div>
       <!-- Tabs -->
       <div class="flex border-b border-outline-variant/20 text-[9px] font-bold uppercase tracking-wider overflow-x-auto pt-scrollbar">
-        <button id="tab-positions" class="flex-1 min-w-[52px] py-2.5 text-center border-b-2 border-primary text-primary">POS <span id="badge-positions-count" class="opacity-60">(0)</span></button>
-        <button id="tab-orders" class="flex-1 min-w-[52px] py-2.5 text-center border-b-2 border-transparent text-on-surface-variant">ORD <span id="badge-orders-count" class="opacity-60">(0)</span></button>
-        <button id="tab-history" class="flex-1 min-w-[52px] py-2.5 text-center border-b-2 border-transparent text-on-surface-variant">HIST</button>
-        <button id="tab-trades" class="flex-1 min-w-[52px] py-2.5 text-center border-b-2 border-transparent text-on-surface-variant">TRD</button>
-        <button id="tab-stats" class="flex-1 min-w-[52px] py-2.5 text-center border-b-2 border-transparent text-on-surface-variant">STATS</button>
+        <button id="tab-positions" class="flex-1 min-w-[50px] py-2 text-center border-b-2 border-primary text-primary">POS <span id="badge-positions-count" class="opacity-60">(0)</span></button>
+        <button id="tab-orders" class="flex-1 min-w-[50px] py-2 text-center border-b-2 border-transparent text-on-surface-variant">ORD <span id="badge-orders-count" class="opacity-60">(0)</span></button>
+        <button id="tab-history" class="flex-1 min-w-[50px] py-2 text-center border-b-2 border-transparent text-on-surface-variant">HIST</button>
+        <button id="tab-trades" class="flex-1 min-w-[50px] py-2 text-center border-b-2 border-transparent text-on-surface-variant">TRD</button>
+        <button id="tab-stats" class="flex-1 min-w-[50px] py-2 text-center border-b-2 border-transparent text-on-surface-variant">STATS</button>
       </div>
       <!-- Tab Panels -->
       <div class="flex-1 overflow-y-auto pt-scrollbar p-sm space-y-sm">
