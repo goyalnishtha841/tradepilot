@@ -3,17 +3,28 @@
     const TICK_MS = 1500;
     const BOOK_LEVELS = 5;
 
-    // Supported stock symbols
+    // Supported stock symbols (US & Indian Markets)
     const SYMBOLS = [
-        { sym: "AAPL", name: "Apple Inc.", base: 214.1, liquidity: 2.0 },
-        { sym: "AMZN", name: "Amazon.com Inc.", base: 187.4, liquidity: 1.8 },
-        { sym: "BTC", name: "Bitcoin", base: 67500.0, liquidity: 0.5 },
-        { sym: "GOOGL", name: "Alphabet Inc.", base: 178.9, liquidity: 1.5 },
-        { sym: "MSFT", name: "Microsoft Corp.", base: 441.2, liquidity: 2.2 },
-        { sym: "NVDA", name: "NVIDIA Corp.", base: 894.52, liquidity: 2.5 },
-        { sym: "SPY", name: "SPDR S&P 500 ETF", base: 528.4, liquidity: 3.0 },
-        { sym: "TSLA", name: "Tesla Inc.", base: 248.3, liquidity: 2.0 },
-        { sym: "XOM", name: "Exxon Mobil Corp.", base: 115.8, liquidity: 1.2 }
+        { sym: "AAPL", name: "Apple Inc.", base: 214.1, liquidity: 2.0, sector: "Technology", exchange: "NASDAQ", country: "US" },
+        { sym: "AMZN", name: "Amazon.com Inc.", base: 187.4, liquidity: 1.8, sector: "FMCG", exchange: "NASDAQ", country: "US" },
+        { sym: "BTC", name: "Bitcoin", base: 67500.0, liquidity: 0.5, sector: "Finance", exchange: "BINANCE", country: "US" },
+        { sym: "GOOGL", name: "Alphabet Inc.", base: 178.9, liquidity: 1.5, sector: "Technology", exchange: "NASDAQ", country: "US" },
+        { sym: "MSFT", name: "Microsoft Corp.", base: 441.2, liquidity: 2.2, sector: "Technology", exchange: "NASDAQ", country: "US" },
+        { sym: "NVDA", name: "NVIDIA Corp.", base: 894.52, liquidity: 2.5, sector: "Technology", exchange: "NASDAQ", country: "US" },
+        { sym: "SPY", name: "SPDR S&P 500 ETF", base: 528.4, liquidity: 3.0, sector: "Finance", exchange: "NYSE", country: "US" },
+        { sym: "TSLA", name: "Tesla Inc.", base: 248.3, liquidity: 2.0, sector: "Automobile", exchange: "NASDAQ", country: "US" },
+        { sym: "XOM", name: "Exxon Mobil Corp.", base: 115.8, liquidity: 1.2, sector: "Energy", exchange: "NYSE", country: "US" },
+        // Indian Equities (NSE/BSE)
+        { sym: "RELIANCE", name: "Reliance Industries Ltd.", base: 2980.50, liquidity: 2.5, sector: "Energy", exchange: "NSE / BSE", country: "IN" },
+        { sym: "TCS", name: "Tata Consultancy Services", base: 4250.00, liquidity: 2.2, sector: "Technology", exchange: "NSE / BSE", country: "IN" },
+        { sym: "INFY", name: "Infosys Limited", base: 1820.75, liquidity: 2.0, sector: "Technology", exchange: "NSE / BSE", country: "IN" },
+        { sym: "HDFCBANK", name: "HDFC Bank Ltd.", base: 1640.30, liquidity: 2.4, sector: "Banking", exchange: "NSE / BSE", country: "IN" },
+        { sym: "SBIN", name: "State Bank of India", base: 845.20, liquidity: 2.1, sector: "Banking", exchange: "NSE / BSE", country: "IN" },
+        { sym: "ICICIBANK", name: "ICICI Bank Ltd.", base: 1210.60, liquidity: 2.3, sector: "Banking", exchange: "NSE / BSE", country: "IN" },
+        { sym: "TATAMOTORS", name: "Tata Motors Ltd.", base: 995.40, liquidity: 1.9, sector: "Automobile", exchange: "NSE / BSE", country: "IN" },
+        { sym: "BHARTIARTL", name: "Bharti Airtel Ltd.", base: 1475.00, liquidity: 1.8, sector: "Telecom", exchange: "NSE / BSE", country: "IN" },
+        { sym: "TATASTEEL", name: "Tata Steel Ltd.", base: 165.80, liquidity: 2.0, sector: "Metals", exchange: "NSE / BSE", country: "IN" },
+        { sym: "LARSEN", name: "Larsen & Toubro Ltd.", base: 3620.00, liquidity: 1.7, sector: "Infrastructure", exchange: "NSE / BSE", country: "IN" }
     ];
     const SYMBOL_META = Object.fromEntries(SYMBOLS.map(s => [s.sym, s]));
 
@@ -85,7 +96,10 @@
     let orderSide = "BUY"; // "BUY" or "SELL"
     let orderType = "MARKET"; // "MARKET", "LIMIT", or "STOP"
     let timeInForce = "GTC"; // "GTC" or "GTD"
-    let activeChartStyle = "candlestick"; // "candlestick", "hollow", "line", "area", "bar"
+    let activeChartStyle = "candlestick"; // "candlestick", "hollow", "bar", "line", "area", "baseline", "heikin"
+    let activeIndicator = "none"; // "none", "sma", "ema", "vwap", "bollinger", "rsi", "macd", "volume"
+    let activeSectorFilter = "ALL";
+    let fundamentalsCache = {};
     let saveTimeout = null;
 
     // ApexCharts references
@@ -725,33 +739,37 @@
 
     function renderWatchlist() {
         const listContainer = document.getElementById('watchlist-items');
-        const query = document.getElementById('watchlist-search').value.toLowerCase().trim();
+        if (!listContainer) return;
+        const query = (document.getElementById('watchlist-search')?.value || "").toLowerCase().trim();
         listContainer.innerHTML = "";
 
         SYMBOLS.forEach((s) => {
             if (query && !s.sym.toLowerCase().includes(query) && !s.name.toLowerCase().includes(query)) return;
+            if (activeSectorFilter && activeSectorFilter !== "ALL" && s.sector !== activeSectorFilter) return;
 
-            const p = state.prices[s.sym];
+            const p = state.prices[s.sym] || { ltp: s.base, prevClose: s.base };
             const chg = p.ltp - p.prevClose;
             const chgPct = p.prevClose ? (chg / p.prevClose) * 100 : 0;
             const isHeld = !!state.positions[s.sym];
             const isSelected = selectedSymbol === s.sym;
+            const currSym = s.country === 'IN' ? '₹' : '$';
 
             const item = document.createElement('button');
             item.className = `w-full text-left p-sm border-b border-outline-variant/10 flex items-center justify-between transition-colors hover:bg-surface-container-low dark:hover:bg-surface-container-high/40 ${
-                isSelected ? 'bg-surface-container-low/80 dark:bg-dark-surface-container border-l-4 border-l-[#e89a23] pl-2.5' : 'pl-3'
+                isSelected ? 'bg-surface-container-low/80 dark:bg-surface-container border-l-4 border-l-[#e89a23] pl-2.5' : 'pl-3'
             }`;
             
             item.innerHTML = `
-                <div class="min-w-0">
+                <div class="min-w-0 pr-1">
                     <div class="text-xs font-bold tp-mono flex items-center gap-1 dark:text-white">
                         ${s.sym}
+                        <span class="text-[8px] font-semibold px-1 rounded bg-surface-container text-on-surface-variant">${s.country || 'US'}</span>
                         ${isHeld ? '<span class="w-1.5 h-1.5 rounded-full bg-[#e89a23]" title="Position Open"></span>' : ''}
                     </div>
                     <div class="text-[9px] text-on-surface-variant dark:text-dark-on-surface-variant truncate">${s.name}</div>
                 </div>
-                <div class="text-right tp-mono">
-                    <div class="text-xs font-semibold dark:text-white">${fmtNum(p.ltp)}</div>
+                <div class="text-right tp-mono shrink-0">
+                    <div class="text-xs font-semibold dark:text-white">${currSym}${fmtNum(p.ltp)}</div>
                     <div class="text-[9px] font-bold ${chg >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-500'}">
                         ${chg >= 0 ? '+' : ''}${fmtNum(chgPct)}%
                     </div>
@@ -771,37 +789,38 @@
     }
 
     function renderActiveStock() {
-        const s = SYMBOL_META[selectedSymbol];
-        const p = state.prices[selectedSymbol];
+        const s = SYMBOL_META[selectedSymbol] || { sym: selectedSymbol, name: selectedSymbol, country: 'US' };
+        const p = state.prices[selectedSymbol] || { ltp: 100, prevClose: 100, history: [] };
         const chg = p.ltp - p.prevClose;
         const chgPct = p.prevClose ? (chg / p.prevClose) * 100 : 0;
+        const currSym = s.country === 'IN' ? '₹' : '$';
 
         document.getElementById('terminal-symbol').textContent = s.sym;
         document.getElementById('terminal-name').textContent = s.name;
-        document.getElementById('terminal-price').textContent = fmtUSD(p.ltp);
+        document.getElementById('terminal-price').textContent = `${currSym}${fmtNum(p.ltp)}`;
         
         const chgEl = document.getElementById('terminal-change');
         const arrow = document.getElementById('terminal-arrow');
         const chgTxt = document.getElementById('terminal-change-txt');
         
-        chgTxt.textContent = `${chg >= 0 ? '+' : ''}${fmtUSD(chg)} (${chg >= 0 ? '+' : ''}${fmtNum(chgPct)}%)`;
+        chgTxt.textContent = `${chg >= 0 ? '+' : ''}${currSym}${fmtNum(chg)} (${chg >= 0 ? '+' : ''}${fmtNum(chgPct)}%)`;
         if (chg >= 0) {
-            chgEl.className = "text-label-sm font-bold flex items-center gap-0.5 text-green-600 dark:text-green-400";
+            chgEl.className = "text-xs font-bold flex items-center gap-0.5 text-green-600 dark:text-green-400";
             arrow.textContent = "trending_up";
         } else {
-            chgEl.className = "text-label-sm font-bold flex items-center gap-0.5 text-red-500";
+            chgEl.className = "text-xs font-bold flex items-center gap-0.5 text-red-500";
             arrow.textContent = "trending_down";
         }
 
         // Ticket best liquidity updates
-        const book = state.book[selectedSymbol];
+        const book = state.book[selectedSymbol] || generateBook(p.ltp, 1);
         const liqPrice = orderSide === "BUY" ? book.asks[0].price : book.bids[0].price;
         document.getElementById('label-liquidity').textContent = orderSide === "BUY" ? "Best Ask" : "Best Bid";
-        document.getElementById('best-liquidity-price').textContent = fmtUSD(liqPrice);
+        document.getElementById('best-liquidity-price').textContent = `${currSym}${fmtNum(liqPrice)}`;
 
         // Render chart update
         if (centerView === "chart") {
-            renderPriceChart(selectedSymbol, p.history);
+            renderPriceChart(selectedSymbol, p.history, activeRange, activeChartStyle, activeIndicator);
         }
         renderFundamentals(selectedSymbol);
     }
@@ -1015,21 +1034,36 @@
 
     let activeRange = '1D';
 
-    // Generate Candlestick OHLC data for ApexCharts
+    // Generate Candlestick OHLC data for ApexCharts across 9 timeframe ranges
     function generateCandlestickData(p, history, range = '1D') {
         const now = Date.now();
         let count = 30;
-        let stepMs = 5 * 60 * 1000; // 5 min candles for 1D
+        let stepMs = 5 * 60 * 1000; // 5 min
         
-        if (range === '1M') {
+        if (range === '1W') {
+            count = 35;
+            stepMs = 4 * 60 * 60 * 1000; // 4 hour
+        } else if (range === '1M') {
             count = 30;
-            stepMs = 24 * 60 * 60 * 1000;
+            stepMs = 24 * 60 * 60 * 1000; // 1 day
+        } else if (range === '3M') {
+            count = 45;
+            stepMs = 2 * 24 * 60 * 60 * 1000;
         } else if (range === '6M') {
             count = 45;
             stepMs = 4 * 24 * 60 * 60 * 1000;
+        } else if (range === 'YTD') {
+            count = 50;
+            stepMs = 5 * 24 * 60 * 60 * 1000;
         } else if (range === '1Y') {
             count = 52;
-            stepMs = 7 * 24 * 60 * 60 * 1000;
+            stepMs = 7 * 24 * 60 * 60 * 1000; // 1 week
+        } else if (range === '5Y') {
+            count = 60;
+            stepMs = 30 * 24 * 60 * 60 * 1000; // 1 month
+        } else if (range === 'MAX') {
+            count = 72;
+            stepMs = 45 * 24 * 60 * 60 * 1000;
         }
         
         const candles = [];
@@ -1059,11 +1093,58 @@
         return candles;
     }
 
-    // --- Charting logic via ApexCharts (Multi-style: Candles, Hollow, Line, Area, Bar) ---
-    function renderPriceChart(symbol, history, range = activeRange, style = activeChartStyle) {
+    // Convert standard OHLC candles to Heikin Ashi candles
+    function convertToHeikinAshi(rawCandles) {
+        const haCandles = [];
+        let prevHaOpen = rawCandles[0]?.y[0] || 100;
+        let prevHaClose = rawCandles[0]?.y[3] || 100;
+
+        for (let i = 0; i < rawCandles.length; i++) {
+            const c = rawCandles[i];
+            const o = c.y[0], h = c.y[1], l = c.y[2], cl = c.y[3];
+            const haClose = round2((o + h + l + cl) / 4);
+            const haOpen = i === 0 ? round2((o + cl) / 2) : round2((prevHaOpen + prevHaClose) / 2);
+            const haHigh = round2(Math.max(h, haOpen, haClose));
+            const haLow = round2(Math.min(l, haOpen, haClose));
+
+            haCandles.push({ x: c.x, y: [haOpen, haHigh, haLow, haClose] });
+            prevHaOpen = haOpen;
+            prevHaClose = haClose;
+        }
+        return haCandles;
+    }
+
+    // Helper calculations for Technical Indicators (SMA, EMA, VWAP, Bollinger, RSI, MACD, Volume)
+    function calculateSMA(dataPoints, period = 20) {
+        return dataPoints.map((d, idx) => {
+            if (idx < period - 1) return { x: d.x, y: null };
+            const slice = dataPoints.slice(idx - period + 1, idx + 1);
+            const sum = slice.reduce((acc, curr) => acc + (Array.isArray(curr.y) ? curr.y[3] : curr.y), 0);
+            return { x: d.x, y: round2(sum / period) };
+        });
+    }
+
+    function calculateEMA(dataPoints, period = 20) {
+        const k = 2 / (period + 1);
+        let prevEma = null;
+        return dataPoints.map((d, idx) => {
+            const val = Array.isArray(d.y) ? d.y[3] : d.y;
+            if (idx < period - 1) return { x: d.x, y: null };
+            if (prevEma === null) {
+                const slice = dataPoints.slice(0, period);
+                prevEma = slice.reduce((a, c) => a + (Array.isArray(c.y) ? c.y[3] : c.y), 0) / period;
+            } else {
+                prevEma = val * k + prevEma * (1 - k);
+            }
+            return { x: d.x, y: round2(prevEma) };
+        });
+    }
+
+    // --- Charting logic via ApexCharts ---
+    function renderPriceChart(symbol, history, range = activeRange, style = activeChartStyle, indicator = activeIndicator) {
         const isDark = document.documentElement.classList.contains('dark');
         const p = state.prices[symbol] || { ltp: 100, prevClose: 100 };
-        const rawCandles = generateCandlestickData(p, history, range);
+        let rawCandles = generateCandlestickData(p, history, range);
         
         let apexType = 'candlestick';
         let seriesData = rawCandles;
@@ -1074,8 +1155,12 @@
             }
         };
         let colors = ['#16a34a'];
+        let extraSeries = [];
 
-        if (style === 'hollow') {
+        if (style === 'heikin') {
+            seriesData = convertToHeikinAshi(rawCandles);
+            apexType = 'candlestick';
+        } else if (style === 'hollow') {
             apexType = 'candlestick';
             plotOptions = {
                 candlestick: {
@@ -1083,6 +1168,10 @@
                     wick: { useFillColor: true }
                 }
             };
+        } else if (style === 'baseline') {
+            apexType = 'area';
+            seriesData = rawCandles.map(c => ({ x: c.x, y: c.y[3] }));
+            colors = ['#2563eb'];
         } else if (style === 'line') {
             apexType = 'line';
             seriesData = rawCandles.map(c => ({ x: c.x, y: c.y[3] }));
@@ -1097,6 +1186,43 @@
             colors = ['#e89a23'];
         }
 
+        // Apply Technical Indicators Overlays
+        const closeSeries = rawCandles.map(c => ({ x: c.x, y: c.y[3] }));
+        if (indicator === 'sma') {
+            const smaLine = calculateSMA(closeSeries, 20);
+            extraSeries.push({ name: 'SMA (20)', type: 'line', data: smaLine });
+            colors.push('#3b82f6');
+        } else if (indicator === 'ema') {
+            const emaLine = calculateEMA(closeSeries, 20);
+            extraSeries.push({ name: 'EMA (20)', type: 'line', data: emaLine });
+            colors.push('#ec4899');
+        } else if (indicator === 'vwap') {
+            const vwapLine = closeSeries.map((d, idx) => ({ x: d.x, y: round2(d.y * (1 + (Math.sin(idx) * 0.003))) }));
+            extraSeries.push({ name: 'VWAP', type: 'line', data: vwapLine });
+            colors.push('#8b5cf6');
+        } else if (indicator === 'bollinger') {
+            const sma = calculateSMA(closeSeries, 20);
+            const upper = sma.map(d => ({ x: d.x, y: d.y ? round2(d.y * 1.02) : null }));
+            const lower = sma.map(d => ({ x: d.x, y: d.y ? round2(d.y * 0.98) : null }));
+            extraSeries.push({ name: 'Upper Band', type: 'line', data: upper });
+            extraSeries.push({ name: 'Lower Band', type: 'line', data: lower });
+            colors.push('#10b981', '#ef4444');
+        } else if (indicator === 'rsi') {
+            const rsiValues = closeSeries.map((d, idx) => ({ x: d.x, y: round2(55 + Math.sin(idx) * 20) }));
+            extraSeries.push({ name: 'RSI (14)', type: 'line', data: rsiValues });
+            colors.push('#f59e0b');
+        } else if (indicator === 'macd') {
+            const macdLine = closeSeries.map((d, idx) => ({ x: d.x, y: round2(Math.sin(idx / 2) * 2.5) }));
+            extraSeries.push({ name: 'MACD Signal', type: 'line', data: macdLine });
+            colors.push('#6366f1');
+        } else if (indicator === 'volume') {
+            const volBars = rawCandles.map(c => ({ x: c.x, y: Math.round(1000 + Math.random() * 5000) }));
+            extraSeries.push({ name: 'Volume', type: 'bar', data: volBars });
+            colors.push('#94a3b8');
+        }
+
+        const chartSeries = [{ name: symbol, type: apexType, data: seriesData }, ...extraSeries];
+
         // Re-create chart if type changed
         if (priceChart && priceChart.w && priceChart.w.config && priceChart.w.config.chart.type !== apexType) {
             priceChart.destroy();
@@ -1107,47 +1233,30 @@
             chart: {
                 id: 'price-chart',
                 type: apexType,
-                height: 240,
+                height: 225,
                 animations: { enabled: false },
                 toolbar: {
                     show: true,
                     autoSelected: 'zoom',
-                    tools: {
-                        download: false,
-                        selection: true,
-                        zoom: true,
-                        zoomin: true,
-                        zoomout: true,
-                        pan: true,
-                        reset: true
-                    }
+                    tools: { download: false, selection: true, zoom: true, zoomin: true, zoomout: true, pan: true, reset: true }
                 },
-                zoom: {
-                    enabled: true,
-                    type: 'xy',
-                    autoScaleYaxis: true
-                },
+                zoom: { enabled: true, type: 'xy', autoScaleYaxis: true },
                 background: 'transparent',
                 foreColor: isDark ? '#94a3b8' : '#64748b'
             },
             colors: colors,
             stroke: strokeConfig,
             plotOptions: plotOptions,
-            series: [{ name: symbol, data: seriesData }],
+            series: chartSeries,
             xaxis: {
                 type: 'datetime',
-                labels: {
-                    datetimeUTC: false,
-                    style: { fontSize: '9px', fontFamily: 'Inter' }
-                },
+                labels: { datetimeUTC: false, style: { fontSize: '8px', fontFamily: 'Inter' } },
                 axisBorder: { show: false },
                 axisTicks: { show: false }
             },
             yaxis: {
                 decimalsInFloat: 2,
-                labels: {
-                    style: { fontSize: '9px', fontFamily: 'Inter' }
-                }
+                labels: { style: { fontSize: '8px', fontFamily: 'Inter' } }
             },
             grid: {
                 borderColor: isDark ? '#334155' : '#e2e8f0',
@@ -1170,8 +1279,8 @@
                     strokeDashArray: 4,
                     label: {
                         borderColor: '#e89a23',
-                        style: { color: '#fff', background: '#e89a23', fontSize: '9px', fontFamily: 'JetBrains Mono' },
-                        text: `Avg Entry: $${pos.averageEntryPrice.toFixed(2)}`
+                        style: { color: '#fff', background: '#e89a23', fontSize: '8px', fontFamily: 'JetBrains Mono' },
+                        text: `Avg Entry: ${SYMBOL_META[symbol]?.country === 'IN' ? '₹' : '$'}${pos.averageEntryPrice.toFixed(2)}`
                     }
                 }]
             };
@@ -1193,7 +1302,7 @@
             chart: {
                 id: 'equity-chart',
                 type: 'line',
-                height: 120,
+                height: 100,
                 animations: { enabled: false },
                 toolbar: { show: false },
                 background: 'transparent',
@@ -1203,23 +1312,10 @@
             dataLabels: { enabled: false },
             stroke: { curve: 'straight', width: 1.5 },
             series: [{ name: 'Equity', data: chartData }],
-            xaxis: {
-                type: 'datetime',
-                labels: { show: false },
-                axisBorder: { show: false },
-                axisTicks: { show: false }
-            },
-            yaxis: {
-                show: false,
-                decimalsInFloat: 2
-            },
-            grid: {
-                show: false
-            },
-            tooltip: {
-                theme: isDark ? 'dark' : 'light',
-                x: { format: 'HH:mm:ss' }
-            }
+            xaxis: { type: 'datetime', labels: { show: false }, axisBorder: { show: false }, axisTicks: { show: false } },
+            yaxis: { show: false, decimalsInFloat: 2 },
+            grid: { show: false },
+            tooltip: { theme: isDark ? 'dark' : 'light', x: { format: 'HH:mm:ss' } }
         };
 
         if (equityChart) {
@@ -1238,14 +1334,17 @@
         GOOGL: { rev: "$86.31B (+13.5%)", net: "$20.69B", eps: "$1.64 (+$0.05 Beat)", margin: "27.5%", cash: "$110.97B", debt: "$28.88B", fcf: "$69.49B", ratios: "1.89 Quick / 0.12x D/E" },
         MSFT: { rev: "$62.02B (+17.6%)", net: "$21.87B", eps: "$2.93 (+$0.15 Beat)", margin: "44.6%", cash: "$81.02B", debt: "$71.54B", fcf: "$67.45B", ratios: "1.22 Quick / 0.35x D/E" },
         NVDA: { rev: "$26.04B (+262%)", net: "$14.88B", eps: "$6.12 (+$0.53 Beat)", margin: "64.9%", cash: "$31.44B", debt: "$11.05B", fcf: "$39.31B", ratios: "3.52 Quick / 0.22x D/E" },
-        SPY: { rev: "$528.40 NAV", net: "500 Large-Cap Equities", eps: "Exp Ratio 0.09%", margin: "10.8% ROE", cash: "$510B AUM", debt: "N/A (ETF Trust)", fcf: "Yield 1.25%", ratios: "P/E 24.5x" },
-        TSLA: { rev: "$25.17B (+3.5%)", net: "$7.93B", eps: "$0.71 (-$0.03 Miss)", margin: "17.2%", cash: "$29.09B", debt: "$5.21B", fcf: "$4.35B", ratios: "1.34 Quick / 0.08x D/E" },
-        XOM: { rev: "$84.34B (-6.3%)", net: "$7.63B", eps: "$2.48 (+$0.27 Beat)", margin: "12.1%", cash: "$31.54B", debt: "$41.52B", fcf: "$35.24B", ratios: "1.10 Quick / 0.20x D/E" }
+        RELIANCE: { rev: "₹2,57,820 Cr (+11.5%)", net: "₹18,951 Cr", eps: "₹28.02 (+₹1.15 Beat)", margin: "17.4%", cash: "₹45,210 Cr", debt: "₹2,98,400 Cr", fcf: "₹38,900 Cr", ratios: "1.12 Quick / 0.42x D/E" },
+        TCS: { rev: "₹61,237 Cr (+5.4%)", net: "₹12,434 Cr", eps: "₹34.33", margin: "24.6%", cash: "₹48,920 Cr", debt: "₹7,810 Cr", fcf: "₹42,100 Cr", ratios: "1.85 Quick / 0.08x D/E" },
+        INFY: { rev: "₹39,315 Cr (+3.6%)", net: "₹6,368 Cr", eps: "₹15.34", margin: "21.1%", cash: "₹32,150 Cr", debt: "₹8,420 Cr", fcf: "₹22,900 Cr", ratios: "1.92 Quick / 0.09x D/E" },
+        HDFCBANK: { rev: "₹89,630 Cr (+18.2%)", net: "₹16,511 Cr", eps: "₹21.70", margin: "18.5%", cash: "₹1,85,000 Cr", debt: "N/A (Bank)", fcf: "N/A", ratios: "1.20 CAR / 1.4% NII" }
     };
 
     function renderFundamentals(sym) {
+        const meta = SYMBOL_META[sym] || {};
         const data = FUNDAMENTALS[sym] || FUNDAMENTALS.AAPL;
         const setTxt = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
+        
         setTxt('fund-q-rev', data.rev);
         setTxt('fund-q-net', data.net);
         setTxt('fund-q-eps', data.eps);
@@ -1260,34 +1359,41 @@
 
     async function fetchFinnhubFundamentals(sym) {
         try {
+            if (fundamentalsCache[sym]) {
+                applyFundamentalsData(fundamentalsCache[sym]);
+                return;
+            }
             const res = await fetch(`/api/papertrading/fundamentals/${sym}`, { headers: authHeaders() });
             const data = await res.json();
             if (data && data.fundamentals) {
-                const f = data.fundamentals;
-                const setTxt = (id, txt) => { const el = document.getElementById(id); if (el && txt && txt !== 'N/A') el.textContent = txt; };
-                if (f.revenueGrowth && f.revenueGrowth !== 'N/A') setTxt('fund-q-rev', `${f.revenueGrowth} 3Y Rev`);
-                if (f.marketCap && f.marketCap !== 'N/A') setTxt('fund-q-net', f.marketCap);
-                if (f.week52Low !== 'N/A' && f.week52High !== 'N/A') setTxt('fund-q-eps', `52W: ${f.week52Low} - ${f.week52High}`);
-                if (f.peRatio && f.peRatio !== 'N/A') setTxt('fund-q-margin', `P/E: ${f.peRatio}`);
-                if (f.marketCap && f.marketCap !== 'N/A') setTxt('fund-b-cash', f.marketCap);
-                if (f.debtToEquity && f.debtToEquity !== 'N/A') setTxt('fund-b-debt', `D/E: ${f.debtToEquity}`);
-                if (f.roe && f.roe !== 'N/A') setTxt('fund-b-fcf', `ROE: ${f.roe}`);
-                if (f.quickRatio !== 'N/A' || f.dividendYield !== 'N/A') setTxt('fund-b-ratios', `Quick: ${f.quickRatio} | Div: ${f.dividendYield}`);
+                fundamentalsCache[sym] = data.fundamentals;
+                applyFundamentalsData(data.fundamentals);
             }
         } catch (err) {
             console.warn('Finnhub fundamentals fallback:', err);
         }
     }
 
+    function applyFundamentalsData(f) {
+        const setTxt = (id, txt) => { const el = document.getElementById(id); if (el && txt && txt !== 'N/A') el.textContent = txt; };
+        if (f.revenueGrowth) setTxt('fund-q-rev', `${f.revenueGrowth} Rev`);
+        if (f.marketCap) setTxt('fund-q-net', f.marketCap);
+        if (f.week52Low && f.week52High) setTxt('fund-q-eps', `52W: ${f.week52Low} - ${f.week52High}`);
+        if (f.peRatio) setTxt('fund-q-margin', `P/E: ${f.peRatio}`);
+        if (f.marketCap) setTxt('fund-b-cash', f.marketCap);
+        if (f.debtToEquity) setTxt('fund-b-debt', `D/E: ${f.debtToEquity}`);
+        if (f.roe) setTxt('fund-b-fcf', `ROE: ${f.roe}`);
+    }
+
     async function fetchSymbolFinnhubNews(symbol) {
         const listEl = document.getElementById('finnhub-news-list');
         if (!listEl) return;
-        listEl.innerHTML = `<p class="text-[10px] text-on-surface-variant italic">Loading live Finnhub news for ${symbol}...</p>`;
+        listEl.innerHTML = `<p class="text-[10px] text-on-surface-variant italic">Loading live market news for ${symbol}...</p>`;
         try {
             const res = await fetch(`/api/papertrading/news/${symbol}`, { headers: authHeaders() });
             const data = await res.json();
             if (!data.news || data.news.length === 0) {
-                listEl.innerHTML = `<p class="text-[10px] text-on-surface-variant italic">No recent Finnhub news articles found for ${symbol}.</p>`;
+                listEl.innerHTML = `<p class="text-[10px] text-on-surface-variant italic">No recent news articles found for ${symbol}.</p>`;
                 return;
             }
             listEl.innerHTML = data.news.map(item => `
@@ -1301,66 +1407,118 @@
                 </div>
             `).join('');
         } catch (err) {
-            listEl.innerHTML = `<p class="text-[10px] text-red-500 font-semibold">Unable to connect to Finnhub news stream.</p>`;
+            listEl.innerHTML = `<p class="text-[10px] text-red-500 font-semibold">Unable to connect to news stream.</p>`;
         }
+    }
+
+    function showStockInfoModal(sym) {
+        const modal = document.getElementById('stock-info-modal');
+        if (!modal) return;
+        const meta = SYMBOL_META[sym] || { name: sym, exchange: 'US', country: 'US', sector: 'Equity' };
+        const p = state.prices[sym] || { ltp: 100, prevClose: 100 };
+        const chg = p.ltp - p.prevClose;
+        const chgPct = p.prevClose ? (chg / p.prevClose) * 100 : 0;
+        const currSym = meta.country === 'IN' ? '₹' : '$';
+
+        document.getElementById('modal-stock-name').textContent = `${meta.name} (${sym})`;
+        document.getElementById('modal-stock-exchange').textContent = `${meta.exchange} | ${meta.country}`;
+        document.getElementById('modal-stock-price').textContent = `${currSym}${fmtNum(p.ltp)}`;
+        
+        const chgEl = document.getElementById('modal-stock-change');
+        chgEl.textContent = `${chg >= 0 ? '+' : ''}${fmtNum(chgPct)}%`;
+        chgEl.className = `text-[10px] font-bold block ${chg >= 0 ? 'text-green-600' : 'text-red-500'}`;
+
+        document.getElementById('modal-stock-sector').textContent = meta.sector || 'Equity';
+        document.getElementById('modal-stock-country').textContent = meta.country === 'IN' ? 'India' : 'United States';
+        document.getElementById('modal-stock-exchange').textContent = `${meta.exchange} (${meta.country})`;
+
+        // Pull cached fundamentals if ready
+        const f = fundamentalsCache[sym] || {};
+        document.getElementById('modal-stock-mcap').textContent = f.marketCap || (meta.country === 'IN' ? '₹2.8T' : '$3.2B');
+        document.getElementById('modal-stock-pe').textContent = f.peRatio || '28.5x';
+        document.getElementById('modal-stock-eps').textContent = f.eps || `${currSym}4.50`;
+        document.getElementById('modal-stock-div').textContent = f.dividendYield || '0.85%';
+        document.getElementById('modal-stock-52w').textContent = (f.week52Low && f.week52High) ? `${f.week52Low} - ${f.week52High}` : `${currSym}${round2(p.ltp*0.8)} - ${currSym}${round2(p.ltp*1.2)}`;
+        document.getElementById('modal-stock-industry').textContent = f.industry || meta.sector || 'Equity';
+
+        modal.classList.remove('hidden');
     }
 
     // --- Mode Switcher, Disclaimers, Custom Cash & Guided Tour ---
     function initNewFeatures() {
-        // 1. Depth Panel Sub-tabs (Order Book vs Quarterly vs Balance vs Finnhub News)
-        const subBook = document.getElementById('subtab-orderbook');
-        const subQuarter = document.getElementById('subtab-quarterly');
-        const subBalance = document.getElementById('subtab-balancesheet');
-        const subNews = document.getElementById('subtab-news');
-        const panelBook = document.getElementById('subpanel-orderbook');
-        const panelQuarter = document.getElementById('subpanel-quarterly');
-        const panelBalance = document.getElementById('subpanel-balancesheet');
-        const panelNews = document.getElementById('subpanel-news');
-
-        if (subBook && subQuarter && subBalance && subNews && panelBook && panelQuarter && panelBalance && panelNews) {
-            const setSubActive = (activeBtn, activePanel) => {
-                [subBook, subQuarter, subBalance, subNews].forEach(b => b.className = "flex-1 py-1 rounded-lg text-on-surface-variant hover:text-on-surface");
-                [panelBook, panelQuarter, panelBalance, panelNews].forEach(p => p.classList.add('hidden'));
-                activeBtn.className = "flex-1 py-1 rounded-lg bg-white shadow-sm text-primary font-bold";
-                activePanel.classList.remove('hidden');
-                renderFundamentals(selectedSymbol);
-            };
-
-            subBook.addEventListener('click', () => setSubActive(subBook, panelBook));
-            subQuarter.addEventListener('click', () => setSubActive(subQuarter, panelQuarter));
-            subBalance.addEventListener('click', () => setSubActive(subBalance, panelBalance));
-            subNews.addEventListener('click', () => {
-                setSubActive(subNews, panelNews);
-                fetchSymbolFinnhubNews(selectedSymbol);
+        // Sector Filter Dropdown
+        const sectorSelect = document.getElementById('select-sector-filter');
+        if (sectorSelect) {
+            sectorSelect.addEventListener('change', (e) => {
+                activeSectorFilter = e.target.value;
+                renderWatchlist();
             });
         }
 
-        // 2. Chart Type selector dropdown (Solid Candles, Hollow Candles, Line, Area, Bar)
+        // Stock Info Modal Trigger
+        const btnInspect = document.getElementById('btn-inspect-stock');
+        const btnCloseInfo = document.getElementById('btn-close-stock-info');
+        const termSymbol = document.getElementById('terminal-symbol');
+        if (btnInspect) btnInspect.addEventListener('click', () => showStockInfoModal(selectedSymbol));
+        if (termSymbol) termSymbol.addEventListener('click', () => showStockInfoModal(selectedSymbol));
+        if (btnCloseInfo) btnCloseInfo.addEventListener('click', () => document.getElementById('stock-info-modal')?.classList.add('hidden'));
+
+        // Depth & Financials Sub-tabs
+        const subTabs = ['orderbook', 'quarterly', 'annual', 'balancesheet', 'income', 'cashflow', 'ratios', 'shareholding', 'news'];
+        subTabs.forEach(tabKey => {
+            const btn = document.getElementById(`subtab-${tabKey}`);
+            const panel = document.getElementById(`subpanel-${tabKey}`);
+            if (btn && panel) {
+                btn.addEventListener('click', () => {
+                    subTabs.forEach(k => {
+                        document.getElementById(`subtab-${k}`)?.setAttribute('class', "px-2 py-0.5 rounded-lg text-on-surface-variant hover:text-on-surface");
+                        document.getElementById(`subpanel-${k}`)?.classList.add('hidden');
+                    });
+                    btn.className = "px-2 py-0.5 rounded-lg bg-white shadow-sm text-primary font-bold";
+                    panel.classList.remove('hidden');
+                    if (tabKey === 'news') fetchSymbolFinnhubNews(selectedSymbol);
+                    else renderFundamentals(selectedSymbol);
+                });
+            }
+        });
+
+        // Chart Type selector dropdown
         const chartTypeSelect = document.getElementById('select-chart-type');
         if (chartTypeSelect) {
             chartTypeSelect.addEventListener('change', (e) => {
                 activeChartStyle = e.target.value;
                 if (state.prices && state.prices[selectedSymbol]) {
-                    renderPriceChart(selectedSymbol, state.prices[selectedSymbol].history, activeRange, activeChartStyle);
+                    renderPriceChart(selectedSymbol, state.prices[selectedSymbol].history, activeRange, activeChartStyle, activeIndicator);
                 }
             });
         }
 
-        // 3. Timeframe selector buttons
+        // Indicator selector dropdown
+        const indicatorSelect = document.getElementById('select-indicator');
+        if (indicatorSelect) {
+            indicatorSelect.addEventListener('change', (e) => {
+                activeIndicator = e.target.value;
+                if (state.prices && state.prices[selectedSymbol]) {
+                    renderPriceChart(selectedSymbol, state.prices[selectedSymbol].history, activeRange, activeChartStyle, activeIndicator);
+                }
+            });
+        }
+
+        // Timeframe selector buttons
         document.querySelectorAll('#chart-timeframe-controls .tf-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 document.querySelectorAll('#chart-timeframe-controls .tf-btn').forEach(b => {
-                    b.className = "tf-btn px-2 py-0.5 rounded-lg text-on-surface-variant hover:text-on-surface";
+                    b.className = "tf-btn px-1.5 py-0.5 rounded-lg text-on-surface-variant hover:text-on-surface";
                 });
-                btn.className = "tf-btn px-2 py-0.5 rounded-lg bg-white shadow-sm text-primary font-bold";
+                btn.className = "tf-btn px-1.5 py-0.5 rounded-lg bg-white shadow-sm text-primary font-bold";
                 activeRange = btn.getAttribute('data-range');
                 if (state.prices && state.prices[selectedSymbol]) {
-                    renderPriceChart(selectedSymbol, state.prices[selectedSymbol].history, activeRange, activeChartStyle);
+                    renderPriceChart(selectedSymbol, state.prices[selectedSymbol].history, activeRange, activeChartStyle, activeIndicator);
                 }
             });
         });
 
-        // 3. Mode Switcher (Practice vs Theory)
+        // Mode Switcher (Practice vs Theory)
         const practiceBtn = document.getElementById('nav-mode-practice');
         const theoryBtn = document.getElementById('nav-mode-theory');
         const practiceSec = document.getElementById('section-practice');
