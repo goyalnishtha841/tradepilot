@@ -424,9 +424,20 @@
 
         // Listen for theme change to update charts
         window.addEventListener('theme-changed', () => {
-            if (priceChart) renderPriceChart(selectedSymbol, state.prices[selectedSymbol].history);
+            if (priceChart) renderPriceChart(selectedSymbol, state.prices[selectedSymbol].history, activeRange, activeChartStyle, activeIndicator);
             if (equityChart) renderEquityChart(state.equityHistory);
         });
+
+        // Responsive chart resizing
+        const chartContainer = document.getElementById('chart-panel');
+        if (chartContainer && typeof ResizeObserver !== 'undefined') {
+            const ro = new ResizeObserver(() => {
+                if (priceChart && centerView === 'chart') {
+                    try { priceChart.windowResizeHandler(); } catch (e) { /* silent */ }
+                }
+            });
+            ro.observe(chartContainer);
+        }
     }
 
     function toggleCenterView(view) {
@@ -755,18 +766,19 @@
             const currSym = s.country === 'IN' ? '₹' : '$';
 
             const item = document.createElement('button');
-            item.className = `w-full text-left p-sm border-b border-outline-variant/10 flex items-center justify-between transition-colors hover:bg-surface-container-low dark:hover:bg-surface-container-high/40 ${
-                isSelected ? 'bg-surface-container-low/80 dark:bg-surface-container border-l-4 border-l-[#e89a23] pl-2.5' : 'pl-3'
+            item.className = `w-full text-left p-sm border-b border-outline-variant/10 dark:border-dark-outline-variant/20 flex items-center justify-between transition-colors hover:bg-surface-container-low dark:hover:bg-dark-surface-container-high/40 ${
+                isSelected ? 'bg-surface-container-low/80 dark:bg-dark-surface-container border-l-4 border-l-[#e89a23] pl-2.5' : 'pl-3'
             }`;
             
             item.innerHTML = `
                 <div class="min-w-0 pr-1">
                     <div class="text-xs font-bold tp-mono flex items-center gap-1 dark:text-white">
                         ${s.sym}
-                        <span class="text-[8px] font-semibold px-1 rounded bg-surface-container text-on-surface-variant">${s.country || 'US'}</span>
+                        <span class="text-[8px] font-semibold px-1 rounded bg-surface-container dark:bg-dark-surface-container-high text-on-surface-variant dark:text-dark-on-surface-variant">${s.country || 'US'}</span>
                         ${isHeld ? '<span class="w-1.5 h-1.5 rounded-full bg-[#e89a23]" title="Position Open"></span>' : ''}
                     </div>
                     <div class="text-[9px] text-on-surface-variant dark:text-dark-on-surface-variant truncate">${s.name}</div>
+                    <div class="text-[8px] font-medium text-on-surface-variant/60 dark:text-dark-on-surface-variant/60">${s.sector || 'Equity'}</div>
                 </div>
                 <div class="text-right tp-mono shrink-0">
                     <div class="text-xs font-semibold dark:text-white">${currSym}${fmtNum(p.ltp)}</div>
@@ -1233,7 +1245,7 @@
             chart: {
                 id: 'price-chart',
                 type: apexType,
-                height: 225,
+                height: 300,
                 animations: { enabled: false },
                 toolbar: {
                     show: true,
@@ -1243,6 +1255,13 @@
                 zoom: { enabled: true, type: 'xy', autoScaleYaxis: true },
                 background: 'transparent',
                 foreColor: isDark ? '#94a3b8' : '#64748b'
+            },
+            crosshairs: {
+                show: true,
+                width: 1,
+                position: 'back',
+                opacity: 0.9,
+                stroke: { color: isDark ? '#475569' : '#94a3b8', width: 1, dashArray: 3 }
             },
             colors: colors,
             stroke: strokeConfig,
@@ -1267,6 +1286,13 @@
             tooltip: {
                 theme: isDark ? 'dark' : 'light',
                 x: { format: 'dd MMM HH:mm' }
+            },
+            crosshairs: {
+                show: true,
+                width: 1,
+                position: 'back',
+                opacity: 0.9,
+                stroke: { color: isDark ? '#475569' : '#94a3b8', width: 1, dashArray: 3 }
             }
         };
 
@@ -1343,16 +1369,88 @@
     function renderFundamentals(sym) {
         const meta = SYMBOL_META[sym] || {};
         const data = FUNDAMENTALS[sym] || FUNDAMENTALS.AAPL;
+        const p = state.prices[sym] || { ltp: 100, prevClose: 100, high: 100, low: 100, open: 100 };
+        const chg = p.ltp - p.prevClose;
+        const chgPct = p.prevClose ? (chg / p.prevClose) * 100 : 0;
+        const currSym = meta.country === 'IN' ? '₹' : '$';
         const setTxt = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
         
+        // Quarterly panel
         setTxt('fund-q-rev', data.rev);
         setTxt('fund-q-net', data.net);
         setTxt('fund-q-eps', data.eps);
         setTxt('fund-q-margin', data.margin);
+        
+        // Annual panel
+        setTxt('fund-a-rev', data.rev);
+        setTxt('fund-a-net', data.net);
+        setTxt('fund-a-ebitda', data.fcf || '—');
+        setTxt('fund-a-growth', data.ratios || '—');
+        
+        // Balance Sheet panel
         setTxt('fund-b-cash', data.cash);
         setTxt('fund-b-debt', data.debt);
         setTxt('fund-b-fcf', data.fcf);
         setTxt('fund-b-ratios', data.ratios);
+        
+        // Income Statement panel
+        setTxt('fund-i-gross', data.margin);
+        setTxt('fund-i-opmarg', data.margin);
+        setTxt('fund-i-netmarg', data.margin);
+        setTxt('fund-i-eps', data.eps);
+        
+        // Cash Flow panel
+        setTxt('fund-cf-ops', data.fcf);
+        setTxt('fund-cf-fcf', data.fcf);
+        setTxt('fund-cf-capex', '—');
+        setTxt('fund-cf-fin', '—');
+        
+        // Company Overview panel
+        setTxt('fund-co-name', meta.name || sym);
+        setTxt('fund-co-sym', sym);
+        setTxt('fund-co-sector', meta.sector || 'Equity');
+        setTxt('fund-co-industry', meta.sector || 'Equity');
+        setTxt('fund-co-exchange', meta.exchange || '—');
+        setTxt('fund-co-country', meta.country === 'IN' ? 'India' : 'United States');
+        
+        // Market Data panel
+        setTxt('fund-md-price', `${currSym}${fmtNum(p.ltp)}`);
+        const chgEl = document.getElementById('fund-md-change');
+        if (chgEl) {
+            chgEl.textContent = `${chg >= 0 ? '+' : ''}${fmtNum(chgPct)}%`;
+            chgEl.className = `font-bold ${chg >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-500'}`;
+        }
+        setTxt('fund-md-mcap', '—');
+        setTxt('fund-md-pe', '—');
+        setTxt('fund-md-eps', data.eps || '—');
+        setTxt('fund-md-divy', '—');
+        setTxt('fund-md-beta', '—');
+        setTxt('fund-md-shares', '—');
+        setTxt('fund-md-ev', '—');
+        
+        // Price Statistics panel
+        setTxt('fund-ps-high', `${currSym}${fmtNum(p.high || p.ltp)}`);
+        setTxt('fund-ps-low', `${currSym}${fmtNum(p.low || p.ltp)}`);
+        setTxt('fund-ps-open', `${currSym}${fmtNum(p.open || p.prevClose || p.ltp)}`);
+        setTxt('fund-ps-prevclose', `${currSym}${fmtNum(p.prevClose || p.ltp)}`);
+        setTxt('fund-ps-52h', '—');
+        setTxt('fund-ps-52l', '—');
+        
+        // Key Ratios panel
+        setTxt('fund-r-pe', '—');
+        setTxt('fund-r-fpe', '—');
+        setTxt('fund-r-pb', '—');
+        setTxt('fund-r-roe', '—');
+        setTxt('fund-r-roa', '—');
+        setTxt('fund-r-de', '—');
+        setTxt('fund-r-divy', '—');
+        setTxt('fund-r-beta', '—');
+        setTxt('fund-r-quick', '—');
+        
+        // Business Info
+        const webEl = document.getElementById('fund-bi-web');
+        if (webEl) { webEl.textContent = '—'; webEl.href = '#'; }
+        setTxt('fund-bi-desc', '—');
 
         fetchFinnhubFundamentals(sym);
     }
@@ -1376,6 +1474,8 @@
 
     function applyFundamentalsData(f) {
         const setTxt = (id, txt) => { const el = document.getElementById(id); if (el && txt && txt !== 'N/A') el.textContent = txt; };
+        
+        // Existing quarterly/balance mappings
         if (f.revenueGrowth) setTxt('fund-q-rev', `${f.revenueGrowth} Rev`);
         if (f.marketCap) setTxt('fund-q-net', f.marketCap);
         if (f.week52Low && f.week52High) setTxt('fund-q-eps', `52W: ${f.week52Low} - ${f.week52High}`);
@@ -1383,6 +1483,55 @@
         if (f.marketCap) setTxt('fund-b-cash', f.marketCap);
         if (f.debtToEquity) setTxt('fund-b-debt', `D/E: ${f.debtToEquity}`);
         if (f.roe) setTxt('fund-b-fcf', `ROE: ${f.roe}`);
+        
+        // Company Overview
+        if (f.name) setTxt('fund-co-name', f.name);
+        if (f.symbol) setTxt('fund-co-sym', f.symbol);
+        if (f.sector) setTxt('fund-co-sector', f.sector);
+        if (f.industry) setTxt('fund-co-industry', f.industry);
+        if (f.exchange) setTxt('fund-co-exchange', f.exchange);
+        if (f.country) setTxt('fund-co-country', f.country === 'IN' ? 'India' : f.country === 'US' ? 'United States' : f.country);
+        
+        // Market Data
+        if (f.marketCap) setTxt('fund-md-mcap', f.marketCap);
+        if (f.peRatio) setTxt('fund-md-pe', f.peRatio);
+        if (f.eps) setTxt('fund-md-eps', f.eps);
+        if (f.dividendYield) setTxt('fund-md-divy', f.dividendYield);
+        if (f.beta) setTxt('fund-md-beta', f.beta);
+        if (f.sharesOutstanding) setTxt('fund-md-shares', f.sharesOutstanding);
+        if (f.enterpriseValue) setTxt('fund-md-ev', f.enterpriseValue);
+        if (f.forwardPE) setTxt('fund-r-fpe', f.forwardPE);
+        
+        // Price Statistics
+        if (f.week52High) setTxt('fund-ps-52h', f.week52High);
+        if (f.week52Low) setTxt('fund-ps-52l', f.week52Low);
+        
+        // Key Ratios
+        if (f.peRatio) setTxt('fund-r-pe', f.peRatio);
+        if (f.pbRatio) setTxt('fund-r-pb', f.pbRatio);
+        if (f.roe) setTxt('fund-r-roe', f.roe);
+        if (f.roa) setTxt('fund-r-roa', f.roa);
+        if (f.debtToEquity) setTxt('fund-r-de', f.debtToEquity);
+        if (f.dividendYield) setTxt('fund-r-divy', f.dividendYield);
+        if (f.beta) setTxt('fund-r-beta', f.beta);
+        if (f.quickRatio) setTxt('fund-r-quick', f.quickRatio);
+        
+        // Income Statement
+        if (f.grossMargin) setTxt('fund-i-gross', f.grossMargin);
+        if (f.operatingMargin) setTxt('fund-i-opmarg', f.operatingMargin);
+        if (f.netMargin) setTxt('fund-i-netmarg', f.netMargin);
+        if (f.eps) setTxt('fund-i-eps', f.eps);
+        
+        // Cash Flow
+        if (f.freeCashFlow) setTxt('fund-cf-fcf', f.freeCashFlow);
+        if (f.operatingCashFlow) setTxt('fund-cf-ops', f.operatingCashFlow);
+        
+        // Business Info
+        if (f.weburl) {
+            const webEl = document.getElementById('fund-bi-web');
+            if (webEl) { webEl.textContent = f.weburl; webEl.href = f.weburl; }
+        }
+        if (f.description) setTxt('fund-bi-desc', f.description);
     }
 
     async function fetchSymbolFinnhubNews(symbol) {
@@ -1397,10 +1546,10 @@
                 return;
             }
             listEl.innerHTML = data.news.map(item => `
-                <div class="p-2 bg-surface-container rounded-xl border border-outline-variant/10">
-                    <a href="${item.url}" target="_blank" class="font-bold text-primary hover:underline line-clamp-1 text-xs block mb-0.5">${item.headline}</a>
-                    <p class="text-[10px] text-on-surface-variant line-clamp-2 mb-1">${item.summary}</p>
-                    <div class="flex justify-between text-[8px] font-semibold text-on-surface-variant/80 uppercase">
+                <div class="p-2 bg-surface-container dark:bg-dark-surface-container-high rounded-xl border border-outline-variant/10 dark:border-dark-outline-variant/20">
+                    <a href="${item.url}" target="_blank" class="font-bold text-primary dark:text-dark-primary hover:underline line-clamp-1 text-xs block mb-0.5">${item.headline}</a>
+                    <p class="text-[10px] text-on-surface-variant dark:text-dark-on-surface-variant line-clamp-2 mb-1">${item.summary}</p>
+                    <div class="flex justify-between text-[8px] font-semibold text-on-surface-variant/80 dark:text-dark-on-surface-variant/80 uppercase">
                         <span>${item.source}</span>
                         <span>${item.datetime}</span>
                     </div>
@@ -1471,10 +1620,10 @@
             if (btn && panel) {
                 btn.addEventListener('click', () => {
                     subTabs.forEach(k => {
-                        document.getElementById(`subtab-${k}`)?.setAttribute('class', "px-2 py-0.5 rounded-lg text-on-surface-variant hover:text-on-surface");
+                        document.getElementById(`subtab-${k}`)?.setAttribute('class', "px-2 py-0.5 rounded-lg text-on-surface-variant dark:text-dark-on-surface-variant hover:text-on-surface");
                         document.getElementById(`subpanel-${k}`)?.classList.add('hidden');
                     });
-                    btn.className = "px-2 py-0.5 rounded-lg bg-white shadow-sm text-primary font-bold";
+                    btn.className = "px-2 py-0.5 rounded-lg bg-white dark:bg-dark-surface-container shadow-sm text-primary dark:text-dark-primary font-bold";
                     panel.classList.remove('hidden');
                     if (tabKey === 'news') fetchSymbolFinnhubNews(selectedSymbol);
                     else renderFundamentals(selectedSymbol);
@@ -1508,9 +1657,9 @@
         document.querySelectorAll('#chart-timeframe-controls .tf-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 document.querySelectorAll('#chart-timeframe-controls .tf-btn').forEach(b => {
-                    b.className = "tf-btn px-1.5 py-0.5 rounded-lg text-on-surface-variant hover:text-on-surface";
+                    b.className = "tf-btn px-1.5 py-0.5 rounded-lg text-on-surface-variant dark:text-dark-on-surface-variant hover:text-on-surface";
                 });
-                btn.className = "tf-btn px-1.5 py-0.5 rounded-lg bg-white shadow-sm text-primary font-bold";
+                btn.className = "tf-btn px-1.5 py-0.5 rounded-lg bg-white dark:bg-dark-surface-container shadow-sm text-primary dark:text-dark-primary font-bold";
                 activeRange = btn.getAttribute('data-range');
                 if (state.prices && state.prices[selectedSymbol]) {
                     renderPriceChart(selectedSymbol, state.prices[selectedSymbol].history, activeRange, activeChartStyle, activeIndicator);
