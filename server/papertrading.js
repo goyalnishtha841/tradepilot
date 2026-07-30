@@ -132,25 +132,40 @@ router.get('/fundamentals/:symbol', async (req, res) => {
     const m = metrics.metric || {};
     const currSym = isIndian ? '₹' : '$';
 
+    // Helper to safely format a number
+    const fmt = (v, decimals = 2) => (typeof v === 'number' && !isNaN(v)) ? v.toFixed(decimals) : null;
+
     res.json({
       fundamentals: {
         symbol,
         name: profile.name || (isIndian ? `${symbol} India Ltd.` : symbol),
         marketCap: profile.marketCapitalization ? `${currSym}${(profile.marketCapitalization / 1000).toFixed(2)}B` : 'N/A',
-        peRatio: m.peBasicExclExtraTTM ? `${m.peBasicExclExtraTTM.toFixed(2)}x` : (m.peTTM ? `${m.peTTM.toFixed(2)}x` : 'N/A'),
-        pbRatio: m.pbAnnual ? `${m.pbAnnual.toFixed(2)}x` : 'N/A',
-        eps: m.epsTTM ? `${currSym}${m.epsTTM.toFixed(2)}` : 'N/A',
-        week52High: m['52WeekHigh'] ? `${currSym}${m['52WeekHigh'].toFixed(2)}` : 'N/A',
-        week52Low: m['52WeekLow'] ? `${currSym}${m['52WeekLow'].toFixed(2)}` : 'N/A',
-        roe: m.roeTTM ? `${m.roeTTM.toFixed(2)}%` : 'N/A',
-        revenueGrowth: m.revenueGrowth3Y ? `${m.revenueGrowth3Y.toFixed(2)}%` : 'N/A',
-        quickRatio: m.quickRatioAnnual ? `${m.quickRatioAnnual.toFixed(2)}` : 'N/A',
-        debtToEquity: m.totalDebtToEquityAnnual ? `${m.totalDebtToEquityAnnual.toFixed(2)}x` : 'N/A',
-        dividendYield: m.dividendYieldIndicatedAnnual ? `${m.dividendYieldIndicatedAnnual.toFixed(2)}%` : 'N/A',
+        peRatio: m.peBasicExclExtraTTM ? `${fmt(m.peBasicExclExtraTTM)}x` : (m.peTTM ? `${fmt(m.peTTM)}x` : 'N/A'),
+        forwardPE: m.peNormalizedAnnual ? `${fmt(m.peNormalizedAnnual)}x` : 'N/A',
+        pbRatio: m.pbAnnual ? `${fmt(m.pbAnnual)}x` : 'N/A',
+        eps: m.epsTTM ? `${currSym}${fmt(m.epsTTM)}` : 'N/A',
+        week52High: m['52WeekHigh'] ? `${currSym}${fmt(m['52WeekHigh'])}` : 'N/A',
+        week52Low: m['52WeekLow'] ? `${currSym}${fmt(m['52WeekLow'])}` : 'N/A',
+        roe: m.roeTTM ? `${fmt(m.roeTTM)}%` : 'N/A',
+        roa: m.roaTTM ? `${fmt(m.roaTTM)}%` : 'N/A',
+        revenueGrowth: m.revenueGrowth3Y ? `${fmt(m.revenueGrowth3Y)}%` : 'N/A',
+        quickRatio: m.quickRatioAnnual ? `${fmt(m.quickRatioAnnual)}` : 'N/A',
+        debtToEquity: m.totalDebtToEquityAnnual ? `${fmt(m.totalDebtToEquityAnnual)}x` : 'N/A',
+        dividendYield: m.dividendYieldIndicatedAnnual ? `${fmt(m.dividendYieldIndicatedAnnual)}%` : 'N/A',
+        beta: m.beta ? `${fmt(m.beta)}` : 'N/A',
+        grossMargin: m.grossMarginTTM ? `${fmt(m.grossMarginTTM)}%` : 'N/A',
+        operatingMargin: m.operatingMarginTTM ? `${fmt(m.operatingMarginTTM)}%` : 'N/A',
+        netMargin: m.netProfitMarginTTM ? `${fmt(m.netProfitMarginTTM)}%` : 'N/A',
+        freeCashFlow: m.freeCashFlowTTM ? `${currSym}${fmt(m.freeCashFlowTTM / 1e9)}B` : 'N/A',
+        operatingCashFlow: m.currentRatioAnnual ? `CR: ${fmt(m.currentRatioAnnual)}` : 'N/A',
+        enterpriseValue: m.enterpriseValueEBITDATTM ? `${fmt(m.enterpriseValueEBITDATTM)}x EV/EBITDA` : 'N/A',
+        sharesOutstanding: profile.shareOutstanding ? `${fmt(profile.shareOutstanding)}M` : 'N/A',
         sector: profile.finnhubIndustry || (isIndian ? 'Indian Markets' : 'Technology'),
         industry: profile.finnhubIndustry || 'Equity',
         exchange: profile.exchange || (isIndian ? 'NSE / BSE' : 'NASDAQ/NYSE'),
-        country: profile.country || (isIndian ? 'IN' : 'US')
+        country: profile.country || (isIndian ? 'IN' : 'US'),
+        weburl: profile.weburl || 'N/A',
+        description: profile.name ? `${profile.name} is listed on ${profile.exchange || 'N/A'} in the ${profile.finnhubIndustry || 'N/A'} sector.` : 'N/A'
       }
     });
   } catch (err) {

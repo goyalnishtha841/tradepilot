@@ -157,6 +157,7 @@ document.addEventListener('DOMContentLoaded', function () {
       localStorage.setItem('tradepilot_dark_mode', String(newState));
       document.documentElement.classList.toggle('dark', newState);
       iconTarget.textContent = newState ? 'light_mode' : 'dark_mode';
+      window.dispatchEvent(new CustomEvent('theme-changed'));
     });
   }
 });
