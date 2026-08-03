@@ -23,9 +23,17 @@ function passwordError(password) {
 }
 
 function signToken(user) {
-  return jwt.sign({ id: user.id, email: user.email, name: user.name }, JWT_SECRET, {
-    expiresIn: TOKEN_EXPIRY
-  });
+  return jwt.sign(
+    {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role || 'user',
+      status: user.status || 'approved'
+    },
+    JWT_SECRET,
+    { expiresIn: TOKEN_EXPIRY }
+  );
 }
 
 // POST /api/auth/signup
@@ -50,7 +58,7 @@ router.post('/signup', async (req, res) => {
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
-    const user = await db.createUser({ name: name.trim(), email: email.trim(), passwordHash });
+    const user = await db.createUser({ name: name.trim(), email: email.trim(), passwordHash, role: 'user', status: 'approved' });
     const token = signToken(user);
 
     res.json({
@@ -59,6 +67,8 @@ router.post('/signup', async (req, res) => {
         id: user.id,
         name: user.name,
         email: user.email,
+        role: user.role || 'user',
+        status: user.status || 'approved',
         onboardingCompleted: false
       }
     });
@@ -82,10 +92,22 @@ router.post('/signin', async (req, res) => {
       return res.status(401).json({ error: 'Invalid email or password.' });
     }
 
+    if (user.status === 'suspended') {
+      return res.status(403).json({ error: 'Your account has been suspended. Please contact an administrator.' });
+    }
+    if (user.status === 'deactivated') {
+      return res.status(403).json({ error: 'Your account is deactivated.' });
+    }
+    if (user.status === 'rejected') {
+      return res.status(403).json({ error: 'Your registration application was rejected.' });
+    }
+
     const matches = await bcrypt.compare(password, user.passwordHash);
     if (!matches) {
       return res.status(401).json({ error: 'Invalid email or password.' });
     }
+
+    await db.updateLastLogin(user.id);
 
     const token = signToken(user);
     const prefs = await db.getUserPreferences(user.id);
@@ -97,6 +119,8 @@ router.post('/signin', async (req, res) => {
         id: user.id,
         name: user.name,
         email: user.email,
+        role: user.role || 'user',
+        status: user.status || 'approved',
         onboardingCompleted
       }
     });
@@ -122,6 +146,23 @@ function requireAuth(req, res, next) {
   } catch (err) {
     return res.status(401).json({ error: 'Session expired or invalid. Please sign in again.' });
   }
+}
+
+// Middleware to require admin rights
+function requireAdmin(req, res, next) {
+  requireAuth(req, res, async () => {
+    // Also check current database state for role
+    const fullUser = await db.getUserById(req.user.id);
+    const role = fullUser ? fullUser.role : req.user.role;
+    const status = fullUser ? fullUser.status : req.user.status;
+
+    if (role === 'admin' && (status === 'approved' || status === 'active')) {
+      req.user.role = 'admin';
+      next();
+    } else {
+      return res.status(403).json({ error: 'Access denied. Administrator privileges required.' });
+    }
+  });
 }
 
 // GET /api/auth/me — used by pages to check "am I logged in?"
@@ -280,5 +321,4 @@ router.post('/google', async (req, res) => {
   }
 });
 
-module.exports = { router, requireAuth };
-module.exports = { router, requireAuth };
+module.exports = { router, requireAuth, requireAdmin, signToken };

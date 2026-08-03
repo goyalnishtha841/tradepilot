@@ -1672,22 +1672,51 @@
         const theoryBtn = document.getElementById('nav-mode-theory');
         const practiceSec = document.getElementById('section-practice');
         const theorySec = document.getElementById('section-theory');
+        const describeBtn = document.getElementById('btn-describe-screen');
+        const tourCard = document.getElementById('tour-card');
 
-        if (practiceBtn && theoryBtn && practiceSec && theorySec) {
-            practiceBtn.addEventListener('click', () => {
-                practiceBtn.className = "px-6 py-2 rounded-xl text-xs font-bold transition-all bg-white text-primary shadow-sm flex items-center gap-2";
-                theoryBtn.className = "px-6 py-2 rounded-xl text-xs font-bold transition-all text-on-surface-variant hover:text-on-surface flex items-center gap-2";
-                practiceSec.classList.remove('hidden');
-                theorySec.classList.add('hidden');
-                setTimeout(() => { if (priceChart) priceChart.windowResizeHandler(); }, 50);
-            });
+        function setMode(mode) {
+            if (!practiceBtn || !theoryBtn || !practiceSec || !theorySec) return;
 
-            theoryBtn.addEventListener('click', () => {
-                theoryBtn.className = "px-6 py-2 rounded-xl text-xs font-bold transition-all bg-white text-primary shadow-sm flex items-center gap-2";
-                practiceBtn.className = "px-6 py-2 rounded-xl text-xs font-bold transition-all text-on-surface-variant hover:text-on-surface flex items-center gap-2";
+            if (mode === 'theory') {
+                theoryBtn.className = "px-6 py-2 rounded-xl text-xs font-bold transition-all bg-white text-primary shadow-sm flex items-center gap-2 dark:bg-dark-surface-container dark:text-dark-primary";
+                practiceBtn.className = "px-6 py-2 rounded-xl text-xs font-bold transition-all text-on-surface-variant hover:text-on-surface flex items-center gap-2 dark:text-dark-on-surface-variant";
                 theorySec.classList.remove('hidden');
                 practiceSec.classList.add('hidden');
-            });
+                
+                // Hide Describe Screen button and any open guided tour in Theory mode
+                if (describeBtn) {
+                    describeBtn.classList.add('hidden');
+                    describeBtn.classList.remove('sm:flex');
+                }
+                if (tourCard) {
+                    tourCard.classList.add('hidden');
+                }
+            } else {
+                practiceBtn.className = "px-6 py-2 rounded-xl text-xs font-bold transition-all bg-white text-primary shadow-sm flex items-center gap-2 dark:bg-dark-surface-container dark:text-dark-primary";
+                theoryBtn.className = "px-6 py-2 rounded-xl text-xs font-bold transition-all text-on-surface-variant hover:text-on-surface flex items-center gap-2 dark:text-dark-on-surface-variant";
+                practiceSec.classList.remove('hidden');
+                theorySec.classList.add('hidden');
+
+                // Show Describe Screen button in Practice mode
+                if (describeBtn) {
+                    describeBtn.classList.remove('hidden');
+                    describeBtn.classList.add('sm:flex');
+                }
+                setTimeout(() => { if (priceChart) priceChart.windowResizeHandler(); }, 50);
+            }
+        }
+
+        if (practiceBtn && theoryBtn && practiceSec && theorySec) {
+            practiceBtn.addEventListener('click', () => setMode('practice'));
+            theoryBtn.addEventListener('click', () => setMode('theory'));
+
+            // Initial state check on page load
+            if (!theorySec.classList.contains('hidden')) {
+                setMode('theory');
+            } else {
+                setMode('practice');
+            }
         }
 
         checkDisclaimerModal();
