@@ -12,6 +12,8 @@ const portfolioRouter = require('./portfolio');
 const watchlistRouter = require('./watchlist');
 const marketRouter = require('./market');
 const papertradingRouter = require('./papertrading');
+const adminRouter = require('./admin');
+const articlesRouter = require('./articles');
 const db = require('./db');
 
 const app = express();
@@ -22,6 +24,8 @@ app.use(cors());
 app.use(express.json());
 
 app.use('/api/auth', authRouter);
+app.use('/api/admin', adminRouter);
+app.use('/api/articles', articlesRouter);
 app.use('/api/onboarding', onboardingRouter);
 app.use('/api/alerts', alertsRouter);
 app.use('/api/narrative', narrativeRouter);
@@ -30,7 +34,6 @@ app.use('/api/portfolio', portfolioRouter);
 app.use('/api/watchlist', watchlistRouter);
 app.use('/api/market', marketRouter);
 app.use('/api/papertrading', papertradingRouter);
-//app.use('/api/explore', require('./explore'));
 
 // Middleware to redirect direct .html requests to clean paths
 app.use((req, res, next) => {
@@ -61,7 +64,9 @@ const cleanPages = [
   'profile',
   'signin',
   'signup',
-  'onboarding'
+  'onboarding',
+  'admin-login',
+  'admin'
 ];
 
 cleanPages.forEach(page => {
